@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java 面试术语大白话手册</title>
+<style>
+:root{--ink:#1a1d29;--muted:#5c6273;--bg:#f6f5f1;--card:#ffffff;--line:#e6e3da;--accent:#2b5aed;--accent-soft:#eef2ff;--ok:#1a7f4e;--warn:#b45309;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.75}
+.wrap{max-width:900px;margin:0 auto;padding:32px 20px 80px}
+header{text-align:center;padding:36px 0 28px;border-bottom:3px double var(--line);margin-bottom:28px}
+header h1{font-size:30px;letter-spacing:1px}
+header .sub{color:var(--muted);font-size:14px;margin-top:10px}
+.tip{background:var(--accent-soft);border-left:4px solid var(--accent);padding:14px 18px;border-radius:0 10px 10px 0;font-size:14px;margin-bottom:32px}
+.tip b{color:var(--accent)}
+h2{font-size:20px;margin:44px 0 6px;padding-bottom:8px;border-bottom:2px solid var(--ink);display:flex;align-items:center;gap:10px}
+h2 .no{background:var(--ink);color:#fff;font-size:13px;padding:2px 10px;border-radius:20px;letter-spacing:1px}
+.chap-note{color:var(--muted);font-size:13.5px;margin:6px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px}
+.term{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:box-shadow .2s}
+.term:hover{box-shadow:0 6px 18px rgba(0,0,0,.07)}
+.term .name{font-weight:700;font-size:15.5px;display:flex;align-items:center;gap:8px}
+.term .name .tag{font-size:11px;font-weight:400;background:var(--accent-soft);color:var(--accent);padding:1px 8px;border-radius:10px;white-space:nowrap}
+.term .plain{margin-top:8px;font-size:14px;color:#333}
+.term .plain::before{content:"说人话 → ";color:var(--ok);font-weight:700;font-size:13px}
+.term .say{margin-top:8px;font-size:13px;background:#faf9f5;border-radius:8px;padding:8px 12px;border:1px dashed var(--line)}
+.term .say::before{content:"面试可以这么说：";color:var(--warn);font-weight:700;font-size:12.5px}
+footer{margin-top:56px;text-align:center;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:20px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>Java 面试术语 · 大白话手册</h1>
+<div class="sub">130+ 高频术语 ｜ 每条一句比喻 + 一句面试话术 ｜ 配套《6 年 Java 面试题库》使用</div>
+</header>
+
+<div class="tip">
+<b>用法：</b>面试时嘴上说<b>术语</b>（显得专业），脑子里想<b>人话</b>（才真的懂）。每条卡片下半句是「面试可以这么说」——直接照着讲，既通俗又不掉价。
+</div>
+
+<h2><span class="no">一</span>集合</h2>
+<div class="chap-note">一句话主线：数组像一排座位（ArrayList），链表像手拉手排队（LinkedList），HashMap 是按编号找座位的柜子。</div>
+<div class="grid">
+
+<div class="term"><div class="name">HashMap<span class="tag">必问</span></div>
+<div class="plain">一个超大的柜子，key 算出「抽屉号」，value 塞进抽屉。两个人算到同一个抽屉就在里面排队，队伍太长改成树形排。</div>
+<div class="say">它就是一个「key 算出抽屉号、value 放进抽屉」的柜子，冲突了就排队，容量到七成就换大柜子。</div></div>
+
+<div class="term"><div class="name">扩容 / 负载因子 0.75</div>
+<div class="plain">柜子装到七成满就得换个大柜子，所有人重新找抽屉。0.75 是「太挤容易撞、太空浪费地」的折中。</div>
+<div class="say">到 75% 就扩容一倍，不扩的话冲突太多查询变慢，扩太勤又浪费内存。</div></div>
+
+<div class="term"><div class="name">红黑树化（链表≥8）</div>
+<div class="plain">同一个抽屉里排队的人太多（8 个以上），就从「排队」改成「分层找」——从挨个问变成每次排除一半。</div>
+<div class="say">链表长了查询从 O(n) 退化，树化后降到 O(log n)，一个 8 长度的链表找最后一项要走 8 步，树只要 3 步。</div></div>
+
+<div class="term"><div class="name">ConcurrentHashMap</div>
+<div class="plain">多线程安全的 HashMap。1.7 是把大柜子隔成 16 个区、一区一把锁；1.8 更狠，谁动哪个抽屉就只锁那个抽屉。</div>
+<div class="say">锁粒度从「一段」细化到「一个桶头节点」，冲突概率大大降低。</div></div>
+
+<div class="term"><div class="name">ArrayList 扩容</div>
+<div class="plain">一排座位坐满了，就换一条 1.5 倍长的新座位排，把所有人搬过去。</div>
+<div class="say">默认 10 个，满了扩到 1.5 倍，用数组复制整体搬迁，所以能预估容量就提前指定。</div></div>
+
+<div class="term"><div class="name">fail-fast</div>
+<div class="plain">一边点名一边把人拽走，点到后面名单对不上，直接掀桌子报错（ConcurrentModificationException）。</div>
+<div class="say">遍历时结构性修改会触发 fail-fast，要删元素用 Iterator.remove 或 removeIf。</div></div>
+
+<div class="term"><div class="name">CopyOnWriteArrayList</div>
+<div class="plain">每次改都先复印一份新的，在新复印件上改，改完整份换上去——读的人永远看的是完整版。</div>
+<div class="say">读写不冲突，但每次写都全量复制，适合监听器列表这种「读多写极少」的场景。</div></div>
+
+</div>
+
+<h2><span class="no">二</span>并发编程</h2>
+<div class="chap-note">一句话主线：多线程乱就三种病——看不见（可见性）、被插队（原子性）、顺序乱（有序性），所有工具都在治这三种病。</div>
+<div class="grid">
+
+<div class="term"><div class="name">JMM（Java 内存模型）<span class="tag">必问</span></div>
+<div class="plain">一本「多线程读写共享变量时，你该看到什么」的规则书。每个线程都有个小本本，改共享变量先记本上，别人不一定看得见；公共黑板就是主内存。注意它<b>不是</b>堆、栈、元空间那套内存分区，那是 JVM 内存结构，两回事。</div>
+<div class="say">主内存像公共黑板，工作内存像每个人的小本本，JMM 规定了本子和黑板之间什么时候必须同步。</div></div>
+
+<div class="term"><div class="name">happens-before</div>
+<div class="plain">不是「时间上先后」，是「我干完的事，你一定能看见」的承诺清单。</div>
+<div class="say">比如锁的解锁先于下一次加锁、volatile 写先于读——满足这些规则，前一个操作的结果对后一个必然可见。</div></div>
+
+<div class="term"><div class="name">volatile</div>
+<div class="plain">「别记小本本，直接写黑板、从黑板读」——别人立刻看得见，也禁止乱调顺序。但管不了「两个人同时加一」。</div>
+<div class="say">保证可见性和有序性，不保证原子性，i++ 这种三步操作照样会被插队。</div></div>
+
+<div class="term"><div class="name">锁升级</div>
+<div class="plain">一开始没人抢，锁只认一个人；有人来抢，就变成 CAS 抢一下、稍等；抢的人多了等得久，就交给操作系统排队（最贵）。</div>
+<div class="say">偏向锁→轻量级锁→重量级锁，按竞争激烈程度逐级升级，只能升不能降。</div></div>
+
+<div class="term"><div class="name">AQS</div>
+<div class="plain">「一个计数器 + 一条排队队伍」。state 表示能不能进，抢不到的进队睡觉，前一个出来叫醒下一个。</div>
+<div class="say">核心是 volatile state 加 CLH 队列，ReentrantLock、Semaphore、CountDownLatch 都是这套壳。</div></div>
+
+<div class="term"><div class="name">CAS</div>
+<div class="plain">「我看一眼是 A，就换成 B；不是 A 就重来」——不排队，但一直失败就一直空转。</div>
+<div class="say">无锁但自旋，高竞争下失败率飙升反而更慢，LongAdder 就是把热点拆成多份来治它。</div></div>
+
+<div class="term"><div class="name">ABA 问题</div>
+<div class="plain">我走时杯子是满的，回来还是满的——其实中间被人喝光又倒满过。光看「满不满」发现不了，得看「换过几次水」。</div>
+<div class="say">用 AtomicStampedReference 加版本号，值每变一次版本加一，就能识别中途被改过。</div></div>
+
+<div class="term"><div class="name">ThreadLocal</div>
+<div class="plain">给每个线程发一个自己的储物柜，各存各的，互不打扰。柜子名牌是弱引用，但柜里的东西是强引用——线程不死，东西一直堆着。</div>
+<div class="say">空间换隔离，线程池场景用完必须 remove，不然内存泄漏。</div></div>
+
+<div class="term"><div class="name">线程池执行流程<span class="tag">必问</span></div>
+<div class="plain">像餐馆排班：先招满正式工 → 坐不下就排队等位 → 等位区也满了才招临时工 → 还不行就门口挂「客满谢绝」。</div>
+<div class="say">核心线程 → 队列 → 最大线程 → 拒绝策略，顺序反直觉：队列满了才扩容。</div></div>
+
+<div class="term"><div class="name">拒绝策略</div>
+<div class="plain">客满了怎么办：掀桌报警（Abort）、让叫号的顾客自己去后厨帮忙端菜（CallerRuns）、默默扔掉新客（Discard）、把等最久的请走让新客坐（DiscardOldest）。</div>
+<div class="say">核心业务用 CallerRuns 让调用线程自己执行，天然限流不丢任务。</div></div>
+
+<div class="term"><div class="name">虚拟线程</div>
+<div class="plain">「把等 IO 的时间让出来」——一个服务员不傻等上菜，转头服务别桌，一个 OS 线程能伺候上万个任务。</div>
+<div class="say">解决阻塞 IO 的线程成本，不解决 CPU 瓶颈和连接池上限，且不要池化它。</div></div>
+
+<div class="term"><div class="name">死锁</div>
+<div class="plain">两个人各拿一半东西，都等对方手里那半，谁也不撒手。</div>
+<div class="say">破坏「循环等待」最实用——所有线程按同一顺序加锁；jstack 一搜 deadlock 就能定位。</div></div>
+
+<div class="term"><div class="name">虚假唤醒</div>
+<div class="plain">wait 睡着被叫醒，不代表你等的事就发生了——可能叫错人了。醒了必须再检查一遍条件。</div>
+<div class="say">所以 wait 要写在 while 里而不是 if 里，醒了先看锅里还有没有。</div></div>
+
+</div>
+
+<h2><span class="no">三</span>JVM 与 GC</h2>
+<div class="chap-note">一句话主线：对象放仓库（堆），清洁工定期扫垃圾（GC）；调优就两件事——垃圾别堆太快，扫的时候别把业务停太久。</div>
+<div class="grid">
+
+<div class="term"><div class="name">堆 / 栈 / 元空间</div>
+<div class="plain">堆是大仓库放对象；栈是每个线程的小桌子放局部变量；元空间是放「图纸」（类信息）的地方。</div>
+<div class="say">线程共享的是堆和方法区，每个线程独有的是栈、程序计数器。</div></div>
+
+<div class="term"><div class="name">可达性分析</div>
+<div class="plain">判断对象死没死，不数引用数，而是看「从根上摸不摸得到」——从 GC Roots 顺藤摸瓜摸不到的就是垃圾。</div>
+<div class="say">GC Roots 包括栈上局部变量、静态变量、常量等；不用引用计数是因为循环引用清不掉。</div></div>
+
+<div class="term"><div class="name">标记-复制 / 标记-整理</div>
+<div class="plain">新生代用「搬家」：把活的全搬到一个空房间，旧房间整个清空（快）；老年代用「往前挪」：把活的挤到一头，剩下的清掉（省空间但搬得累）。</div>
+<div class="say">分代假设是「绝大多数对象朝生夕死」，新生代死得快适合复制，老年代适合整理。</div></div>
+
+<div class="term"><div class="name">对象进老年代</div>
+<div class="plain">熬过很多次 GC 还没死（资历够了）、同龄人扎堆超半数、或者本身就是个大块头——直接进老年代。</div>
+<div class="say">年龄阈值默认 15，还有动态年龄判断和大对象直入，共四条路径。</div></div>
+
+<div class="term"><div class="name">G1<span class="tag">必问</span></div>
+<div class="plain">把仓库切成两千个小格子，每次只挑「垃圾最多」的格子先收——所以叫 Garbage First。你说最多停 200ms，它自己决定扫几个格子。</div>
+<div class="say">Region 分区 + 可预测停顿模型，适合 4~64G 堆，JDK9 起默认。</div></div>
+
+<div class="term"><div class="name">ZGC</div>
+<div class="plain">清洁工边扫你边逛，几乎感觉不到它存在（停顿小于 1 毫秒，仓库再大也不变）。</div>
+<div class="say">染色指针加读屏障实现并发整理，代价是吞吐略降、内存略多。</div></div>
+
+<div class="term"><div class="name">双亲委派</div>
+<div class="plain">办事先问上级，上级办不了才自己来——保证 java.lang.String 永远只有官方那一份，别人伪造不了。</div>
+<div class="say">子加载器先委托父加载器，保证核心类唯一、防篡改；SPI 和 Tomcat 是刻意打破它的场景。</div></div>
+
+<div class="term"><div class="name">OOM</div>
+<div class="plain">仓库装满了（heap）、图纸室装满了（Metaspace）、桌子摆不下了（线程数）、仓库外堆场满了（Direct buffer）——报错那句话就是线索。</div>
+<div class="say">先看是哪种 OOM，再配 HeapDumpOnOutOfMemoryError 拿 dump 用 MAT 分析。</div></div>
+
+<div class="term"><div class="name">CPU 100% 排查</div>
+<div class="plain">先看哪个进程忙 → 再看进程里哪个人忙 → 把他的工号翻成十六进制 → 去 jstack 里搜他正在干什么。</div>
+<div class="say">top、top -Hp、printf %x、jstack 四连；先排除是不是 GC 线程在忙。</div></div>
+
+<div class="term"><div class="name">逃逸分析</div>
+<div class="plain">发现「这对象压根没跑出这个房间」，那就不用进仓库了，直接拆成几个变量放在桌上——连 GC 都省了。</div>
+<div class="say">栈上分配加标量替换，还有锁消除，都是 JIT 的免费优化。</div></div>
+
+</div>
+
+<h2><span class="no">四</span>MySQL</h2>
+<div class="chap-note">一句话主线：怎么找得快（索引）、好几个人同时改怎么办（事务和锁）、数据太多怎么办（分库分表）。</div>
+<div class="grid">
+
+<div class="term"><div class="name">B+ 树</div>
+<div class="plain">又矮又胖的目录树，三层能装千万行，一次磁盘 IO 读一层；叶子之间还是串起来的链表，范围查特别顺。</div>
+<div class="say">矮胖让 IO 次数少（3~4 次），叶子链表让范围查询和排序友好，这是它赢过 B 树、Hash、二叉树的原因。</div></div>
+
+<div class="term"><div class="name">聚簇索引 / 二级索引</div>
+<div class="plain">主键索引的叶子直接挂着书的本体（整行数据）；普通索引的叶子只挂页码（主键值）。</div>
+<div class="say">二级索引查完还要拿主键回主键索引再查一遍整行，这就是回表。</div></div>
+
+<div class="term"><div class="name">回表 / 覆盖索引</div>
+<div class="plain">按目录找到页码，还得翻回本体拿内容，这是回表；如果目录上直接写着你要的东西，就不用翻了——覆盖索引。</div>
+<div class="say">查的列全在索引里就不回表，Extra 显示 Using index；select * 最容易破功。</div></div>
+
+<div class="term"><div class="name">最左前缀</div>
+<div class="plain">联合索引像电话簿「先按姓再按名」排，你直接报名字是用不上的，必须从最左边开始连续用。</div>
+<div class="say">(a,b,c) 索引，where 只有 b 用不上；范围查询后面的列也断掉。</div></div>
+
+<div class="term"><div class="name">索引失效</div>
+<div class="plain">本来能走目录，你偏偏把字段套进函数里改了样、或者类型写错（字符串列传数字）、或者前面带 %，MySQL 认不出来，只好整本书翻一遍。</div>
+<div class="say">函数、隐式转换、前导模糊、or 非索引列，这四个是高频失效场景。</div></div>
+
+<div class="term"><div class="name">MVCC<span class="tag">必问</span></div>
+<div class="plain">每行数据都留着「上一个版本」，串成一条链。你查的时候举着一份「快照名单」，顺着链找到你出生之前就存在的版本。</div>
+<div class="say">undo log 版本链加 ReadView；RC 每次查询重新领名单，RR 一辈子用同一份——差异全在这。</div></div>
+
+<div class="term"><div class="name">undo / redo / binlog</div>
+<div class="plain">undo 是草稿，留着反悔和看旧版本；redo 是「先记草稿，断电也能补回来」；binlog 是流水账，主从复制和备份靠它。</div>
+<div class="say">undo 保原子性，redo 保持久性，binlog 是 Server 层的归档日志，两者用两阶段提交对齐。</div></div>
+
+<div class="term"><div class="name">间隙锁</div>
+<div class="plain">不光锁住存在的行，连行和行之间的「空隙」也锁了，让你插不进来——防的就是幻读。</div>
+<div class="say">Next-Key Lock = 记录锁 + 间隙锁；没走索引的更新会锁全表，这是线上卡死常见元凶。</div></div>
+
+<div class="term"><div class="name">深分页 limit 100万,10</div>
+<div class="plain">意思是「翻完前一百万个，只把最后一条给我看」——前面全白扔。</div>
+<div class="say">延迟关联：先在索引上把 id 翻出来再回表；或者游标 where id > 上次最大值接着翻。</div></div>
+
+<div class="term"><div class="name">主从延迟</div>
+<div class="plain">主库写完了，从库还在慢慢抄作业，这时候去从库读就读到旧的。</div>
+<div class="say">写完立刻读的场景强制走主库；再配半同步复制、监控延迟。</div></div>
+
+<div class="term"><div class="name">分库分表</div>
+<div class="plain">一家店货太多放不下，就开连锁分仓。分片键选「散得匀、大多数查询都带它」的，一般就是 user_id。</div>
+<div class="say">拆完的代价：跨库 join、跨库分页、分布式事务、全局 ID、扩容搬数据，全要单独解决。</div></div>
+
+<div class="term"><div class="name">雪花算法</div>
+<div class="plain">「时间戳 + 机器号 + 流水号」拼出来的 ID，越生越大不用对表——就怕服务器时钟往回跳。</div>
+<div class="say">趋势递增适合做主键，时钟回拨要拒绝、等待或用历史最大时间戳兜底。</div></div>
+
+</div>
+
+<h2><span class="no">五</span>Redis</h2>
+<div class="chap-note">一句话主线：Redis 是块公共白板，问题永远围绕「白板和账本对不对得上」和「白板被擦了写满了怎么办」。</div>
+<div class="grid">
+
+<div class="term"><div class="name">Redis 为什么快<span class="tag">必问</span></div>
+<div class="plain">数据全在内存里、一个线程不用抢锁、用 epoll 一个人盯几百个连接——不是「因为单线程所以快」。</div>
+<div class="say">内存操作 + 单线程避免锁竞争 + IO 多路复用，6.0 后网络 IO 多线程但命令执行仍单线程。</div></div>
+
+<div class="term"><div class="name">跳表</div>
+<div class="plain">链表加了几层快速通道，找东西先坐快车再走小路；层级是随机掷出来的。</div>
+<div class="say">实现简单、范围查询天然友好（底层是有序链表），ZSet 就用它而不是红黑树。</div></div>
+
+<div class="term"><div class="name">RDB / AOF</div>
+<div class="plain">RDB 是「拍张照片」，恢复快但两次拍照之间的会丢；AOF 是「记流水账」，最多丢一秒但文件大恢复慢。</div>
+<div class="say">生产用混合持久化：AOF 重写时前半段直接写 RDB 格式，又快又安全。</div></div>
+
+<div class="term"><div class="name">缓存穿透</div>
+<div class="plain">天天有人问一个根本不存在的商品，缓存里永远没有，每次都砸到数据库。</div>
+<div class="say">布隆过滤器先把「不存在的」挡在门口 + 空值缓存短 TTL。</div></div>
+
+<div class="term"><div class="name">缓存击穿</div>
+<div class="plain">柜台最受欢迎的商品突然下架补货，一秒内几百个顾客全涌向仓库去拿。</div>
+<div class="say">热点 key 失效瞬间加互斥锁，只放一个人去回源重建，其他人等或返回旧值。</div></div>
+
+<div class="term"><div class="name">缓存雪崩</div>
+<div class="plain">一整排货架的商品同一秒全部过期，全店顾客同时冲向仓库；或者仓库本身塌了。</div>
+<div class="say">TTL 加随机值打散、多级缓存、集群高可用、熔断降级兜底。</div></div>
+
+<div class="term"><div class="name">大 key / 热 key</div>
+<div class="plain">大 key 是「一个抽屉塞了几万件货」，开一次抽屉卡死所有人；热 key 是「所有人都挤同一个抽屉」，网卡直接打满。</div>
+<div class="say">大 key 拆分 + UNLINK 异步删；热 key 本地缓存多副本分散。</div></div>
+
+<div class="term"><div class="name">分布式锁</div>
+<div class="plain">在白板上写「这个单子我在处理了」，别人看到就不碰。写和设闹钟必须一口气完成，擦的时候先确认是自己写的。</div>
+<div class="say">SET NX PX 一条命令加锁，Lua 原子释放，Redisson 看门狗自动续期。</div></div>
+
+<div class="term"><div class="name">先更库再删缓存</div>
+<div class="plain">改完账本，把白板上那行擦掉，下次谁看谁重新抄——而不是直接改白板（两支笔同时改顺序就永久错乱）。</div>
+<div class="say">Cache Aside：先 update DB 再 delete cache，删失败用延迟双删或 binlog 订阅兜底。</div></div>
+
+<div class="term"><div class="name">哨兵 / Cluster</div>
+<div class="plain">主从是一个人写多个人念，挂了不会自己站起来；哨兵是请几个保安盯着，主挂了投票换一个；Cluster 是仓库太大分几处放。</div>
+<div class="say">哨兵解决高可用，Cluster 解决容量（16384 个 slot），Cluster 最少 3 主 3 从。</div></div>
+
+<div class="term"><div class="name">Redis 事务 vs Lua</div>
+<div class="plain">Redis 事务是假事务——中间一条报错别的照样跑；Lua 是「整段话一口气说完」，中间还能看结果做判断。</div>
+<div class="say">需要「判断 + 执行」的原子操作用 Lua，但别在脚本里写耗时逻辑，单线程会卡死全实例。</div></div>
+
+<div class="term"><div class="name">Pipeline</div>
+<div class="plain">把十句话攒一起一次说完，省的是来回跑腿的时间——但它不是原子的，中间可能插进别人的命令。</div>
+<div class="say">省 RTT 不保原子，命令之间有依赖就不能用，MGET 才是服务端原子。</div></div>
+
+<div class="term"><div class="name">fork + COW</div>
+<div class="plain">拍快照前先复印一份目录，大家先照旧读写，谁改了哪页才把那页真的复印出来——写得多内存可能翻倍。</div>
+<div class="say">bgsave 用写时复制，机器要留一半内存余量，单实例建议不超过 10G。</div></div>
+
+</div>
+
+<h2><span class="no">六</span>Spring</h2>
+<div class="chap-note">一句话主线：Spring 就两件事——帮你造对象（IoC）、帮你在方法前后加料（AOP）。所有八股都是这两件事的细节。</div>
+<div class="grid">
+
+<div class="term"><div class="name">IoC / DI</div>
+<div class="plain">以前你自己 new 对象（自己买菜做饭），现在报个名，Spring 把做好的端给你（叫外卖）。把「造东西的控制权」交给容器。</div>
+<div class="say">控制反转是思想，依赖注入是实现——对象不自己创建依赖，由容器喂进来。</div></div>
+
+<div class="term"><div class="name">Bean 生命周期</div>
+<div class="plain">先 new 出来 → 把零件（依赖）装上 → 发一圈名片告诉你我是谁 → 执行初始化方法 → 套上代理外衣 → 干活 → 销毁。</div>
+<div class="say">实例化、属性填充、Aware 回调、初始化前后处理，AOP 代理在初始化之后生成。</div></div>
+
+<div class="term"><div class="name">三级缓存 / 循环依赖</div>
+<div class="plain">A 要 B、B 要 A，谁先来都卡住。Spring 的办法是「半成品先摆出来」：A 刚出生还没装零件，先把它的地址登记出去，B 拿地址先用着。</div>
+<div class="say">三级缓存本质是「提前暴露引用」，用工厂延迟决定要不要提前生成代理；构造器注入解决不了。</div></div>
+
+<div class="term"><div class="name">AOP</div>
+<div class="plain">找个替身接活：活还是你干，但进门出门都得过替身，替身趁机加料（日志、事务）。</div>
+<div class="say">有接口用 JDK 动态代理，没接口用 CGLIB 生成子类；自调用会绕过替身导致失效。</div></div>
+
+<div class="term"><div class="name">事务失效</div>
+<div class="plain">事务靠替身加料，你自己调自己（this.xxx）就是绕过替身直接找本人，料全没了。</div>
+<div class="say">自调用、非 public、异常被吞、抛受检异常是四大高频失效场景，rollbackFor 必写。</div></div>
+
+<div class="term"><div class="name">传播行为</div>
+<div class="plain">REQUIRED 是「有队就跟着排，没队就新开一条」；REQUIRES_NEW 是「你们先停，我单开一条，我挂了不影响你们」；NESTED 是「在我这儿打个存档点」。</div>
+<div class="say">REQUIRES_NEW 会多占一个数据库连接，嵌套深了把连接池抽干。</div></div>
+
+<div class="term"><div class="name">自动配置</div>
+<div class="plain">Spring Boot 提前写好一张「什么情况配什么」的清单，启动时读出来，用条件注解筛一遍：类在不在、你定义了没、开关开了没。</div>
+<div class="say">EnableAutoConfiguration 加 Conditional 系列注解，你自定义了 Bean 它就让你。</div></div>
+
+<div class="term"><div class="name">@Configuration 增强</div>
+<div class="plain">这个类被 CGLIB 偷偷改成子类，你在里面调另一个 @Bean 方法，它先看容器里有没有，有就直接给——所以拿到的是同一个对象。</div>
+<div class="say">proxyBeanMethods 保证单例语义；Boot 2.2 后建议关掉（Lite 模式）提速。</div></div>
+
+<div class="term"><div class="name">事务事件 AFTER_COMMIT</div>
+<div class="plain">等账本真的记上了，再去发通知——避免「消息发出去了，结果事务回滚了」。</div>
+<div class="say">@TransactionalEventListener(phase=AFTER_COMMIT)，事务提交后才执行监听逻辑。</div></div>
+
+</div>
+
+<h2><span class="no">七</span>消息队列</h2>
+<div class="chap-note">一句话主线：MQ 是传菜口——厨师做好放上去，服务员自己来取，两边不用互相等。毛病也是传菜口的毛病：菜会掉、会上两遍、会堆。</div>
+<div class="grid">
+
+<div class="term"><div class="name">解耦 / 异步 / 削峰</div>
+<div class="plain">不用挨家挨户通知（解耦）、不用干等回话（异步）、洪峰来了先堆在管子里慢慢流（削峰）。</div>
+<div class="say">代价是链路变长：要考虑丢、重、乱序、堆积，所以核心链路别乱异步。</div></div>
+
+<div class="term"><div class="name">消息不丢</div>
+<div class="plain">三关都要守住：寄出要确认送达、中转站要确认签收入库、收件人要确认拆完信再销号。</div>
+<div class="say">生产端确认 + Broker 刷盘/多副本 + 消费端手动 ACK；最后一层永远是本地消息表 + 对账。</div></div>
+
+<div class="term"><div class="name">消息重复 / 幂等</div>
+<div class="plain">MQ 只能保证「至少送到一次」，重复一定会发生，只能收件人自己保证「来几次都只办一次」。</div>
+<div class="say">唯一索引最硬，状态机其次，Redis 记 messageId 辅助——注意业务成功后才记，别先占位。</div></div>
+
+<div class="term"><div class="name">消息顺序</div>
+<div class="plain">全局排队吞吐就没了，实际只要「同一个订单的消息按顺序」就行——按订单号把消息固定塞进同一条管道。</div>
+<div class="say">按业务 key 路由到同一分区/队列，消费端同 key 串行（内存队列分发）。</div></div>
+
+<div class="term"><div class="name">消息堆积</div>
+<div class="plain">传菜口堆成山了。先看是厨房出菜太快还是服务员全趴了；然后临时加人、加快取餐速度，堆得太狠先把菜转到临时冷库。</div>
+<div class="say">定位原因 → 扩消费者（不超分区数）→ 批量消费 → 降级转存，平时监控 lag。</div></div>
+
+<div class="term"><div class="name">事务消息</div>
+<div class="plain">先发一条「谁也看不见的半消息」→ 干完自己的活 → 说一声「成了」消息才生效；中途死机了，Broker 会回来问「你到底成没成」。</div>
+<div class="say">半消息 + 本地事务 + 回查，解决「改库和发消息」的原子性，仍需对账兜底。</div></div>
+
+<div class="term"><div class="name">延迟消息</div>
+<div class="plain">「30 分钟后再送」的定时信。RocketMQ 是固定档位的定时器，RabbitMQ 用「过期转投死信队列」凑。</div>
+<div class="say">订单超时关闭主力方案，配定时扫表兜底防丢。</div></div>
+
+</div>
+
+<h2><span class="no">八</span>分布式与微服务</h2>
+<div class="chap-note">一句话主线：系统拆开之后多出来的麻烦——它们在哪儿、怎么找到彼此、一个挂了怎么不连累别人、数据怎么对得上。</div>
+<div class="grid">
+
+<div class="term"><div class="name">CAP</div>
+<div class="plain">网络一定会断（P 必须保），所以只能在「宁可停服也要数据准」和「先能用，数据晚点对」之间二选一。</div>
+<div class="say">Eureka 选 AP，ZooKeeper 选 CP，Nacos 可切换；业务系统多数选 AP + 最终一致。</div></div>
+
+<div class="term"><div class="name">2PC / TCC / Saga / 本地消息表</div>
+<div class="plain">2PC 是「主持人问一圈，都点头才干」——稳但所有人都得干等；TCC 是「先占座、后确认、不行就取消」；Saga 是「一步一步干，哪步砸了就退哪步」；本地消息表是「先记在小本本上，回头照着补发」。</div>
+<div class="say">能用最终一致就别强一致；日常业务本地消息表/事务消息最常用。</div></div>
+
+<div class="term"><div class="name">限流算法</div>
+<div class="plain">固定窗口是「每小时放行 100 人」，但整点前后可能放进 200；漏桶是「匀速滴水」；令牌桶是「平时攒着票，忙时能花」。</div>
+<div class="say">要抗突发用令牌桶（最常用），分布式限流用 Redis+Lua，单机 Guava RateLimiter。</div></div>
+
+<div class="term"><div class="name">熔断 / 降级 / 隔离</div>
+<div class="plain">熔断是「你老出错，我先不找你了」；降级是「你不干了我给个兜底答案」；隔离是「每个下游一个独立池子」，一个淹了不连累别人。</div>
+<div class="say">熔断保护调用方，降级给兜底，隔离防扩散——Sentinel 三样都做了。</div></div>
+
+<div class="term"><div class="name">服务雪崩</div>
+<div class="plain">一个下游变慢 → 调它的线程全卡住 → 我的线程池也满 → 上面也被拖死，一层层往上炸。</div>
+<div class="say">超时必须设且比上游短、重试要克制、熔断、舱壁隔离、限流。</div></div>
+
+<div class="term"><div class="name">幂等</div>
+<div class="plain">同一件事你来几次，效果都跟来一次一样——像电梯按钮按十遍电梯也只来一次。</div>
+<div class="say">唯一索引兜底 + token/状态机/乐观锁辅助；支付回调、MQ 消费、下单必做。</div></div>
+
+<div class="term"><div class="name">服务注册与发现</div>
+<div class="plain">上班先报到（注册），同事手里有通讯录（客户端缓存名单），谁旷工太久就从通讯录划掉（心跳摘除）。</div>
+<div class="say">心跳续约 + 本地缓存 + 推拉结合；下线要先摘流量再停进程。</div></div>
+
+<div class="term"><div class="name">链路追踪</div>
+<div class="plain">一个快递单号（TraceId）贯穿全程，每经过一个站点盖个章（SpanId），最后按单号能还原整条路线。</div>
+<div class="say">TraceId 从入口生成，header/MQ 往下传，线程池要包装否则异步断链。</div></div>
+
+<div class="term"><div class="name">灰度发布</div>
+<div class="plain">新版本先放一台，把 5% 的客人引过去尝鲜，没人骂再加量。</div>
+<div class="say">按用户 ID/请求头路由，前提是数据库和接口新旧版本能共存。</div></div>
+
+<div class="term"><div class="name">分布式单体</div>
+<div class="plain">服务拆了，但还是共享数据库、改一个需求要五个服务一起发——相当于把单体拆开又用铁链拴上。</div>
+<div class="say">按业务能力拆、数据不共享、独立演进，否则不如不拆。</div></div>
+
+</div>
+
+<h2><span class="no">九</span>场景设计</h2>
+<div class="chap-note">一句话主线：场景题没有标准答案，看你会不会一层层削流量——前端挡一批、网关限一批、缓存扛一批、队列缓一批，最后才轮到数据库。</div>
+<div class="grid">
+
+<div class="term"><div class="name">秒杀系统</div>
+<div class="plain">一万人抢十件货：门口先拦（按钮置灰、验证码）、门口限流、Redis 里扣掉那十件、抢到的发号排队慢慢下单，数据库再用条件更新把最后一道门守住。</div>
+<div class="say">漏斗式削流量 + Redis 预扣 + MQ 异步 + DB 乐观锁兜底，绝不超卖。</div></div>
+
+<div class="term"><div class="name">订单超时关闭</div>
+<div class="plain">下完单 30 分钟没人付钱就取消——用「30 分钟后才送到的信」通知关单，再配一个每分钟扫一遍的巡逻队兜底。</div>
+<div class="say">延迟消息为主 + 定时扫表兜底 + 关单前再查一次支付状态防并发。</div></div>
+
+<div class="term"><div class="name">排行榜</div>
+<div class="plain">ZSet 天生就是排行榜：每人一个分数，自动排好队，随时问「我第几名」「前十是谁」。</div>
+<div class="say">ZINCRBY 加分、ZREVRANGE 取 TOP N、ZREVRANK 查排名，O(logN)。</div></div>
+
+<div class="term"><div class="name">短链接</div>
+<div class="plain">给长网址发个「车牌号」，访问车牌号时查表跳转回原地址。用 302 临时跳转，别用 301——301 会被浏览器记住，你就统计不到点击了。</div>
+<div class="say">发号器 + Base62 编码 + 302 跳转 + 布隆防穿透。</div></div>
+
+<div class="term"><div class="name">多级缓存</div>
+<div class="plain">离你越近的柜子越小越快：口袋（本地缓存）→ 楼下超市（Redis）→ 仓库（DB）。</div>
+<div class="say">Caffeine 纳秒级、容量有限，一致性靠 MQ 广播失效或短 TTL，只放极热数据。</div></div>
+
+<div class="term"><div class="name">支付回调设计</div>
+<div class="plain">对方的通知会重复、会乱序、也会丢——所以验签、幂等、记流水、秒回 success、异步处理、查单兜底，一样不能少。</div>
+<div class="say">幂等靠唯一索引+状态机，先落库再异步处理，定时主动查单兜底。</div></div>
+
+<div class="term"><div class="name">断点续传</div>
+<div class="plain">大文件切块上传，传过的块跳过，全传完再拼回去。先算指纹（MD5）还能「秒传」——别人传过就直接告诉你传好了。</div>
+<div class="say">分片 + MD5 秒传 + 断点续传 + 异步合并，临时分片要清理。</div></div>
+
+</div>
+
+<h2><span class="no">十</span>附录：高频一词秒懂</h2>
+<div class="grid">
+
+<div class="term"><div class="name">RT（响应时间）</div><div class="plain">从按下按钮到页面出结果的等待时长。</div></div>
+<div class="term"><div class="name">QPS / TPS</div><div class="plain">每秒处理多少次查询 / 多笔事务——店每秒接待多少客人。</div></div>
+<div class="term"><div class="name">P99</div><div class="plain">99% 的请求都比它快——看「最倒霉的那批人」惨不惨，比平均值诚实。</div></div>
+<div class="term"><div class="name">SLA</div><div class="plain">服务承诺书：「一年最多宕机几小时」。</div></div>
+<div class="term"><div class="name">墨菲式「超卖」</div><div class="plain">库存 10 件卖出去 11 件——并发下没把「检查还有货」和「扣掉」当一件事办。</div></div>
+<div class="term"><div class="name">长款 / 短款</div><div class="plain">对账时「渠道有我没我」（长款，多半掉单）和「我有渠道没有」（短款，多半没真付）。</div></div>
+<div class="term"><div class="name">二清</div><div class="plain">平台把钱收进自己口袋再分给商户——监管不允许，所以分账要走渠道的分账能力。</div></div>
+<div class="term"><div class="name">租户（tenant）</div><div class="plain">同一套系统服务的好几家客户公司，数据要互相看不见。</div></div>
+<div class="term"><div class="name">白名单</div><div class="plain">只允许名单上的人进门，名单外的一律拒绝。</div></div>
+<div class="term"><div class="name">watchdog（看门狗）</div><div class="plain">一把锁快到期时，自动帮你续命的闹钟。</div></div>
+<div class="term"><div class="name">脑裂</div><div class="plain">网络断了，队伍里出现两个都说自己是老大的——靠「必须过半数同意」来防止。</div></div>
+<div class="term"><div class="name">OOM Killer</div><div class="plain">Linux 内存告急时，系统挑一个最占内存的进程直接枪毙。</div></div>
+<div class="term"><div class="name">FULL GC 触发原因</div><div class="plain">gc.log 里的 Allocation Failure / Metadata GC Threshold / System.gc() 就是「起火原因」一栏。</div></div>
+<div class="term"><div class="name">计数器 vs 布隆过滤器</div><div class="plain">布隆是个「绝对没有、可能有」的门卫——说没有就肯定没有，说有可能只是可能。</div></div>
+<div class="term"><div class="name">HyperLogLog</div><div class="plain">12KB 估出上亿的「大概有多少个不同的人来过」，误差 0.81%。</div></div>
+<div class="term"><div class="name">限频（Rate Limit）</div><div class="plain">对方说「每秒只准敲我 10 次门」，超了就不理你。</div></div>
+<div class="term"><div class="name">优雅停机</div><div class="plain">关门不是拉闸——先挂「营业结束」牌子，把手头的客人送走，再熄灯。</div></div>
+<div class="term"><div class="name">舱壁隔离</div><div class="plain">船分成多个水密舱，一个舱进水，船不至于整体沉没。</div></div>
+
+</div>
+
+<footer>
+《6 年 Java 后端面试题库》配套资料 · 术语照常讲，人话记心里<br>
+面试嘴上说术语（专业），脑子里想人话（真懂）
+</footer>
+</div>
+</body>
+</html>

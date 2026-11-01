@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java 面试英文术语读音表</title>
+<style>
+:root{--ink:#1a1d29;--muted:#5c6273;--bg:#f6f5f1;--card:#fff;--line:#e6e3da;
+--accent:#2b5aed;--accent-soft:#eef2ff;--ok:#1a7f4e;--warn:#b45309;--pink:#b02a5b;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.75}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px 90px}
+header{text-align:center;padding:46px 0 30px;border-bottom:3px double var(--line)}
+header h1{font-size:31px;letter-spacing:.5px}
+header .sub{color:var(--muted);font-size:14px;margin-top:12px}
+.player{background:var(--ink);color:#fff;border-radius:14px;padding:16px 20px;margin:24px 0 6px;
+display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.player .lbl{font-size:13px;opacity:.7;margin-right:2px}
+.player button{font-family:inherit;font-size:14px;padding:9px 18px;border-radius:9px;border:none;
+cursor:pointer;font-weight:700;transition:.15s;background:#fff;color:var(--ink)}
+.player button:hover{transform:translateY(-1px)}
+.player button.play{background:#2fbf71;color:#fff}
+.player button.stop{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35);font-weight:400}
+.player select,.player input[type=range]{font-family:inherit;font-size:13px;border-radius:8px;border:none;padding:7px 8px;
+background:rgba(255,255,255,.12);color:#fff;outline:none}
+.player input[type=range]{width:110px;accent-color:#2fbf71}
+.player .speed-val{font-size:13px;opacity:.85;min-width:42px}
+.player .status{font-size:13px;opacity:.7;margin-left:auto}
+.searchbar{position:sticky;top:0;z-index:50;background:var(--bg);padding:12px 0 10px;border-bottom:1px solid var(--line);margin-top:14px}
+.searchbar input{width:100%;padding:12px 18px;font-size:15px;border:2px solid var(--line);border-radius:12px;
+background:#fff;outline:none;font-family:inherit;transition:border-color .2s}
+.searchbar input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.tip{background:var(--accent-soft);border-left:4px solid var(--accent);padding:16px 20px;border-radius:0 12px 12px 0;
+font-size:14.5px;margin:22px 0 8px}
+.tip b{color:var(--accent)}
+.tip ol{margin:8px 0 0 20px}
+.tip li{margin:5px 0}
+.tip .rule{background:#fff;border-radius:8px;padding:2px 8px;font-weight:700;color:var(--pink);font-size:13.5px}
+h2{font-size:20px;margin:46px 0 6px;padding-bottom:9px;border-bottom:2px solid var(--ink);display:flex;align-items:center;gap:10px}
+h2 .cnt{font-size:12px;font-weight:400;color:var(--muted);margin-left:auto;letter-spacing:.5px}
+.sec-note{color:var(--muted);font-size:13.5px;margin:8px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:13px}
+.term{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+transition:box-shadow .18s,transform .18s,border-color .18s;cursor:pointer;position:relative}
+.term:hover{box-shadow:0 8px 22px rgba(0,0,0,.075);transform:translateY(-1px);border-color:#c9d3f5}
+.term.playing{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.term .en{font-size:17px;font-weight:700;letter-spacing:.3px;font-family:Consolas,"Courier New",monospace;
+padding-right:34px}
+.term .ipa{font-size:12.5px;color:var(--muted);margin-top:2px;font-family:Consolas,monospace}
+.term .desc{margin-top:8px;font-size:13.5px;color:#3a3f4d;padding-top:8px;border-top:1px dashed var(--line)}
+.term .spk{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;
+background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;
+font-size:13px;transition:.15s}
+.term:hover .spk{background:var(--accent);color:#fff}
+.term.playing .spk{background:var(--accent);color:#fff}
+.letters{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin:14px 0 4px}
+.letters div{background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 6px;text-align:center;
+font-size:15px;font-weight:700;font-family:Consolas,monospace;cursor:pointer;transition:.15s}
+.letters div:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-1px)}
+.quick{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+.quick button{font-family:Consolas,monospace;font-size:14px;font-weight:700;padding:8px 15px;border-radius:20px;
+border:1.5px solid var(--line);background:#fff;cursor:pointer;transition:.15s;color:var(--ink)}
+.quick button:hover{background:var(--pink);color:#fff;border-color:var(--pink)}
+footer{margin-top:64px;text-align:center;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:22px}
+.empty{text-align:center;color:var(--muted);padding:40px;font-size:14px;display:none}
+@media(max-width:600px){.grid{grid-template-columns:1fr}header h1{font-size:24px}.player .status{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+<h1>Java 面试英文术语 · 读音表</h1>
+<div class="sub">157 个会念到的词 ｜ 点一下就念 ｜ 配套《6 年 Java 面试题库》</div>
+</header>
+
+<div class="player">
+<span class="lbl">语音</span>
+<select id="voice"></select>
+<span class="lbl">语速</span>
+<input type="range" id="rate" min="0.5" max="1.2" step="0.05" value="0.85">
+<span class="speed-val" id="rateVal">0.85x</span>
+<button class="play" id="playAll">▶ 连读全部</button>
+<button class="stop" id="stop">停止</button>
+<span class="status" id="status">点卡片任意位置即可发音</span>
+</div>
+
+<div class="searchbar">
+<input id="q2" type="text" placeholder="搜一下，比如 vol、AQS、redis，也能搜中文" autocomplete="off">
+</div>
+
+<div class="tip">
+<b>不会念，按这三条走，永远不会尴尬：</b>
+<ol>
+<li><span class="rule">缩写就念字母</span>：AQS 念 A-Q-S、JWT 念 J-W-T、TTL 念 T-T-L。念字母永远是对的，没人会念成一个怪词。</li>
+<li><span class="rule">单词跟着念</span>：点一下听，跟着重复三遍，比看任何标注都管用。重音看音标里的 ˈ 记号，撇号后面那个音节要重读。</li>
+<li><span class="rule">真拿不准就说中文</span>：说「内存屏障」「幂等」「可重入锁」不丢分；<b>硬念错才丢分</b>——面试官会立刻觉得你没用过。</li>
+</ol>
+</div>
+
+<h2>先记住：26 个字母怎么念 <span class="cnt">所有缩写的底座</span></h2>
+<div class="sec-note">缩写念不准，九成是某个字母读错了。点一遍，尤其 G、J、H、W、X 这几个。</div>
+<div class="letters">
+
+<div data-say="A">A</div>
+<div data-say="B">B</div>
+<div data-say="C">C</div>
+<div data-say="D">D</div>
+<div data-say="E">E</div>
+<div data-say="F">F</div>
+<div data-say="G">G</div>
+<div data-say="H">H</div>
+<div data-say="I">I</div>
+<div data-say="J">J</div>
+<div data-say="K">K</div>
+<div data-say="L">L</div>
+<div data-say="M">M</div>
+<div data-say="N">N</div>
+<div data-say="O">O</div>
+<div data-say="P">P</div>
+<div data-say="Q">Q</div>
+<div data-say="R">R</div>
+<div data-say="S">S</div>
+<div data-say="T">T</div>
+<div data-say="U">U</div>
+<div data-say="V">V</div>
+<div data-say="W">W</div>
+<div data-say="X">X</div>
+<div data-say="Y">Y</div>
+<div data-say="Z">Z</div>
+</div>
+
+<h2>最常被念错的 20 个 <span class="cnt">面试前 3 分钟扫一遍</span></h2>
+<div class="sec-note">这 20 个出现频率最高、又最容易念错。挨个点一遍，念对这几个，气场立刻不一样。</div>
+<div class="quick">
+<button data-say="volatile">volatile</button>
+<button data-say="synchronized">synchronized</button>
+<button data-say="AQS">AQS</button>
+<button data-say="Dubbo">Dubbo</button>
+<button data-say="Nacos">Nacos</button>
+<button data-say="InnoDB">InnoDB</button>
+<button data-say="ZooKeeper">ZooKeeper</button>
+<button data-say="Kafka">Kafka</button>
+<button data-say="Seata">Seata</button>
+<button data-say="Sentinel">Sentinel</button>
+<button data-say="MyBatis">MyBatis</button>
+<button data-say="Feign">Feign</button>
+<button data-say="Nginx">Nginx</button>
+<button data-say="epoll">epoll</button>
+<button data-say="binlog">binlog</button>
+<button data-say="SaaS">SaaS</button>
+<button data-say="CRUD">CRUD</button>
+<button data-say="idempotent">idempotent</button>
+<button data-say="tenant">tenant</button>
+<button data-say="ReentrantLock">ReentrantLock</button>
+</div>
+<h2>一、JVM 与 GC <span class="cnt">17 个</span></h2>
+<div class="sec-note">内存和垃圾回收这块缩写最密集，先把这些念顺。</div>
+<div class="grid">
+<div class="term" data-say="JVM"><div class="en">JVM</div><div class="ipa">/ˌdʒeɪ viː ˈem/</div><div class="desc">Java 虚拟机。念三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="JDK"><div class="en">JDK</div><div class="ipa">/ˌdʒeɪ diː ˈkeɪ/</div><div class="desc">Java 开发工具包。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="GC"><div class="en">GC</div><div class="ipa">/ˌdʒiː ˈsiː/</div><div class="desc">垃圾回收。两个字母，不念成单词。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Full GC"><div class="en">Full GC</div><div class="ipa">/fʊl ˌdʒiː ˈsiː/</div><div class="desc">整堆回收，最慢的那种。Full 要读满。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="OOM"><div class="en">OOM</div><div class="ipa">/ˌoʊ oʊ ˈem/</div><div class="desc">Out Of Memory，内存爆了。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="STW"><div class="en">STW</div><div class="ipa">/ˌes tiː ˈdʌbljuː/</div><div class="desc">Stop The World，GC 时业务全停。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="G1"><div class="en">G1</div><div class="ipa">/dʒiː wʌn/</div><div class="desc">回收器名，读 G one。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ZGC"><div class="en">ZGC</div><div class="ipa">/zed dʒiː ˈsiː/</div><div class="desc">超低停顿回收器，三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="CMS"><div class="en">CMS</div><div class="ipa">/ˌsiː em ˈes/</div><div class="desc">老年代回收器，JDK14 已废弃。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Eden"><div class="en">Eden</div><div class="ipa">/ˈiːdn/</div><div class="desc">新生代的伊甸区，对象出生地。重音在第一个音节。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Survivor"><div class="en">Survivor</div><div class="ipa">/sərˈvaɪvər/</div><div class="desc">幸存者区。重音在 vaɪ。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Metaspace"><div class="en">Metaspace</div><div class="ipa">/ˈmetəspeɪs/</div><div class="desc">元空间，存类信息，JDK8 起取代永久代。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="heap"><div class="en">heap</div><div class="ipa">/hiːp/</div><div class="desc">堆。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="jstack"><div class="en">jstack</div><div class="ipa">/ˈdʒeɪ stæk/</div><div class="desc">看线程栈的命令，排查卡死用。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="jmap"><div class="en">jmap</div><div class="ipa">/ˈdʒeɪ mæp/</div><div class="desc">导堆快照的命令。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="jstat"><div class="en">jstat</div><div class="ipa">/ˈdʒeɪ stæt/</div><div class="desc">看 GC 频率和耗时的命令。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Arthas"><div class="en">Arthas</div><div class="ipa">/ˈɑːrθəs/</div><div class="desc">阿里出的线上诊断工具。</div><div class="spk">🔊</div></div>
+</div>
+<h2>二、并发编程 <span class="cnt">21 个</span></h2>
+<div class="sec-note">全是缩写加长单词，这块最容易念崩。</div>
+<div class="grid">
+<div class="term" data-say="JMM"><div class="en">JMM</div><div class="ipa">/ˌdʒeɪ em ˈem/</div><div class="desc">Java 内存模型，管可见性和有序性。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="JUC"><div class="en">JUC</div><div class="ipa">/ˌdʒeɪ juː ˈsiː/</div><div class="desc">java.util.concurrent 并发包。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="AQS"><div class="en">AQS</div><div class="ipa">/ˌeɪ kjuː ˈes/</div><div class="desc">AbstractQueuedSynchronizer，锁的排队框架。三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="CAS"><div class="en">CAS</div><div class="ipa">/kæs/</div><div class="desc">Compare And Swap，比较并交换。读成一个词。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="volatile"><div class="en">volatile</div><div class="ipa">/ˈvɒlətaɪl/</div><div class="desc">轻量级同步，保证可见性、禁重排。重音在第一音节 VOL。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="synchronized"><div class="en">synchronized</div><div class="ipa">/ˈsɪŋkrənaɪzd/</div><div class="desc">重量级锁关键字。重音在 SYN，末尾是 -naizd 不是 -nized。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ReentrantLock"><div class="en">ReentrantLock</div><div class="ipa">/riːˈentrənt lɒk/</div><div class="desc">可重入锁。重音在 EN。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ThreadLocal"><div class="en">ThreadLocal</div><div class="ipa">/ˈθred loʊkl/</div><div class="desc">线程本地变量。Thread 的 th 咬舌，接近「斯瑞德」。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ConcurrentHashMap"><div class="en">ConcurrentHashMap</div><div class="ipa">/kənˈkʌrənt ˈhæʃmæp/</div><div class="desc">并发安全的 HashMap。重音在 CURR。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="CopyOnWriteArrayList"><div class="en">CopyOnWriteArrayList</div><div class="ipa">/ˈkɒpi ɒn raɪt/</div><div class="desc">写时复制列表，读多写少用。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Semaphore"><div class="en">Semaphore</div><div class="ipa">/ˈseməfɔːr/</div><div class="desc">信号量，控制同时几个线程进。重音在 SEM。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="CountDownLatch"><div class="en">CountDownLatch</div><div class="ipa">/kaʊnt daʊn lætʃ/</div><div class="desc">倒计数门闩，等 N 个任务做完再走。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="CyclicBarrier"><div class="en">CyclicBarrier</div><div class="ipa">/ˈsaɪklɪk ˈbæriər/</div><div class="desc">循环栅栏，一批线程互相等齐。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ForkJoin"><div class="en">ForkJoin</div><div class="ipa">/fɔːrk dʒɔɪn/</div><div class="desc">分治线程池，大任务拆小。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="LongAdder"><div class="en">LongAdder</div><div class="ipa">/lɒŋ ˈædər/</div><div class="desc">高并发计数，比 AtomicLong 快。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="AtomicInteger"><div class="en">AtomicInteger</div><div class="ipa">/əˈtɒmɪk ˈɪntɪdʒər/</div><div class="desc">原子整数。重音在 TOM。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="happens-before"><div class="en">happens-before</div><div class="ipa">/ˈhæpənz bɪˈfɔːr/</div><div class="desc">先行发生原则，JMM 的核心规则。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ABA"><div class="en">ABA</div><div class="ipa">/ˌeɪ biː ˈeɪ/</div><div class="desc">值改了又改回来，CAS 看不出来。三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="spin"><div class="en">spin</div><div class="ipa">/spɪn/</div><div class="desc">自旋，原地空转等锁。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="CompletableFuture"><div class="en">CompletableFuture</div><div class="ipa">/kəmˈpliːtəbl ˈfjuːtʃər/</div><div class="desc">异步编排工具。重音在 PLI。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ThreadPool"><div class="en">ThreadPool</div><div class="ipa">/ˈθred puːl/</div><div class="desc">线程池。</div><div class="spk">🔊</div></div>
+</div>
+<h2>三、集合 <span class="cnt">8 个</span></h2>
+<div class="sec-note">名字长，但都是「XX + Map/List」拼起来，拆开念就顺。</div>
+<div class="grid">
+<div class="term" data-say="HashMap"><div class="en">HashMap</div><div class="ipa">/ˈhæʃmæp/</div><div class="desc">哈希表。Map 读「迈普」不是「马普」。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ArrayList"><div class="en">ArrayList</div><div class="ipa">/əˈreɪ lɪst/</div><div class="desc">数组列表。重音在 RAY。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="LinkedList"><div class="en">LinkedList</div><div class="ipa">/ˈlɪŋkt lɪst/</div><div class="desc">链表。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="TreeMap"><div class="en">TreeMap</div><div class="ipa">/triː mæp/</div><div class="desc">红黑树实现的有序 Map。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ConcurrentSkipListMap"><div class="en">ConcurrentSkipListMap</div><div class="ipa">/kənˈkʌrənt skɪp lɪst mæp/</div><div class="desc">跳表实现的有序并发 Map，念前半截也行。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Iterator"><div class="en">Iterator</div><div class="ipa">/ɪˈtereɪtər/</div><div class="desc">迭代器。重音在 TER。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="fail-fast"><div class="en">fail-fast</div><div class="ipa">/feɪl fɑːst/</div><div class="desc">快速失败，遍历时改集合就抛异常。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="hashCode"><div class="en">hashCode</div><div class="ipa">/hæʃ koʊd/</div><div class="desc">哈希码。</div><div class="spk">🔊</div></div>
+</div>
+<h2>四、MySQL 与数据库 <span class="cnt">14 个</span></h2>
+<div class="sec-note">一半是缩写，一半是「拼写和读音对不上」的坑。</div>
+<div class="grid">
+<div class="term" data-say="MySQL"><div class="en">MySQL</div><div class="ipa">/ˌmaɪ ˌes kjuː ˈel/</div><div class="desc">官方读法是把字母念全：my-S-Q-L。口语说「迈 SQL」也听得懂。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="InnoDB"><div class="en">InnoDB</div><div class="ipa">/ˌɪnoʊ diː ˈbiː/</div><div class="desc">MySQL 默认存储引擎。后半截念 D-B 两个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="MyISAM"><div class="en">MyISAM</div><div class="ipa">/maɪ ˈaɪ sæm/</div><div class="desc">老引擎，不支持事务。my-I-sam。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="B+Tree"><div class="en">B+Tree</div><div class="ipa">/biː plʌs triː/</div><div class="desc">B+ 树，索引结构。读 B plus tree。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="MVCC"><div class="en">MVCC</div><div class="ipa">/ˌem viː siː ˈsiː/</div><div class="desc">多版本并发控制，靠快照读不加锁。四个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="binlog"><div class="en">binlog</div><div class="ipa">/ˈbaɪn lɒɡ/</div><div class="desc">归档日志，主从同步和恢复靠它。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="redo log"><div class="en">redo log</div><div class="ipa">/ˈriːdoʊ lɒɡ/</div><div class="desc">重做日志，保证崩溃不丢数据。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="undo log"><div class="en">undo log</div><div class="ipa">/ˈʌnduː lɒɡ/</div><div class="desc">回滚日志，保证事务能撤回。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="EXPLAIN"><div class="en">EXPLAIN</div><div class="ipa">/ɪkˈspleɪn/</div><div class="desc">执行计划。重音在 PLAIN。简历上别拼成 EXPLAN。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ACID"><div class="en">ACID</div><div class="ipa">/ˈæsɪd/</div><div class="desc">事务四特性：原子、一致、隔离、持久。读成一个词。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="RC / RR"><div class="en">RC / RR</div><div class="ipa">/ˌɑːr ˈsiː/ /ˌɑːr ˈɑːr/</div><div class="desc">读已提交 / 可重复读，两种隔离级别。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="gap lock"><div class="en">gap lock</div><div class="ipa">/ɡæp lɒk/</div><div class="desc">间隙锁，防别人往空档里插数据。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="next-key lock"><div class="en">next-key lock</div><div class="ipa">/nekst kiː lɒk/</div><div class="desc">行锁加间隙锁的组合。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="replica"><div class="en">replica</div><div class="ipa">/ˈreplɪkə/</div><div class="desc">副本，从库。重音在 REP。</div><div class="spk">🔊</div></div>
+</div>
+<h2>五、Redis <span class="cnt">11 个</span></h2>
+<div class="sec-note">词短，但 SETNX、ZSet 这种最容易瞎念。</div>
+<div class="grid">
+<div class="term" data-say="Redis"><div class="en">Redis</div><div class="ipa">/ˈredɪs/</div><div class="desc">缓存数据库。重音在第一音节。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="RDB"><div class="en">RDB</div><div class="ipa">/ˌɑːr diː ˈbiː/</div><div class="desc">快照持久化，三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="AOF"><div class="en">AOF</div><div class="ipa">/ˌeɪ oʊ ˈef/</div><div class="desc">追加日志持久化，三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="SETNX"><div class="en">SETNX</div><div class="ipa">/set en eks/</div><div class="desc">SET if Not eXists，不存在才设值，做分布式锁用。读 set-N-X。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="TTL"><div class="en">TTL</div><div class="ipa">/ˌtiː tiː ˈel/</div><div class="desc">Time To Live，过期时间。三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Lua"><div class="en">Lua</div><div class="ipa">/ˈluːə/</div><div class="desc">脚本语言，Redis 里用它保证多命令原子。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ZSet"><div class="en">ZSet</div><div class="ipa">/zed set/</div><div class="desc">有序集合。读 Z-set。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Sentinel"><div class="en">Sentinel</div><div class="ipa">/ˈsentɪnl/</div><div class="desc">哨兵，Redis 高可用方案。重音在 SEN。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Cluster"><div class="en">Cluster</div><div class="ipa">/ˈklʌstər/</div><div class="desc">集群。重音在 CLUS。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="pipeline"><div class="en">pipeline</div><div class="ipa">/ˈpaɪplaɪn/</div><div class="desc">管道，批量发命令省往返。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="LRU / LFU"><div class="en">LRU / LFU</div><div class="ipa">/ˌel ɑːr ˈjuː/ /ˌel ef ˈjuː/</div><div class="desc">最近最少用 / 最不常用，两种淘汰策略。念字母。</div><div class="spk">🔊</div></div>
+</div>
+<h2>六、Spring 全家桶 <span class="cnt">23 个</span></h2>
+<div class="sec-note">名字大多能按拼读念，注意 Bean、Feign 这几个例外。</div>
+<div class="grid">
+<div class="term" data-say="Spring"><div class="en">Spring</div><div class="ipa">/sprɪŋ/</div><div class="desc">框架名。末尾是后鼻音 -ing。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Spring Boot"><div class="en">Spring Boot</div><div class="ipa">/sprɪŋ buːt/</div><div class="desc">快速启动脚手架。Boot 读「布特」。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Spring Cloud"><div class="en">Spring Cloud</div><div class="ipa">/klaʊd/</div><div class="desc">微服务全家桶。Cloud 读「克劳德」。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Bean"><div class="en">Bean</div><div class="ipa">/biːn/</div><div class="desc">被 Spring 管理的对象。读「比恩」，不是「宾」。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="IoC"><div class="en">IoC</div><div class="ipa">/ˌaɪ oʊ ˈsiː/</div><div class="desc">控制反转，对象创建权交给容器。三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="DI"><div class="en">DI</div><div class="ipa">/ˌdiː ˈaɪ/</div><div class="desc">依赖注入，两个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="AOP"><div class="en">AOP</div><div class="ipa">/ˌeɪ oʊ ˈpiː/</div><div class="desc">面向切面，日志事务就是这么织进去的。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="CGLIB"><div class="en">CGLIB</div><div class="ipa">/ˌsiː dʒiː lɪb/</div><div class="desc">字节码生成代理，给没有接口的类做代理。读 C-G-lib。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="MyBatis"><div class="en">MyBatis</div><div class="ipa">/maɪˈbætɪs/</div><div class="desc">ORM 框架。重音在 BA。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Mapper"><div class="en">Mapper</div><div class="ipa">/ˈmæpər/</div><div class="desc">映射器，写 SQL 的接口。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Nacos"><div class="en">Nacos</div><div class="ipa">/ˈneɪkɒs/</div><div class="desc">注册中心加配置中心。读「内扣斯」或「纳科斯」都行。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Eureka"><div class="en">Eureka</div><div class="ipa">/juˈriːkə/</div><div class="desc">老一代注册中心，已停更。重音在 RI。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Hystrix"><div class="en">Hystrix</div><div class="ipa">/ˈhɪstrɪks/</div><div class="desc">熔断器，已停更。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Gateway"><div class="en">Gateway</div><div class="ipa">/ˈɡeɪtweɪ/</div><div class="desc">网关。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Feign"><div class="en">Feign</div><div class="ipa">/feɪn/</div><div class="desc">声明式 HTTP 调用。读起来像「费恩」，g 不发音。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Ribbon"><div class="en">Ribbon</div><div class="ipa">/ˈrɪbən/</div><div class="desc">客户端负载均衡。两个 b 只读一个。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Seata"><div class="en">Seata</div><div class="ipa">/siˈɑːtə/</div><div class="desc">分布式事务框架。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Sentinel"><div class="en">Sentinel</div><div class="ipa">/ˈsentɪnl/</div><div class="desc">限流熔断。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Apollo"><div class="en">Apollo</div><div class="ipa">/əˈpɒloʊ/</div><div class="desc">配置中心。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Tomcat"><div class="en">Tomcat</div><div class="ipa">/ˈtɒmkæt/</div><div class="desc">Web 容器。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Netty"><div class="en">Netty</div><div class="ipa">/ˈneti/</div><div class="desc">高性能网络框架。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Servlet"><div class="en">Servlet</div><div class="ipa">/ˈsɜːrvlət/</div><div class="desc">Java Web 的老祖宗。重音在 SER。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="DispatcherServlet"><div class="en">DispatcherServlet</div><div class="ipa">/dɪˈspætʃər ˈsɜːrvlət/</div><div class="desc">SpringMVC 的总调度。</div><div class="spk">🔊</div></div>
+</div>
+<h2>七、中间件与分布式 <span class="cnt">18 个</span></h2>
+<div class="sec-note">Dubbo、Kafka、ZooKeeper 念错最明显，重点听。</div>
+<div class="grid">
+<div class="term" data-say="Dubbo"><div class="en">Dubbo</div><div class="ipa">/ˈdʌboʊ/</div><div class="desc">阿里 RPC 框架。重音在前，读「达波」。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ZooKeeper"><div class="en">ZooKeeper</div><div class="ipa">/ˈzuː kiːpər/</div><div class="desc">分布式协调。Zoo 读「祖」。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Kafka"><div class="en">Kafka</div><div class="ipa">/ˈkɑːfkə/</div><div class="desc">消息队列。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="RocketMQ"><div class="en">RocketMQ</div><div class="ipa">/ˈrɒkɪt ˌem ˈkjuː/</div><div class="desc">阿里消息队列。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="RabbitMQ"><div class="en">RabbitMQ</div><div class="ipa">/ˈræbɪt ˌem ˈkjuː/</div><div class="desc">Rabbit 是兔子。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Broker"><div class="en">Broker</div><div class="ipa">/ˈbroʊkər/</div><div class="desc">消息中间节点。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="topic"><div class="en">topic</div><div class="ipa">/ˈtɒpɪk/</div><div class="desc">主题，消息的分类。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="partition"><div class="en">partition</div><div class="ipa">/pɑːrˈtɪʃn/</div><div class="desc">分区。重音在 TI。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="producer"><div class="en">producer</div><div class="ipa">/prəˈduːsər/</div><div class="desc">生产者。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="consumer"><div class="en">consumer</div><div class="ipa">/kənˈsuːmər/</div><div class="desc">消费者。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="offset"><div class="en">offset</div><div class="ipa">/ˈɒfset/</div><div class="desc">偏移量，消费到哪了。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ACK"><div class="en">ACK</div><div class="ipa">/æk/</div><div class="desc">确认应答。读成一个词。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Elasticsearch"><div class="en">Elasticsearch</div><div class="ipa">/ɪˌlæstɪkˈsɜːrtʃ/</div><div class="desc">搜索引擎。口语一律简称 ES。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Lucene"><div class="en">Lucene</div><div class="ipa">/luːˈsiːn/</div><div class="desc">ES 底层的全文检索库。重音在 SI。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Canal"><div class="en">Canal</div><div class="ipa">/kəˈnæl/</div><div class="desc">伪装成从库偷 binlog 同步数据。重音在 NAL。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="ShardingSphere"><div class="en">ShardingSphere</div><div class="ipa">/ˈʃɑːrdɪŋ sfɪr/</div><div class="desc">分库分表中间件。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Jenkins"><div class="en">Jenkins</div><div class="ipa">/ˈdʒeŋkɪnz/</div><div class="desc">持续集成工具。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Nexus"><div class="en">Nexus</div><div class="ipa">/ˈneksəs/</div><div class="desc">私服仓库。</div><div class="spk">🔊</div></div>
+</div>
+<h2>八、网络与系统 <span class="cnt">12 个</span></h2>
+<div class="sec-note">网络词基本念字母，Nginx 和 epoll 单独记。</div>
+<div class="grid">
+<div class="term" data-say="TCP"><div class="en">TCP</div><div class="ipa">/ˌtiː siː ˈpiː/</div><div class="desc">传输控制协议，三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="UDP"><div class="en">UDP</div><div class="ipa">/ˌjuː diː ˈpiː/</div><div class="desc">用户数据报协议，三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="HTTP"><div class="en">HTTP</div><div class="ipa">/ˌeɪtʃ tiː tiː ˈpiː/</div><div class="desc">四个字母连着念，不要念成一个词。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="TIME_WAIT"><div class="en">TIME_WAIT</div><div class="ipa">/taɪm weɪt/</div><div class="desc">四次挥手的等待状态。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="SYN"><div class="en">SYN</div><div class="ipa">/sɪn/</div><div class="desc">握手包。读成一个词，不是 S-Y-N。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="socket"><div class="en">socket</div><div class="ipa">/ˈsɒkɪt/</div><div class="desc">套接字。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="NIO"><div class="en">NIO</div><div class="ipa">/ˌen aɪ ˈoʊ/</div><div class="desc">三种 IO 模型之一，念字母。BIO、AIO 同理。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="epoll"><div class="en">epoll</div><div class="ipa">/ɪˈpɒl/</div><div class="desc">Linux 高效事件通知机制。重音在后，不读 E-poll。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Nginx"><div class="en">Nginx</div><div class="ipa">/ˈendʒɪn eks/</div><div class="desc">读作 engine-X。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Linux"><div class="en">Linux</div><div class="ipa">/ˈlɪnəks/</div><div class="desc">两种读法都有，国内多读「利纳克斯」。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Docker"><div class="en">Docker</div><div class="ipa">/ˈdɒkər/</div><div class="desc">容器。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="Kubernetes"><div class="en">Kubernetes</div><div class="ipa">/ˌkjuːbərˈniːtiːz/</div><div class="desc">简称 K8s，读 K-eight-s。</div><div class="spk">🔊</div></div>
+</div>
+<h2>九、业务与架构词 <span class="cnt">33 个</span></h2>
+<div class="sec-note">你简历里支付、SaaS、多租户这块高频出现。</div>
+<div class="grid">
+<div class="term" data-say="SaaS"><div class="en">SaaS</div><div class="ipa">/sæs/</div><div class="desc">软件即服务。读成一个词，不念 S-A-A-S。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="PaaS"><div class="en">PaaS</div><div class="ipa">/pɑːs/</div><div class="desc">平台即服务。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="IaaS"><div class="en">IaaS</div><div class="ipa">/aɪˈæs/</div><div class="desc">基础设施即服务。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="MQTT"><div class="en">MQTT</div><div class="ipa">/ˌem kjuː tiː ˈtiː/</div><div class="desc">物联网轻量协议，浴缸项目用的就是它。四个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="SDK"><div class="en">SDK</div><div class="ipa">/ˌes diː ˈkeɪ/</div><div class="desc">开发工具包，三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="API"><div class="en">API</div><div class="ipa">/ˌeɪ piː ˈaɪ/</div><div class="desc">接口，三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="RPC"><div class="en">RPC</div><div class="ipa">/ˌɑːr piː ˈsiː/</div><div class="desc">远程调用，三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="REST"><div class="en">REST</div><div class="ipa">/rest/</div><div class="desc">一种接口风格，读成一个词。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="CRUD"><div class="en">CRUD</div><div class="ipa">/krʌd/</div><div class="desc">增删改查。读成一个词。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="DDD"><div class="en">DDD</div><div class="ipa">/ˌdiː diː ˈdiː/</div><div class="desc">领域驱动设计，三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="CI/CD"><div class="en">CI/CD</div><div class="ipa">/ˌsiː ˈaɪ/ /ˌsiː ˈdiː/</div><div class="desc">持续集成 / 持续交付。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="QPS"><div class="en">QPS</div><div class="ipa">/ˌkjuː piː ˈes/</div><div class="desc">每秒查询数，三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="TPS"><div class="en">TPS</div><div class="ipa">/ˌtiː piː ˈes/</div><div class="desc">每秒事务数，三个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="SLA"><div class="en">SLA</div><div class="ipa">/ˌes el ˈeɪ/</div><div class="desc">服务等级协议，承诺几个 9 的可用性。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="P99"><div class="en">P99</div><div class="ipa">/piː ˈnaɪnti naɪn/</div><div class="desc">99% 的请求在这个耗时以内。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="idempotent"><div class="en">idempotent</div><div class="ipa">/aɪˈdempətənt/</div><div class="desc">幂等，重复调用结果一样。支付场景必考。重音在 DEM。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="UUID"><div class="en">UUID</div><div class="ipa">/ˌjuː juː ˈaɪ diː/</div><div class="desc">全局唯一 ID，四个字母。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="token"><div class="en">token</div><div class="ipa">/ˈtoʊkən/</div><div class="desc">令牌。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="tenant"><div class="en">tenant</div><div class="ipa">/ˈtenənt/</div><div class="desc">租户，SaaS 多租户的核心词。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="webhook"><div class="en">webhook</div><div class="ipa">/ˈwebhʊk/</div><div class="desc">回调钩子。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="callback"><div class="en">callback</div><div class="ipa">/ˈkɔːlbæk/</div><div class="desc">回调。支付回调必问。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="timeout"><div class="en">timeout</div><div class="ipa">/ˈtaɪmaʊt/</div><div class="desc">超时。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="rollback"><div class="en">rollback</div><div class="ipa">/ˈroʊlbæk/</div><div class="desc">回滚。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="retry"><div class="en">retry</div><div class="ipa">/rɪˈtraɪ/</div><div class="desc">重试。重音在后。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="fallback"><div class="en">fallback</div><div class="ipa">/ˈfɔːlbæk/</div><div class="desc">降级兜底。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="degrade"><div class="en">degrade</div><div class="ipa">/dɪˈɡreɪd/</div><div class="desc">降级。重音在后。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="circuit breaker"><div class="en">circuit breaker</div><div class="ipa">/ˈsɜːrkɪt ˈbreɪkər/</div><div class="desc">熔断器。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="rate limit"><div class="en">rate limit</div><div class="ipa">/reɪt ˈlɪmɪt/</div><div class="desc">限流。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="latency"><div class="en">latency</div><div class="ipa">/ˈleɪtənsi/</div><div class="desc">延迟。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="throughput"><div class="en">throughput</div><div class="ipa">/ˈθruːpʊt/</div><div class="desc">吞吐量。th 咬舌。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="transaction"><div class="en">transaction</div><div class="ipa">/trænˈzækʃn/</div><div class="desc">事务。重音在 ZAC。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="optimistic lock"><div class="en">optimistic lock</div><div class="ipa">/ˌɒptɪˈmɪstɪk/</div><div class="desc">乐观锁，靠版本号。</div><div class="spk">🔊</div></div>
+<div class="term" data-say="pessimistic lock"><div class="en">pessimistic lock</div><div class="ipa">/ˌpesɪˈmɪstɪk/</div><div class="desc">悲观锁，先锁住。</div><div class="spk">🔊</div></div>
+</div>
+
+<div class="empty" id="empty">没搜到，换个关键词试试（可以搜中文，比如「锁」「缓存」「支付」）</div>
+
+<footer>
+157 个术语 · 点卡片即发音 ｜ 浏览器语音引擎，无需联网<br>
+配套：Java-6年经验-面试题库.html ｜ 简历定向面试题-我.html ｜ Java面试术语大白话手册.html
+</footer>
+</div>
+
+<script>
+(function(){
+  var synth = window.speechSynthesis;
+  var voiceSel = document.getElementById('voice');
+  var rateEl = document.getElementById('rate');
+  var rateVal = document.getElementById('rateVal');
+  var statusEl = document.getElementById('status');
+  var playAllBtn = document.getElementById('playAll');
+  var stopBtn = document.getElementById('stop');
+  var emptyEl = document.getElementById('empty');
+
+  if (!synth) {
+    statusEl.textContent = '这个浏览器不支持语音，建议用 Edge 或 Chrome 打开';
+    return;
+  }
+
+  var voices = [];
+  function pickVoice() {
+    voices = synth.getVoices().filter(function(v){ return /^en/i.test(v.lang); });
+    voiceSel.innerHTML = '';
+    if (!voices.length) {
+      var o = document.createElement('option');
+      o.textContent = '未检测到英文语音';
+      voiceSel.appendChild(o);
+      return;
+    }
+    voices.forEach(function(v, i){
+      var o = document.createElement('option');
+      o.value = i;
+      o.textContent = v.name.replace('Microsoft ', '').replace(' - English', '') + ' (' + v.lang + ')';
+      voiceSel.appendChild(o);
+    });
+    // 优先选本地、女声
+    var idx = voices.findIndex(function(v){ return v.localService && /Zira|Aria|Jenny|Samantha|Google US/i.test(v.name); });
+    if (idx < 0) idx = voices.findIndex(function(v){ return v.localService; });
+    if (idx < 0) idx = 0;
+    voiceSel.value = idx;
+  }
+  pickVoice();
+  synth.onvoiceschanged = pickVoice;
+
+  function curVoice() {
+    var i = parseInt(voiceSel.value, 10);
+    return voices[i] || null;
+  }
+
+  var currentTerm = null;
+  function speak(text, onEnd) {
+    synth.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    var v = curVoice();
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'en-US'; }
+    u.rate = parseFloat(rateEl.value);
+    u.pitch = 1;
+    if (currentTerm) currentTerm.classList.remove('playing');
+    if (onEnd) u.onend = onEnd;
+    synth.speak(u);
+  }
+
+  function sayText(text, el) {
+    if (currentTerm) currentTerm.classList.remove('playing');
+    currentTerm = el || null;
+    if (currentTerm) currentTerm.classList.add('playing');
+    statusEl.textContent = '正在念：' + text;
+    speak(text, function(){
+      if (currentTerm) currentTerm.classList.remove('playing');
+      currentTerm = null;
+      statusEl.textContent = '点卡片任意位置即可发音';
+    });
+  }
+
+  // 点卡片 / 字母 / 快选
+  document.addEventListener('click', function(e){
+    var el = e.target.closest('[data-say]');
+    if (!el) return;
+    sayText(el.getAttribute('data-say'), el.classList.contains('term') ? el : null);
+  });
+
+  rateEl.addEventListener('input', function(){ rateVal.textContent = rateEl.value + 'x'; });
+
+  // 连读全部
+  var queue = [], qi = 0, playing = false;
+  playAllBtn.addEventListener('click', function(){
+    if (playing) { stopAll(); return; }
+    queue = Array.prototype.slice.call(document.querySelectorAll('.term')).filter(function(t){
+      return t.style.display !== 'none';
+    });
+    if (!queue.length) return;
+    qi = 0; playing = true;
+    playAllBtn.textContent = '⏸ 暂停';
+    next();
+  });
+
+  function next() {
+    if (!playing) return;
+    if (qi >= queue.length) { stopAll(); return; }
+    var el = queue[qi++];
+    var word = el.getAttribute('data-say');
+    if (currentTerm) currentTerm.classList.remove('playing');
+    currentTerm = el;
+    el.classList.add('playing');
+    el.scrollIntoView({block:'center', behavior:'smooth'});
+    statusEl.textContent = '连读 ' + qi + ' / ' + queue.length + '：' + word;
+
+    var u = new SpeechSynthesisUtterance(word);
+    var v = curVoice();
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'en-US'; }
+    u.rate = parseFloat(rateEl.value);
+    u.onend = function(){ if (playing) setTimeout(next, 260); };
+    u.onerror = function(){ if (playing) setTimeout(next, 120); };
+    synth.speak(u);
+  }
+
+  function stopAll() {
+    playing = false;
+    synth.cancel();
+    queue = []; qi = 0;
+    if (currentTerm) { currentTerm.classList.remove('playing'); currentTerm = null; }
+    playAllBtn.textContent = '▶ 连读全部';
+    statusEl.textContent = '点卡片任意位置即可发音';
+  }
+  stopBtn.addEventListener('click', stopAll);
+
+  // 搜索
+  var q = document.getElementById('q2');
+  var secs = Array.prototype.slice.call(document.querySelectorAll('h2'));
+  var terms = Array.prototype.slice.call(document.querySelectorAll('.term'));
+  function run(v) {
+    v = (v || '').trim().toLowerCase();
+    var hit = 0;
+    terms.forEach(function(t){
+      var ok = !v || t.textContent.toLowerCase().indexOf(v) > -1;
+      t.style.display = ok ? '' : 'none';
+      if (ok) hit++;
+    });
+    secs.forEach(function(h){
+      var note = h.nextElementSibling;
+      var grid = note && note.nextElementSibling;
+      if (!grid || !grid.classList.contains('grid')) return;
+      var any = Array.prototype.some.call(grid.children, function(c){ return c.style.display !== 'none'; });
+      h.style.display = any ? '' : 'none';
+      if (note && note.classList.contains('sec-note')) note.style.display = any ? '' : 'none';
+      grid.style.display = any ? '' : 'none';
+    });
+    emptyEl.style.display = (v && hit === 0) ? 'block' : 'none';
+  }
+  if (q) q.addEventListener('input', function(){ run(q.value); });
+})();
+</script>
+</body>
+</html>

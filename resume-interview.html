@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>简历定向面试预测 · 我</title>
+<style>
+  :root{
+    --bg:#f6f5f2; --paper:#ffffff; --ink:#15181d; --ink-2:#3d444d; --ink-3:#6b7280;
+    --line:#e6e3dc; --accent:#c2410c; --accent-soft:#fdf0e9; --blue:#1d4ed8; --blue-soft:#eef3ff;
+    --warn:#b45309; --code:#f4f2ee;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Source Han Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    font-size:15.5px;line-height:1.85;-webkit-font-smoothing:antialiased;
+  }
+  /* 进度条 */
+  #bar{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#c2410c,#f59e0b);z-index:99;transition:width .1s linear;}
+  /* 侧栏 */
+  aside{
+    position:fixed;top:0;left:0;bottom:0;width:312px;background:#fbfaf8;border-right:1px solid var(--line);
+    display:flex;flex-direction:column;z-index:50;
+  }
+  .brand{padding:22px 22px 14px;border-bottom:1px solid var(--line);}
+  .brand h1{font-size:15px;margin:0 0 4px;letter-spacing:.02em;}
+  .brand p{margin:0;font-size:11.5px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;}
+  .search{padding:12px 16px;border-bottom:1px solid var(--line);}
+  .search input{
+    width:100%;padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;
+    font-size:13px;color:var(--ink);outline:none;font-family:inherit;
+  }
+  .search input:focus{border-color:#c2410c55;box-shadow:0 0 0 3px #c2410c14;}
+  nav{flex:1;overflow-y:auto;padding:10px 10px 40px;}
+  nav::-webkit-scrollbar{width:6px;}
+  nav::-webkit-scrollbar-thumb{background:#d8d4cb;border-radius:3px;}
+  .nav-group{margin-bottom:2px;}
+  .nav-sec{
+    display:flex;gap:9px;align-items:baseline;padding:7px 10px;border-radius:7px;
+    color:var(--ink);text-decoration:none;font-size:13.5px;font-weight:600;line-height:1.5;
+  }
+  .nav-sec:hover{background:#f0ede6;}
+  .nav-idx{font-size:10.5px;color:#b3ada2;font-variant-numeric:tabular-nums;font-weight:500;}
+  .nav-sub{display:none;padding:2px 0 8px 10px;margin-left:14px;border-left:1px solid var(--line);}
+  .nav-group.open .nav-sub{display:block;}
+  .nav-q{
+    display:block;padding:4px 10px;border-radius:6px;color:var(--ink-3);text-decoration:none;
+    font-size:12.5px;line-height:1.55;margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .nav-q:hover{background:#f2efe8;color:var(--ink);}
+  .nav-q.active{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+  .hidden{display:none !important;}
+  /* 内容 */
+  main{margin-left:312px;padding:56px 48px 140px;display:flex;justify-content:center;}
+  article{width:100%;max-width:880px;background:var(--paper);border:1px solid var(--line);border-radius:14px;
+    padding:44px 52px 60px;box-shadow:0 1px 2px #00000006,0 12px 40px -24px #0000001a;}
+  h1{font-size:27px;line-height:1.4;margin:0 0 10px;letter-spacing:-.01em;}
+  h2{
+    font-size:20px;margin:52px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+    letter-spacing:-.005em;scroll-margin-top:24px;
+  }
+  h2:first-of-type{margin-top:36px;}
+  h3.q-title{
+    font-size:15.5px;font-weight:700;margin:26px 0 8px;padding:2px 0 2px 13px;
+    border-left:3px solid #e8d6cc;color:#1b1e24;scroll-margin-top:20px;line-height:1.65;
+  }
+  h3.q-title:hover{border-left-color:var(--accent);}
+  p{margin:8px 0;color:var(--ink-2);}
+  strong{color:var(--ink);font-weight:650;}
+  em{color:var(--ink-3);font-style:normal;font-size:13.5px;}
+  ul,ol{margin:8px 0;padding-left:22px;color:var(--ink-2);}
+  li{margin:4px 0;}
+  li::marker{color:#b3ada2;}
+  code{
+    background:var(--code);padding:1.5px 5px;border-radius:4px;font-size:13px;
+    font-family:"JetBrains Mono","Cascadia Code",Consolas,monospace;color:#9a3412;
+    border:1px solid #ece8e1;
+  }
+  blockquote{
+    margin:14px 0;padding:12px 16px;background:#fdfaf6;border-left:3px solid #e0b48f;
+    border-radius:0 8px 8px 0;color:var(--ink-2);
+  }
+  blockquote p{margin:4px 0;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;}
+  th{background:#faf8f4;font-weight:650;color:var(--ink);white-space:nowrap;}
+  td{color:var(--ink-2);}
+  hr{border:none;border-top:1px dashed var(--line);margin:34px 0;}
+  a{color:var(--blue);}
+  /* 返回顶部 */
+  #top{
+    position:fixed;right:28px;bottom:28px;width:42px;height:42px;border-radius:50%;
+    background:#fff;border:1px solid var(--line);color:var(--ink-2);font-size:16px;cursor:pointer;
+    display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px #00000012;
+  }
+  #top:hover{border-color:#c2410c66;color:var(--accent);}
+  #meta{position:fixed;right:28px;bottom:80px;font-size:11px;color:#b3ada2;letter-spacing:.04em;}
+  @media(max-width:1180px){
+    aside{transform:translateX(-100%);transition:transform .22s;}
+    aside.show{transform:none;}
+    main{margin-left:0;padding:40px 20px 100px;}
+    article{padding:30px 24px 40px;}
+    #menu{display:flex !important;}
+  }
+  #menu{display:none;position:fixed;left:16px;top:16px;z-index:60;width:40px;height:40px;
+    background:#fff;border:1px solid var(--line);border-radius:10px;align-items:center;justify-content:center;
+    font-size:16px;cursor:pointer;box-shadow:0 2px 10px #00000010;}
+  /* 点词发音 */
+  .say{cursor:pointer;border-radius:3px;transition:background .12s,color .12s;}
+  .say:hover{background:var(--blue-soft);color:var(--blue);}
+  .say.speaking{background:#ffe9a8;color:#7c4a03;box-shadow:0 0 0 2px #ffe9a8;}
+  #tts{position:fixed;right:28px;bottom:132px;z-index:70;font-family:inherit;}
+  #ttsBtn{
+    width:42px;height:42px;border-radius:50%;background:#fff;border:1px solid var(--line);
+    font-size:16px;cursor:pointer;box-shadow:0 4px 16px #00000012;display:flex;align-items:center;justify-content:center;
+  }
+  #ttsBtn:hover{border-color:#1d4ed866;background:var(--blue-soft);}
+  #ttsBtn.on{background:var(--blue);border-color:var(--blue);}
+  #ttsPanel{
+    display:none;position:absolute;right:0;bottom:52px;width:246px;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:14px 16px;box-shadow:0 12px 40px -12px #00000033;font-size:12.5px;color:var(--ink-2);
+  }
+  #ttsPanel.show{display:block;}
+  #ttsPanel label{display:block;margin-bottom:10px;}
+  #ttsPanel label:last-of-type{margin-bottom:8px;}
+  #ttsPanel select,#ttsPanel input[type=range]{width:100%;margin-top:4px;font-family:inherit;font-size:12px;}
+  #ttsPanel select{padding:5px;border:1px solid var(--line);border-radius:6px;background:#fff;outline:none;}
+  #ttsPanel .rv{float:right;color:var(--accent);font-weight:700;}
+  #ttsPanel .hint{font-size:11.5px;color:#9aa0aa;line-height:1.6;margin-top:2px;border-top:1px dashed var(--line);padding-top:8px;}
+  #ttsPanel .hint b{color:var(--ink-2);}
+  #toast{
+    position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);z-index:80;
+    background:#15181d;color:#fff;font-size:13px;padding:10px 20px;border-radius:24px;
+    box-shadow:0 10px 30px -8px #00000055;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
+    white-space:nowrap;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media(max-width:1180px){
+    #tts{bottom:96px;right:20px;}
+  }
+  @media print{
+    aside,#bar,#top,#menu,#tts,#toast{display:none !important;}
+    main{margin:0;padding:0;}
+    article{border:none;box-shadow:none;padding:0;max-width:none;}
+    body{background:#fff;}
+  }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<button id="menu">☰</button>
+<aside>
+  <div class="brand">
+    <h1>简历定向面试预测 · 我</h1>
+    <p>Mid-Senior · 46 Questions</p>
+  </div>
+  <div class="search"><input id="q" type="search" placeholder="搜索题目 / 关键词…" autocomplete="off"></div>
+  <nav id="nav"><div class="nav-group" data-text="〇、简历体检：5 个会被打的点（先修）"><a class="nav-sec" href="#sec-1"><span class="nav-idx">01</span><span>〇、简历体检：5 个会被打的点（先修）</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-0" data-text="1. 时间线有硬伤 ⚠⚠⚠">1. 时间线有硬伤 ⚠⚠⚠</a>
+<a class="nav-q" href="#q-0" data-text="2. 错字和格式 ⚠⚠">2. 错字和格式 ⚠⚠</a>
+<a class="nav-q" href="#q-0" data-text="3. 全篇没有数字 ⚠⚠⚠">3. 全篇没有数字 ⚠⚠⚠</a>
+<a class="nav-q" href="#q-0" data-text="4. 技术栈停留在 3 年水位 ⚠⚠⚠">4. 技术栈停留在 3 年水位 ⚠⚠⚠</a>
+<a class="nav-q" href="#q-0" data-text="5. 所有项目同源 ⚠">5. 所有项目同源 ⚠</a>
+</div>
+</div>
+<div class="nav-group" data-text="一、自我介绍 60 秒模板（背下来）"><a class="nav-sec" href="#sec-2"><span class="nav-idx">02</span><span>一、自我介绍 60 秒模板（背下来）</span></a>
+</div>
+<div class="nav-group" data-text="二、支付方向（★ 你简历的主战场，14 题）"><a class="nav-sec" href="#sec-3"><span class="nav-idx">03</span><span>二、支付方向（★ 你简历的主战场，14 题）</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-1" data-text="Q1 ★ 微信、支付宝、银联商务三家的对接差异？">Q1 ★ 微信、支付宝、银联商务三家的对接差异？</a>
+<a class="nav-q" href="#q-2" data-text="Q2 ★ 用户付了钱，但回调丢了（掉单），怎么处理？">Q2 ★ 用户付了钱，但回调丢了（掉单），怎么处理？</a>
+<a class="nav-q" href="#q-3" data-text="Q3 ★ 支付回调的幂等怎么保证？">Q3 ★ 支付回调的幂等怎么保证？</a>
+<a class="nav-q" href="#q-4" data-text="Q4 验签失败的常见原因？">Q4 验签失败的常见原因？</a>
+<a class="nav-q" href="#q-5" data-text="Q5 金额怎么处理？为什么不能用 double？">Q5 金额怎么处理？为什么不能用 double？</a>
+<a class="nav-q" href="#q-6" data-text="Q6 退款怎么做？要注意什么？">Q6 退款怎么做？要注意什么？</a>
+<a class="nav-q" href="#q-7" data-text="Q7 分账（云直通）是怎么回事？">Q7 分账（云直通）是怎么回事？</a>
+<a class="nav-q" href="#q-8" data-text="Q8 多个支付通道，路由怎么选？">Q8 多个支付通道，路由怎么选？</a>
+<a class="nav-q" href="#q-9" data-text="Q9 ★ 支付状态机画一下">Q9 ★ 支付状态机画一下</a>
+<a class="nav-q" href="#q-10" data-text="Q10 顾客扫了码但付了两次（重复支付）怎么办？">Q10 顾客扫了码但付了两次（重复支付）怎么办？</a>
+<a class="nav-q" href="#q-11" data-text="Q11 收银高峰（比如商场周末）支付接口怎么扛？">Q11 收银高峰（比如商场周末）支付接口怎么扛？</a>
+<a class="nav-q" href="#q-12" data-text="Q12 ★ 对账系统怎么设计？">Q12 ★ 对账系统怎么设计？</a>
+<a class="nav-q" href="#q-13" data-text="Q13 支付证书、密钥怎么管理？">Q13 支付证书、密钥怎么管理？</a>
+<a class="nav-q" href="#q-14" data-text="Q14 支付和订单系统之间的事务一致性怎么保证？">Q14 支付和订单系统之间的事务一致性怎么保证？</a>
+</div>
+</div>
+<div class="nav-group" data-text="三、硬件与 IoT（MQTT，6 题）"><a class="nav-sec" href="#sec-4"><span class="nav-idx">04</span><span>三、硬件与 IoT（MQTT，6 题）</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-15" data-text="Q15 ★ MQTT 是什么？为什么设备对接用它不用 HTTP？">Q15 ★ MQTT 是什么？为什么设备对接用它不用 HTTP？</a>
+<a class="nav-q" href="#q-16" data-text="Q16 QoS 0/1/2 的区别？">Q16 QoS 0/1/2 的区别？</a>
+<a class="nav-q" href="#q-17" data-text="Q17 设备离线了，指令怎么办？">Q17 设备离线了，指令怎么办？</a>
+<a class="nav-q" href="#q-18" data-text="Q18 MQTT 怎么保证安全？">Q18 MQTT 怎么保证安全？</a>
+<a class="nav-q" href="#q-19" data-text="Q19 电子秤、打印机这类不用网络的硬件怎么接？">Q19 电子秤、打印机这类不用网络的硬件怎么接？</a>
+<a class="nav-q" href="#q-20" data-text="Q20 配网（帕纳佳世 App）怎么做的？">Q20 配网（帕纳佳世 App）怎么做的？</a>
+</div>
+</div>
+<div class="nav-group" data-text="四、SaaS 多租户与 ERP（8 题）"><a class="nav-sec" href="#sec-5"><span class="nav-idx">05</span><span>四、SaaS 多租户与 ERP（8 题）</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-21" data-text="Q21 ★ 多租户数据隔离怎么做？你们用的哪种？">Q21 ★ 多租户数据隔离怎么做？你们用的哪种？</a>
+<a class="nav-q" href="#q-22" data-text="Q22 商户要定制功能（沙县、新时代），怎么不改崩标准版？">Q22 商户要定制功能（沙县、新时代），怎么不改崩标准版？</a>
+<a class="nav-q" href="#q-23" data-text="Q23 ★ 库存扣减怎么做？超卖了怎么办？">Q23 ★ 库存扣减怎么做？超卖了怎么办？</a>
+<a class="nav-q" href="#q-24" data-text="Q24 进销存的盘点差异怎么处理？">Q24 进销存的盘点差异怎么处理？</a>
+<a class="nav-q" href="#q-25" data-text="Q25 门店断网了还能收银吗？怎么设计？">Q25 门店断网了还能收银吗？怎么设计？</a>
+<a class="nav-q" href="#q-26" data-text="Q26 商品价格策略（会员价、促销价、整单折扣）怎么设计？">Q26 商品价格策略（会员价、促销价、整单折扣）怎么设计？</a>
+<a class="nav-q" href="#q-27" data-text="Q27 订单流水表越来越大怎么办？">Q27 订单流水表越来越大怎么办？</a>
+<a class="nav-q" href="#q-28" data-text="Q28 会员储值/余额怎么保证不出错？">Q28 会员储值/余额怎么保证不出错？</a>
+</div>
+</div>
+<div class="nav-group" data-text="五、第三方对接通用题（6 题）"><a class="nav-sec" href="#sec-6"><span class="nav-idx">06</span><span>五、第三方对接通用题（6 题）</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-29" data-text="Q29 ★ 对接第三方接口的通用套路是什么？（一定会问）">Q29 ★ 对接第三方接口的通用套路是什么？（一定会问）</a>
+<a class="nav-q" href="#q-30" data-text="Q30 阿里云绿网（内容审核）是同步还是异步？怎么设计？">Q30 阿里云绿网（内容审核）是同步还是异步？怎么设计？</a>
+<a class="nav-q" href="#q-31" data-text="Q31 飞书开放平台的 token 怎么管理？">Q31 飞书开放平台的 token 怎么管理？</a>
+<a class="nav-q" href="#q-32" data-text="Q32 企查查这类按次收费的接口，怎么省钱？">Q32 企查查这类按次收费的接口，怎么省钱？</a>
+<a class="nav-q" href="#q-33" data-text="Q33 门禁闸机、捷顺停车这种硬件云对接要注意什么？">Q33 门禁闸机、捷顺停车这种硬件云对接要注意什么？</a>
+<a class="nav-q" href="#q-34" data-text="Q34 第三方接口变版本/下线怎么办？">Q34 第三方接口变版本/下线怎么办？</a>
+</div>
+</div>
+<div class="nav-group" data-text="六、TINDA 海外项目（4 题）"><a class="nav-sec" href="#sec-7"><span class="nav-idx">07</span><span>六、TINDA 海外项目（4 题）</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-35" data-text="Q35 十万商户的量级，架构上怎么撑的？">Q35 十万商户的量级，架构上怎么撑的？</a>
+<a class="nav-q" href="#q-36" data-text="Q36 海外项目跟国内比有什么特殊问题？">Q36 海外项目跟国内比有什么特殊问题？</a>
+<a class="nav-q" href="#q-37" data-text="Q37 报税对接（TINDA 有报税功能）要注意什么？">Q37 报税对接（TINDA 有报税功能）要注意什么？</a>
+<a class="nav-q" href="#q-38" data-text="Q38 海外部署怎么运维？">Q38 海外部署怎么运维？</a>
+</div>
+</div>
+<div class="nav-group" data-text="七、报表与 SQL 优化（4 题）"><a class="nav-sec" href="#sec-8"><span class="nav-idx">08</span><span>七、报表与 SQL 优化（4 题）</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-39" data-text="Q39 ★ 你简历写了 EXPLAIN 调优，举个例子？（必问，且曾把 EXPLAIN 写错）">Q39 ★ 你简历写了 EXPLAIN 调优，举个例子？（必问，且曾把 EXPLAIN 写错）</a>
+<a class="nav-q" href="#q-40" data-text="Q40 大报表为什么慢？除了加索引还有什么招？">Q40 大报表为什么慢？除了加索引还有什么招？</a>
+<a class="nav-q" href="#q-41" data-text="Q41 慢接口排查的一般流程？">Q41 慢接口排查的一般流程？</a>
+<a class="nav-q" href="#q-42" data-text="Q42 数据库连接池怎么配的？">Q42 数据库连接池怎么配的？</a>
+</div>
+</div>
+<div class="nav-group" data-text="八、部署运维与工程（4 题）"><a class="nav-sec" href="#sec-9"><span class="nav-idx">09</span><span>八、部署运维与工程（4 题）</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-43" data-text="Q43 Nginx 在你们架构里干了什么？">Q43 Nginx 在你们架构里干了什么？</a>
+<a class="nav-q" href="#q-44" data-text="Q44 Jenkins 发布流程是什么样的？">Q44 Jenkins 发布流程是什么样的？</a>
+<a class="nav-q" href="#q-45" data-text="Q45 你怎么部署一个新服务？（从零到上线）">Q45 你怎么部署一个新服务？（从零到上线）</a>
+<a class="nav-q" href="#q-46" data-text="Q46 线上出问题你的处理顺序？">Q46 线上出问题你的处理顺序？</a>
+</div>
+</div>
+<div class="nav-group" data-text="九、基础必刷清单（从 184 题里圈出来的）"><a class="nav-sec" href="#sec-10"><span class="nav-idx">10</span><span>九、基础必刷清单（从 184 题里圈出来的）</span></a>
+</div>
+<div class="nav-group" data-text="十、高风险问题与应答口径"><a class="nav-sec" href="#sec-11"><span class="nav-idx">11</span><span>十、高风险问题与应答口径</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-46" data-text="1. &quot;你 6 年了，简历里怎么没有 MQ / 微服务 / 高并发？&quot;">1. "你 6 年了，简历里怎么没有 MQ / 微服务 / 高并发？"</a>
+<a class="nav-q" href="#q-46" data-text="2. &quot;你所有项目都是一家公司的吧？&quot;">2. "你所有项目都是一家公司的吧？"</a>
+<a class="nav-q" href="#q-46" data-text="3. &quot;为什么从上家公司出来 / 为什么看机会？&quot;">3. "为什么从上家公司出来 / 为什么看机会？"</a>
+<a class="nav-q" href="#q-46" data-text="4. &quot;期望薪资？&quot;">4. "期望薪资？"</a>
+<a class="nav-q" href="#q-46" data-text="5. &quot;教育经历怎么回事？&quot;（大专 + 本科时间线）">5. "教育经历怎么回事？"（大专 + 本科时间线）</a>
+</div>
+</div>
+<div class="nav-group" data-text="收尾"><a class="nav-sec" href="#sec-12"><span class="nav-idx">12</span><span>收尾</span></a>
+</div></nav>
+</aside>
+<main><article><h1 id="doc-title">简历定向面试预测（我 · Java 开发）</h1>
+<blockquote>
+<p>配套《Java-6年经验-面试题库》使用：这本管"<strong>面试官会照着你的简历问什么</strong>"，那本管"<strong>基础怎么答</strong>"。
+用法：先过〇（简历体检，把洞补了）→ 背一（自我介绍）→ 逐个项目过二~六 → 用七圈定基础必刷题 → 八是险题预案。</p>
+</blockquote>
+<hr />
+<h2 id="sec-1" class="sec-title">〇、简历体检：5 个会被打的点（先修）</h2>
+<p><strong>面试官拿到简历 30 秒内就能看到这些问题，先在简历上修掉，修不掉的准备口径。</strong></p>
+<h3 id="q-0" class="q-title">1. 时间线有硬伤 ⚠⚠⚠</h3>
+<ul>
+<li>教育经历写的是「本科 2022-2005」——明显笔误，按你的经历应该是 <strong>2019-2022（在职/专升本）</strong>。</li>
+<li>「TINDA 项目 2019.11-至今」，但北京浙星是 <strong>2020.5</strong> 入职的——2019.11-2020.5 这段在随行付？要么改成实际入职时间，要么准备好解释。</li>
+<li>「ATLATL 2025.12-至今」没问题，但和「帕纳佳世 2022.10-2023.4」之间有近 3 年空档没写项目——面试官会问"22 年底到 25 年底在干什么"（大概率是在做唐库迭代，写上）。</li>
+<li>技能第 8 条整段<strong>重复了两遍</strong>，删掉。</li>
+</ul>
+<h3 id="q-0" class="q-title">2. 错字和格式 ⚠⚠</h3>
+<ul>
+<li><code>使用 EXPLAN 分析慢查询</code> → <strong>EXPLAIN</strong>。这个错字最致命——你把 SQL 调优写在技能栏，工具名还拼错，面试官直接掉分。（我是从 PDF 里读出 <code>EXPLAN</code> 的，也可能是提取问题，<strong>打开简历自己确认一遍</strong>。）</li>
+<li>「<strong>价钱</strong>打印」→ 价格打印；「<strong>自主机</strong>点餐」→ 自助点餐。</li>
+<li>建议全文再过一遍，错字在 6 年简历上是"不细心"信号。</li>
+</ul>
+<h3 id="q-0" class="q-title">3. 全篇没有数字 ⚠⚠⚠</h3>
+<p>「十万余商户」是全简历唯一的数字。每段责任描述都要补量级，例：</p>
+<ul>
+<li>唐 库：多少门店在用、日均交易多少笔、峰值 QPS 多少；</li>
+<li>支付通道：接了几个通道、日均流水规模、掉单率/对账差异率降到多少；</li>
+<li>慢 SQL 优化：从多少秒优化到多少毫秒、扫了多少行到多少行。</li>
+</ul>
+<h3 id="q-0" class="q-title">4. 技术栈停留在 3 年水位 ⚠⚠⚠</h3>
+<p>简历里是「熟练使用 MySQL/Redis/Spring」+ EXPLAIN 调优 + 缓存穿透雪崩——<strong>这是 3 年简历的写法</strong>。6 年面试官会预期看到：MQ、微服务/分布式、并发处理、架构设计。两条路：</p>
+<ul>
+<li><strong>用了但没写</strong>：比如订单超时是不是用了延迟消息？库存扣减有没有用 Redis？写上；</li>
+<li><strong>真没用</strong>：准备好口径（见八-1），并且把题库里 MQ/分布式的答案吃透，能聊。</li>
+</ul>
+<h3 id="q-0" class="q-title">5. 所有项目同源 ⚠</h3>
+<p>沙县、新时代都是"在唐库基础上定制"，TINDA、会生活也是收银 POS 赛道。面试官会怀疑"一个 SaaS 产品卖 N 家客户，你是实施还是研发？"。<strong>应对</strong>：主动强调你做的是<strong>平台层</strong>（支付通道、硬件接口、财务模块这种多客户共用的），定制只是数据配置，不是 fork 一份代码。</p>
+<hr />
+<h2 id="sec-2" class="sec-title">一、自我介绍 60 秒模板（背下来）</h2>
+<blockquote>
+<p>面试官好，我叫我，6 年 Java 后端，一直在做<strong>新零售 SaaS</strong> 这条线，核心是收银、支付和进销存 ERP。
+最近 5 年多在唐库新零售，我主要负责两块：一是<strong>支付通道</strong>——微信、支付宝、银联商务都接过，包括回调、退款、对账、分账这些全链路；二是<strong>硬件接口</strong>——收银机、电子秤、扫码盒子、打印机的对接，也用过 MQTT 做过远程控设备的 App。
+数据上大概服务过<strong>十万级商户</strong>，日常主要在做慢 SQL 优化和稳定性，比如把财务报表从几十秒压到秒级。
+我的特点是对<strong>支付和交易链路的一致性</strong>比较熟——掉单、重复支付、对账差异这些坑都趟过。</p>
+</blockquote>
+<p>要点：<strong>只说赛道 + 两块专长 + 一个数字</strong>。别背技能清单，面试官手里有简历。</p>
+<hr />
+<h2 id="sec-3" class="sec-title">二、支付方向（★ 你简历的主战场，14 题）</h2>
+<h3 id="q-1" class="q-title">Q1 ★ 微信、支付宝、银联商务三家的对接差异？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：三家都是「给地址、签名、发请求、等回调」，差别在细节：微信最绕（证书 + 私钥 + 回调还要解密），支付宝最简单（RSA2），银联商务 SDK 老、文档差、进件还得交纸质材料。别逐条背，就说「我做过一层统一网关，把三家差异都关在适配器里」。</p>
+</blockquote>
+<p><strong>要点</strong>：从五个维度比——</p>
+<ul>
+<li><strong>签名</strong>：微信 v3 用平台证书验签 + 商户私钥签名（AES-256-GCM 加密回调解密）；支付宝 RSA2；银联商务类似证书体系但SDK 更老、文档更差。</li>
+<li><strong>回调</strong>：微信/支付宝都是 POST JSON/表单，要求返回 <code>success</code> 应答，否则重试（微信 15s/15s/30s...衰减重试 8 次）。</li>
+<li><strong>退款</strong>：都支持原路退回，微信有退款回调，支付宝要轮询或异步通知。</li>
+<li><strong>进件</strong>：服务商模式下特约商户进件流程各家不同，银联商务经常要线下材料。</li>
+<li><strong>坑</strong>：微信证书会<strong>定期轮换</strong>，要定时下载更新，不然某天回调验签全失败；支付宝网关有沙箱但和生产行为有差异。
+<strong>结合项目</strong>：你说"支付通道"，就要能讲出你们怎么抽象统一支付网关——统一下单接口 + 适配器模式，每个通道一个实现。</li>
+</ul>
+<h3 id="q-2" class="q-title">Q2 ★ 用户付了钱，但回调丢了（掉单），怎么处理？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：用户付了钱，但渠道的通知没到你这儿——钱在人家账上，你系统还显示待支付。三层兜底：定时去问渠道「这单到底付没付」、第二天拿对账单逐笔核、差异报警让人处理。补单也必须幂等，不然一问就补两遍。</p>
+</blockquote>
+<p><strong>要点</strong>：三层防线——</p>
+<ol>
+<li><strong>主动查单</strong>：定时任务扫"支付中"状态超过 5 分钟的单，调渠道查单接口，查到已支付就补单（<strong>补单也要幂等</strong>）；</li>
+<li><strong>对账兜底</strong>：T+1 下载渠道账单和本地流水比对，差异单人工/自动处理；</li>
+<li><strong>对账差异报警</strong>：长款（渠道有本地无）通常是我们掉单，短款（本地有渠道无）通常没真正支付。
+<strong>结合项目</strong>：收银场景还有"扫码后店员以为付了，顾客其实没付"——所以 POS 端要有轮询查单 + 声音提示。</li>
+</ol>
+<h3 id="q-3" class="q-title">Q3 ★ 支付回调的幂等怎么保证？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：渠道会重复通知你，所以你得「来几次都只算一次」。最硬的靠唯一索引（插第二次直接失败），再配状态机（只允许待支付→已支付，已支付再来直接回 success）。顺序记牢：先验签、再落库、最后应答，别在应答前干重活。</p>
+</blockquote>
+<p><strong>要点</strong>：回调会<strong>重复</strong>（网络超时渠道重发），必须幂等：</p>
+<ol>
+<li>渠道订单号/我方支付流水号<strong>唯一索引</strong>兜底（并发重复插入直接失败）；</li>
+<li><strong>状态机</strong>：只有 <code>待支付 → 已支付</code> 合法，已支付的单再来回调直接返回 success；</li>
+<li>更新前 <code>where status = 'PENDING'</code>，影响行数为 0 说明处理过。
+顺序：<strong>验签 → 查本地单 → 加唯一锁 → 状态机更新 → 发后续业务（同事务或消息）→ 应答</strong>。注意：<strong>先落库再发消息</strong>，消息丢了还有查单兜底。</li>
+</ol>
+<h3 id="q-4" class="q-title">Q4 验签失败的常见原因？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：八成是证书过期没更新（微信会定期换），其次是时间戳差太多（服务器时间没同步）、编码不对、参数被网关改过、测试和生产密钥拿混了。别瞎试，先用官方工具把签名原文验一遍。</p>
+</blockquote>
+<p><strong>要点</strong>：① 平台证书没更新（微信定期轮换）；② 时间戳超 5 分钟（防重放，注意服务器时间同步 NTP）；③ 编码问题（UTF-8）、参数被网关改写（空值丢失）；④ 拿错密钥（测试/生产混了）。排查思路：<strong>先用渠道官方工具验一遍签名原文</strong>，别瞎试。</p>
+<h3 id="q-5" class="q-title">Q5 金额怎么处理？为什么不能用 double？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：钱全程用「分」存整数，或者 BigDecimal，绝不用 double（0.1+0.2 都不等于 0.3）。BigDecimal 比大小用 compareTo，别用 equals（它连小数位数一起比）。还有折扣分摊：几毛钱分不匀时，余数塞最后一行，不然对账永远差一分。</p>
+</blockquote>
+<p><strong>要点</strong>：<strong>全程用"分"（long）或 BigDecimal</strong>，绝不用浮点（0.1+0.2≠0.3）。BigDecimal 要 <code>new BigDecimal(String)</code> 或 <code>BigDecimal.valueOf</code>，比较用 <code>compareTo</code> 不是 <code>equals</code>（equals 会比精度）。收银场景还有<strong>整单折扣分摊</strong>问题：优惠金额按比例分到商品行，<strong>余数放在最后一行</strong>，不然对账差一分钱。</p>
+<h3 id="q-6" class="q-title">Q6 退款怎么做？要注意什么？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：退款单独一张流水表，一笔支付可以退多次；校验「累计退款不能超过支付金额」，用条件更新防并发；退完还要等渠道确认到账；失败要重试加人工兜底。库存和优惠券等确认到账再回补，别提前返。</p>
+</blockquote>
+<p><strong>要点</strong>：① 退款单<strong>独立流水</strong>，和支付单一对多（支持部分退款）；② 退款金额校验：累计退款 ≤ 支付金额，用 <code>where refundable &gt;= ?</code> 条件更新防并发超退；③ 退款也有回调/轮询确认到账状态；④ 退款失败的兜底：重试 + 人工工单；⑤ 业务侧注意<strong>库存回补</strong>、优惠券返还的时机（回调确认后再返）。</p>
+<h3 id="q-7" class="q-title">Q7 分账（云直通）是怎么回事？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：平台收钱后按比例分给商户和供应商，钱不经过平台账户（不然算二清，违规）。分账方得先签约进件，T+1 才到账，失败要重试对账。你写了云直通，就得准备一个「分账挂起怎么补偿」的真事。</p>
+</blockquote>
+<p><strong>要点</strong>：平台收单后按比例分给商户/供应商，钱不过平台账户（合规要求，二清风险）。要点：<strong>分账方要先进件/签约</strong>、分账有 T+1 时效、分账失败要重试和对账。你简历写了云直通，<strong>至少准备一个分账失败的案例</strong>：比如收款方账户异常导致分账挂起，怎么补偿。</p>
+<h3 id="q-8" class="q-title">Q8 多个支付通道，路由怎么选？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：选通道就看四样：费率便宜、成功率高、限额够不够、这条通道现在活没活着。实现上给每条通道配权重和健康度，按商户/金额筛出可用的，加权挑一个，失败切下一个——但切之前一定先查原单状态，不然容易付两遍。</p>
+</blockquote>
+<p><strong>要点</strong>：维度：<strong>费率、成功率、限额、通道可用性</strong>。实现：配置中心维护通道权重与健康度 → 按商户/行业/金额过滤可用通道 → 加权选择 → 失败自动切下一个（<strong>注意防重复支付</strong>：切换前先查原单状态）。你接了微信/支付宝/银联，正好答这个。</p>
+<h3 id="q-9" class="q-title">Q9 ★ 支付状态机画一下</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：状态就那么几个：待支付→支付中→已支付→退款中→已退款，外加已关闭。规矩是只能顺着走，跳状态直接拒绝并报警，每次变更留一条流水（谁、什么时候、哪个渠道触发的）。这题必须能画出来。</p>
+</blockquote>
+<p><strong>要点</strong>：<code>待支付 → 支付中 → 已支付 →（部分）已退款 → 已关闭</code>；异常分支：<code>已支付→退款中→退款失败→人工处理</code>。
+原则：<strong>状态只能按图流转</strong>，非法流转直接拒绝并报警；每个状态变更都留流水（谁、何时、什么渠道触发）。这题是考你对交易系统基本功的，<strong>必须画得出图</strong>。</p>
+<h3 id="q-10" class="q-title">Q10 顾客扫了码但付了两次（重复支付）怎么办？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：同一单开了两个收款码，两边都成功，钱多收了。处理就是多出来的原路退回（一般 T+1 对账发现长款时触发）。预防是同一单同一时刻只允许一个「支付中」的渠道单。</p>
+</blockquote>
+<p><strong>要点</strong>：一笔订单同时开了两个收款码/两个通道都成功 → 多收的部分<strong>自动原路退款</strong>（T+1 对账发现长款时触发）。预防：同一订单同一时刻只允许一个"支付中"的渠道单（Redis 锁 / 状态校验）。</p>
+<h3 id="q-11" class="q-title">Q11 收银高峰（比如商场周末）支付接口怎么扛？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：核心是「回调别做重活」——验签落库就赶紧回 success，后面的业务丢给队列慢慢做。渠道查单有限频，别把人家惹毛。流水表按时间或商户分表，索引带上商户号。最后一定要说一个真实峰值数字。</p>
+</blockquote>
+<p><strong>要点</strong>：① 回调处理<strong>异步化</strong>（验签落库后快速应答，后续业务走 MQ/线程池）；② 渠道接口有<strong>限频</strong>，查单任务要限速；③ 数据库层面：支付流水表按时间/商户分表，索引 <code>(商户号,状态,时间)</code>；④ 热点商品库存用 Redis 预扣。答不出数字就说"我们日峰值 X 笔"，<strong>回家把真实数字记下来</strong>。</p>
+<h3 id="q-12" class="q-title">Q12 ★ 对账系统怎么设计？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：每天把渠道的对账单下下来，跟自己的流水逐笔核，核出三种差异：渠道有我没有（长款，多半是掉单）、我有渠道没有（短款，多半没真付）、金额对不上。然后自动补单或挂人工。注意跨天的单算哪一天，要跟渠道规则一致。</p>
+</blockquote>
+<p><strong>要点</strong>：T+1 三步——</p>
+<ol>
+<li><strong>下载</strong>渠道账单（微信/银联都提供 API 或文件）；</li>
+<li><strong>比对</strong>：以渠道为准和本地流水双向核对，产出三类差异：长款、短款、金额不符；</li>
+<li><strong>处理</strong>：自动冲正（掉单补单）/ 挂人工工单 / 生成日报给财务。
+细节：金额单位统一为分、跨天单（23:59 支付 00:01 回调）的切日规则要跟渠道账单对齐。你简历有财务模块，<strong>这题答好直接加分</strong>。</li>
+</ol>
+<h3 id="q-13" class="q-title">Q13 支付证书、密钥怎么管理？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：密钥绝不进 Git，放配置中心或 KMS，按环境隔离；平台证书要定时下载更新；还得想好「私钥泄露了怎么办」（换证书、重签）。这题考的是安全意识。</p>
+</blockquote>
+<p><strong>要点</strong>：不进 Git（配置中心/KMS/加密配置）、按环境隔离、<strong>平台证书定时轮换任务</strong>、商户私钥泄露的应急预案（换证书 + 重发请求报文签名）。面试官问这题是在看你的安全意识。</p>
+<h3 id="q-14" class="q-title">Q14 支付和订单系统之间的事务一致性怎么保证？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：支付成功要改订单、扣库存、加积分，这些不在一个库，没法用一个本地事务罩住。做法是：回调先在自己库里落一笔（这是事实），然后发消息让下游各自处理，失败重试 + 对账兜底。接受「几秒内不一致」，但不接受「永久错」。</p>
+</blockquote>
+<p><strong>要点</strong>：支付成功要触发订单状态变更 + 库存扣减 + 会员积分，跨系统不能靠本地事务。方案：<strong>支付回调本地事务落库 → 发消息（或本地消息表）→ 下游消费</strong>，配合幂等（见 Q3）和定时对账兜底。题库 Q114/Q118 有完整展开。</p>
+<hr />
+<h2 id="sec-4" class="sec-title">三、硬件与 IoT（MQTT，6 题）</h2>
+<h3 id="q-15" class="q-title">Q15 ★ MQTT 是什么？为什么设备对接用它不用 HTTP？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：MQTT 是给设备用的「微信」：设备连上 Broker、订阅一个频道，谁发消息谁往频道里发，不用互相认识。比 HTTP 省太多——报文头才 2 个字节，HTTP 光头部就几百字节，而且不用每次握手。设备弱网、性能差，这就是它存在的理由。</p>
+</blockquote>
+<p><strong>要点</strong>：发布/订阅模型，长连接、<strong>报文头最小 2 字节</strong>（HTTP 光头部就几百字节）、支持弱网。设备端性能弱、网络差（4G/WiFi 波动），HTTP 每次握手太重。组件：<strong>Publisher → Broker（EMQX/Mosquitto）→ Subscriber</strong>，Topic 就是"频道"。</p>
+<h3 id="q-16" class="q-title">Q16 QoS 0/1/2 的区别？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：QoS0 发了不管（可能丢）；QoS1 至少送到一次（可能重复，所以你得幂等）；QoS2 保证只送一次（多两次握手，慢）。设备控制用 QoS1 + 消息 ID 去重就够。指令要设计成「设成 40 度」而不是「加 1 度」，重复执行也不会错。</p>
+</blockquote>
+<p><strong>要点</strong>：0 至多一次（可能丢）；1 至少一次（<strong>可能重复</strong>，所以要幂等）；2 恰好一次（两次握手，慢）。<strong>实践：设备控制指令用 QoS1 + 消息 ID 去重</strong>，配 QoS2 不值得。结合你浴缸 App：控温指令丢了要重发，重复执行要无害（幂等指令设计：发"目标温度 40 度"而不是"+1 度"）。</p>
+<h3 id="q-17" class="q-title">Q17 设备离线了，指令怎么办？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：先看设备在不在线（Broker 的会话状态、遗嘱消息）。不在线就把指令存库排队，等它上线再推；App 那边超时提示「设备不在线」。遗嘱消息是设备掉线时 Broker 替它喊一句「我下线了」，你的服务订阅这个就能同步状态。</p>
+</blockquote>
+<p><strong>要点</strong>：① 发送前查在线状态（broker 的会话/遗嘱消息 LWT）；② 离线时：指令落库排队，设备上线后再推（或用 MQTT5 的会话保持 + retained 消息做"最新状态"）；③ App 端超时提示"设备不在线"。<strong>遗嘱消息</strong>：设备异常断线时 broker 代发"我下线了"，你的服务订阅这个 topic 做状态同步。</p>
+<h3 id="q-18" class="q-title">Q18 MQTT 怎么保证安全？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：每台设备一个独立账号（clientId + 密码，烧在设备里）、全程 TLS、Topic 做权限隔离——A 设备只能订自己的 topic，不然它能收到 B 家的控制指令，那就是事故。</p>
+</blockquote>
+<p><strong>要点</strong>：clientId + 用户名密码（设备唯一凭证烧录）、<strong>TLS</strong>、topic 权限 ACL（一台设备只能订阅自己的 topic，不能收到别人的指令——不然 A 设备能收到 B 设备的控制指令就是事故）、证书到期管理。</p>
+<h3 id="q-19" class="q-title">Q19 电子秤、打印机这类不用网络的硬件怎么接？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：这些设备不走网络，收银机本地起个服务，通过串口/USB 或厂家给的 DLL 通信（Java 用 JNA/JNI 调）。小票打印机走 ESC/POS 指令。坑在：多台设备抢一个口、驱动热插拔、SDK 内存泄漏。这是你的亮点，准备一个具体型号踩坑的故事。</p>
+</blockquote>
+<p><strong>要点</strong>：收银机本地起服务，通过<strong>串口/USB/SDK</strong>（厂家提供 DLL/JNI）通信，Java 侧用 JNA/JNI 调 SDK 或走<strong>厂商中间件</strong>。打印小票用 ESC/POS 指令集。坑：<strong>多设备抢占、驱动热插拔、SDK 内存泄漏</strong>。你这块是简历亮点，准备一个"对接某型号踩坑"的具体故事。</p>
+<h3 id="q-20" class="q-title">Q20 配网（帕纳佳世 App）怎么做的？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：就是「怎么把 WiFi 密码告诉一个还没联网的设备」。常见三种：手机广播包里夹带密码（SmartConfig）、设备先自己变热点让手机连上去配（AP 模式）、蓝牙辅助。说清楚你们用的哪种、成功率多少、失败了怎么引导重试。</p>
+</blockquote>
+<p><strong>要点</strong>：常见方案：<strong>SmartConfig（广播包夹带 WiFi 密码）</strong>、AP 热点模式（设备先变热点，App 连上后下发 WiFi 配置）、蓝牙辅助。要点是<strong>密钥不落盘、失败重试交互</strong>。说清楚你用的哪种、失败率多少。</p>
+<hr />
+<h2 id="sec-5" class="sec-title">四、SaaS 多租户与 ERP（8 题）</h2>
+<h3 id="q-21" class="q-title">Q21 ★ 多租户数据隔离怎么做？你们用的哪种？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：三档：一个客户一个库（最干净最贵）、一个客户一个 schema（折中）、大家挤一张表靠 tenant_id 区分（最省钱，全靠代码守纪律）。中小商户的收银 SaaS 基本都是第三种。重点讲你怎么防漏：MyBatis 拦截器自动拼 tenant_id、每张表都带租户列、运营后台跨租户查询要白名单。</p>
+</blockquote>
+<p><strong>要点</strong>：三档——<strong>独立库</strong>（最强隔离、贵）、<strong>独立 Schema</strong>、<strong>共享表 + tenant_id</strong>（最省、隔离靠纪律）。收银 SaaS 中小商户量大，基本是<strong>共享库 + tenant_id</strong>，重点讲：① MyBatis 拦截器自动拼 tenant_id 防漏；② 所有表强制带租户列 + 联合索引最左列；③ 跨租户查询（平台运营后台）的白名单机制。<strong>没做过也要说得出为什么这么做</strong>。</p>
+<h3 id="q-22" class="q-title">Q22 商户要定制功能（沙县、新时代），怎么不改崩标准版？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：优先级是「能配置就别改代码，能插件就别开分支」。价格策略、小票模板、字段开关做成配置；真要不同实现就用策略模式按租户注入；开分支是最后一步，开了就得想好怎么合并回去。准备一个「这需求我们用配置解决了」的例子。</p>
+</blockquote>
+<p><strong>要点</strong>：<strong>配置化 &gt; 插件化 &gt; 分支</strong>。优先级：能配置的配置（价格策略、小票模板、字段开关）→ 能插件的插件（策略模式 + Spring 条件装配，按租户注入实现）→ 实在不行开分支（维护噩梦，要说明怎么合并）。你同时服务过标准版和多家定制，<strong>准备一个"这个需求我们用配置解决而不是改代码"的例子</strong>。</p>
+<h3 id="q-23" class="q-title">Q23 ★ 库存扣减怎么做？超卖了怎么办？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：数据库那句 update ... where num &gt;= ? 是最后一道锁，影响行数为 0 就是没库存了。量大就在 Redis 里先扣（DECR 或 Lua 保证原子），再异步落库。扣减和回补都要幂等，不然重试一次就多扣一件。</p>
+</blockquote>
+<p><strong>要点</strong>：① DB 乐观锁兜底：<code>update stock set num=num-? where sku_id=? and num&gt;=?</code>，影响行数 0 就是库存不足；② 高频场景 Redis 预扣（<code>DECR</code> + Lua 原子），DB 异步落库；③ <strong>扣减和订单要幂等</strong>（同一订单重复请求只扣一次）；④ 撤单/退款回补也要幂等。题库 Q131/Q136 有展开。</p>
+<h3 id="q-24" class="q-title">Q24 进销存的盘点差异怎么处理？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：盘点期间先把出入库锁住（或者单独记差异），盘完生成盘盈盘亏的调整单走审批。库存流水必须一条不落，期末 = 期初 + 进货 - 销售 ± 调整，财务对账就靠这个公式。</p>
+</blockquote>
+<p><strong>要点</strong>：盘点单锁定期间禁止出入库（或记录差异流水），盘盈盘亏生成<strong>调整单</strong>走审批，库存流水（进货/销售/调整/退货）必须可追溯，期末库存 = 期初 + 流水汇总——<strong>财务对账靠这个</strong>。你做过财务模块，这题应该信手拈来。</p>
+<h3 id="q-25" class="q-title">Q25 门店断网了还能收银吗？怎么设计？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：门店断网也得能卖货，所以 POS 本地先记账（本地库或文件队列），网恢复再按顺序往上传。防重靠本地单号全局唯一 + 服务端幂等；断网期间价格库存可能变了，恢复后以服务端为准，差异生成异常单让人看。这是收银 SaaS 的灵魂题。</p>
+</blockquote>
+<p><strong>要点</strong>：<strong>本地优先</strong>：POS 本地落库（本地 SQLite/文件队列），网络恢复后按序上传；防重复：本地单号全局唯一，服务端幂等；冲突：断网期间价格/库存变化，恢复后以服务端校验为准，差异生成异常单。<strong>这是收银 SaaS 的灵魂问题，必准备</strong>。</p>
+<h3 id="q-26" class="q-title">Q26 商品价格策略（会员价、促销价、整单折扣）怎么设计？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：价格是一层层算下来的：原价 → 会员价 → 活动价 → 整单优惠分摊。关键不是算法，是「能解释」——每笔订单存一份价格快照（当时用了什么规则、怎么算的），不然客户来吵架你查不清。规则多了就用策略 + 责任链。</p>
+</blockquote>
+<p><strong>要点</strong>：价格计算要<strong>分层</strong>：原价 → 会员等级价 → 活动价 → 整单优惠分摊。核心是<strong>可解释、可追溯</strong>：每笔订单存"价格快照"（当时的规则和计算过程），不然客诉来了查不清。规则多了就用<strong>策略模式 + 责任链</strong>（题库 Q180 正好能用上）。</p>
+<h3 id="q-27" class="q-title">Q27 订单流水表越来越大怎么办？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：热数据留三个月在线，老的归档到归档库或 ES；按时间分表；报表别去实时算明细，晚上跑一张日结汇总表，白天直接查汇总。</p>
+</blockquote>
+<p><strong>要点</strong>：冷热分离（热数据 3 个月在线，冷数据归档库/ES）+ 按时间分表 + 报表走<strong>日结汇总表</strong>而不是明细实时算。你做过财务报表，把归档策略讲清楚。</p>
+<h3 id="q-28" class="q-title">Q28 会员储值/余额怎么保证不出错？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：余额永远不能直接 update 了事。每次变动都插一条流水，同事务里再更新余额，余额随时能用流水重算出来。并发扣减用 where balance &gt;= ? 卡住。任何「直接改余额」的方案，面试官都会追着打。</p>
+</blockquote>
+<p><strong>要点</strong>：余额变更<strong>只通过流水表</strong>（每次变更插入一条流水 + 更新余额，同事务），余额 = 流水累计可重算；并发扣减用 <code>where balance &gt;= ?</code> 条件更新；充值有支付回调驱动。<strong>任何"直接 update 余额"的方案都会被打</strong>。</p>
+<hr />
+<h2 id="sec-6" class="sec-title">五、第三方对接通用题（6 题）</h2>
+<h3 id="q-29" class="q-title">Q29 ★ 对接第三方接口的通用套路是什么？（一定会问）</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：背这六条就够：超时和重试要设（只对幂等接口重试）、我这边的接口要幂等（对方可能重复调）、注意人家的调用配额（按次收费的更要命）、对方挂了我得有降级、状态不明的单要定时查、成功率/耗时/错误码要单独监控。</p>
+</blockquote>
+<p><strong>要点</strong>：背下来这个清单——</p>
+<ol>
+<li><strong>超时 + 重试</strong>：连接/读超时必须设，重试只对幂等接口（题库 Q122 服务雪崩）；</li>
+<li><strong>幂等</strong>：回调、重发都按"对方可能重复调你"设计；</li>
+<li><strong>限流配额</strong>：企查查按次计费，本地缓存 + 配额监控，超了报警；</li>
+<li><strong>降级</strong>：第三方挂了不能拖死主流程（审核失败先标记"待审"，不让用户卡死）；</li>
+<li><strong>对账/补偿</strong>：状态不明的单定时查证；</li>
+<li><strong>监控</strong>：成功率、RT、错误码分布单独打点。</li>
+</ol>
+<h3 id="q-30" class="q-title">Q30 阿里云绿网（内容审核）是同步还是异步？怎么设计？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：文本是同步返回的，图片视频是异步回调。设计上：提交完先落库标「审核中」，回调回来再改状态；回调可能丢，所以要有定时反查；审核没过也别把用户卡死，先标记待人工。</p>
+</blockquote>
+<p><strong>要点</strong>：文本同步返回结果，图片/视频<strong>异步回调</strong>。设计：提交任务落库（状态：审核中）→ 回调更新结果 → <strong>回调丢了定时反查</strong> → 审核失败不阻塞主流程（先标记待人工）。要答出"回调不可靠"这个意识。</p>
+<h3 id="q-31" class="q-title">Q31 飞书开放平台的 token 怎么管理？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：tenant_access_token 两小时过期，不能每台机器各自去刷（会互相顶掉），要集中管理 + 提前刷新 + 放 Redis。发消息失败要重试。这题就是看你有没有真接过。</p>
+</blockquote>
+<p><strong>要点</strong>：<code>tenant_access_token</code> 有效期约 2 小时，<strong>集中管理 + 提前刷新 + 分布式缓存</strong>（别每台机器各自刷，会互相顶掉），限频注意。消息用模板卡片，发送失败重试。这题考"有没有真接过"。</p>
+<h3 id="q-32" class="q-title">Q32 企查查这类按次收费的接口，怎么省钱？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：工商信息一年也不变几次，先查缓存（T+1，命中率能到九成），能批量就批量，调用量要打点（谁把额度刷没了得查得出来），预付费余额要监控报警。</p>
+</blockquote>
+<p><strong>要点</strong>：<strong>缓存优先</strong>（工商信息变更频率低，T+1 缓存命中率 90%+）、批量查、调用配额打点（谁把额度刷没了要能查到）、预付费余额监控告警。答出"成本意识"是加分项。</p>
+<h3 id="q-33" class="q-title">Q33 门禁闸机、捷顺停车这种硬件云对接要注意什么？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：这类硬件大多是「云端下指令 + 本地网关盒子执行」，走 WebSocket 或长轮询。三个重点：开门指令重复发要无害（幂等）、断网时本地白名单得能放行、事件上报丢了要重传。准备一个捷顺对接的具体坑。</p>
+</blockquote>
+<p><strong>要点</strong>：大多** WebSocket/HTTP 长轮询 + 本地网关盒子<strong>模式；重点：</strong>指令幂等<strong>（开门指令重复发要无害）、</strong>离线兜底**（断网时本地白名单放行）、事件上报丢失重传。准备好"捷顺对接踩过什么坑"的实例。</p>
+<h3 id="q-34" class="q-title">Q34 第三方接口变版本/下线怎么办？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：业务别直接依赖人家的 SDK，中间加一层适配器；新旧版本可以同时跑一段对比结果；提前订阅对方公告；旧版本留兼容期。核心认知：第三方就是你的一个不稳定依赖，得当依赖来管。</p>
+</blockquote>
+<p><strong>要点</strong>：适配器隔离（业务不直接依赖 SDK）、双跑灰度（新旧版本同时跑对比结果）、<strong>提前订阅对方的公告</strong>、保留旧版本兼容期。答出"依赖第三方是风险源，要当依赖管理"。</p>
+<hr />
+<h2 id="sec-7" class="sec-title">六、TINDA 海外项目（4 题）</h2>
+<h3 id="q-35" class="q-title">Q35 十万商户的量级，架构上怎么撑的？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：十万商户不等于十万并发，得先拆成「日均多少笔、峰值多少 TPS」。然后按漏斗讲：Nginx 分流 → 应用无状态随便加机器 → 数据库读写分离、按商户分片 → Redis 挡热点。这题面试官一定追数字，回家先算出来。</p>
+</blockquote>
+<p><strong>要点</strong>：先说量级拆解：十万商户 ≠ 十万并发，<strong>日均交易量、峰值 TPS 才是关键数字</strong>（回家算出来）。然后按漏斗讲：Nginx 负载均衡 → 应用无状态水平扩 → MySQL 读写分离/按商户分片 → Redis 缓存热点（商品、价格）。<strong>这题你简历写了"维持日益增长的十万余商户"，面试官必问，必须有数字。</strong></p>
+<h3 id="q-36" class="q-title">Q36 海外项目跟国内比有什么特殊问题？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：四个坑：时区（库里存 UTC，展示按当地，财务日切按当地时间）、货币（金额存最小单位 + 币种，汇率要留快照）、多语言（报表模板也得翻译）、网络差（弱网重试 + 幂等）。再加一条合规（数据出境、当地报税）。挑两条你真踩过的深讲。</p>
+</blockquote>
+<p><strong>要点</strong>：① <strong>时区</strong>：库里存 UTC 或带时区的时间戳，展示按商户时区转（财务日切按本地时间）；② <strong>货币</strong>：金额存"最小单位 + 币种"，汇率换算留快照；③ <strong>多语言</strong>：i18n 资源文件，报表模板也要国际化；④ <strong>网络差</strong>：客户端弱网重试 + 幂等；⑤ <strong>合规</strong>：数据是否出境、本地报税规则（乌兹别克斯坦税控）。你真做过，挑两条深讲。</p>
+<h3 id="q-37" class="q-title">Q37 报税对接（TINDA 有报税功能）要注意什么？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：税务接口的特点：慢、限频、格式死板、而且不能重复上报（重复报就是事故）。所以上报前先落库防重，失败进补偿队列，每天拿自己的报税流水和税控回执对一遍。</p>
+</blockquote>
+<p><strong>要点</strong>：税务接口通常是<strong>政府/指定服务商</strong>，特点：慢、限频、格式严格、<strong>不可重放</strong>（重复上报是事故）→ 上报前落库防重、失败进补偿队列、对账按日报税流水和税控回执核对。</p>
+<h3 id="q-38" class="q-title">Q38 海外部署怎么运维？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：跨境网络又慢又不稳，所以服务要部署在当地，国内只做管控；发版还是 Jenkins，但镜像要提前在本地打好，别跨境拉；日志采样回传；监控别依赖国内访问不了的通道。</p>
+</blockquote>
+<p><strong>要点</strong>：跨境网络慢且不稳 → <strong>服务部署在本地/当地云</strong>，国内只做管控；发版走 Jenkins 但要注意跨境拉包慢（镜像预打包）；日志回传做采样；监控用当地可达的通道（别依赖 Google 服务）。</p>
+<hr />
+<h2 id="sec-8" class="sec-title">七、报表与 SQL 优化（4 题）</h2>
+<h3 id="q-39" class="q-title">Q39 ★ 你简历写了 EXPLAIN 调优，举个例子？（必问，且曾把 EXPLAIN 写错）</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：按这个套路讲：财务日报 40 秒 → explain 一看是全表扫 + filesort → 加了 (商户号,状态,时间) 联合索引走 range，扫描行数从 800 万降到 2 万 → 再把 select * 改成只查需要的列 → 最后 800ms。数字换成你自己的。</p>
+</blockquote>
+<p><strong>要点</strong>：准备一个真实案例，按这个结构说：</p>
+<blockquote>
+<p>财务日报原来要 40s → <code>EXPLAIN</code> 发现 <code>type=ALL</code> 全表扫 + <code>Using filesort</code> → 加了 <code>(商户号,状态,时间)</code> 联合索引后走 <code>range</code>，扫描行数从 800 万降到 2 万 → 再把 <code>select *</code> 改成只查需要的列（覆盖索引）→ 最终 800ms。
+数字换成你真实的。<strong>EXPLAIN 重点看什么</strong>：<code>type</code>（至少 range）、<code>key</code>、<code>rows</code>、<code>Extra</code>（filesort/temporary 是坏信号）——详见题库 Q59。</p>
+</blockquote>
+<h3 id="q-40" class="q-title">Q40 大报表为什么慢？除了加索引还有什么招？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：别实时算明细——晚上跑批生成日结/月结汇总表；导出改成异步任务 + 流式写文件；报表查询走从库；数据再大就丢 ES 或 ClickHouse 去做分析。</p>
+</blockquote>
+<p><strong>要点</strong>：① <strong>别实时算明细</strong>：日结/月结汇总表，凌晨跑批；② <strong>导出异步化</strong>：提交任务 → 后台流式生成（EasyExcel）→ 通知下载（题库 Q138）；③ 读写分离让报表走从库；④ 明细数据量大就丢 ES/ClickHouse 做分析。</p>
+<h3 id="q-41" class="q-title">Q41 慢接口排查的一般流程？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：按你自己的项目语言讲：先看是不是慢 SQL（你最熟），再看第三方调用有没有设超时（支付渠道、企查查），再 jstack 看线程卡在哪，最后看 GC。结尾一定给一个「优化前多少、优化后多少」。</p>
+</blockquote>
+<p><strong>要点</strong>：题库 Q137 的流程背一遍，但<strong>要用你的项目语言</strong>：先看是不是慢 SQL（占你简历大头）→ 再看第三方调用（支付渠道、企查查，有没有超时配置）→ 线程栈看卡在哪 → GC。结尾给一个"优化前后 RT"的数字。</p>
+<h3 id="q-42" class="q-title">Q42 数据库连接池怎么配的？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：HikariCP，池子大小从「核数×2」起步，靠压测收敛。最容易犯的错是事务里包了第三方调用——等人家 3 秒，连接就被占 3 秒，量一大就报 connection is not available。</p>
+</blockquote>
+<p><strong>要点</strong>：HikariCP，池大小 ≈ 核数*2 起步靠压测收敛，<strong>事务里别包第三方调用</strong>（连接被占满）。题库 Q143 的"connection is not available"案例就是给你准备的。</p>
+<hr />
+<h2 id="sec-9" class="sec-title">八、部署运维与工程（4 题）</h2>
+<h3 id="q-43" class="q-title">Q43 Nginx 在你们架构里干了什么？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：反向代理、按权重分流、HTTPS 在它这儿卸掉、静态资源它直接发、还能做限流（limit_req）。准备一句「我们配了哪几个参数、为什么」。</p>
+</blockquote>
+<p><strong>要点</strong>：反向代理 + 负载均衡（upstream 加权轮询）+ HTTPS 卸载 + 静态资源 + <strong>限流</strong>（<code>limit_req</code>）。准备一句"我们 Nginx 配了什么参数、为什么"。</p>
+<h3 id="q-44" class="q-title">Q44 Jenkins 发布流程是什么样的？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：提代码 → Jenkins 拉 → Maven 构建跑单测 → 打镜像 → 测试/预发/生产逐级发 → 出问题一键回滚到上一个包。加分的是：发完自动发飞书通知、发完自动健康检查。</p>
+</blockquote>
+<p><strong>要点</strong>：提交代码 → Jenkins 拉取 → Maven 构建 + 单测 → 打镜像/打包 → 按环境发布（测试 → 预发 → 生产）→ <strong>回滚方案</strong>（保留上一版本包，一键回滚）。加分点：发布前自动通知（飞书机器人）、发布后健康检查。</p>
+<h3 id="q-45" class="q-title">Q45 你怎么部署一个新服务？（从零到上线）</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：按顺序说：装环境（JDK/Nginx/防火墙）→ 建库授权 → 配置中心加配置 → Jenkins 建任务 → 配域名和证书 → 接监控告警 → 灰度验证 → 正式上线。体现你一个人能扛完整套。</p>
+</blockquote>
+<p><strong>要点</strong>：按顺序说：服务器初始化（JDK/Nginx/防火墙）→ 数据库建库授权 → 配置中心加配置 → Jenkins 建任务 → 域名/证书 → 监控告警接入 → 灰度验证 → 上线。体现"独立扛过全套"（你简历写了"前期服务搭建、部署上线"）。</p>
+<h3 id="q-46" class="q-title">Q46 线上出问题你的处理顺序？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：先止血（回滚、重启、限流），同时把现场留住（dump、日志），然后才定位（top -Hp + jstack），最后复盘写文档。面试官看的是你慌不慌、有没有优先级。</p>
+</blockquote>
+<p><strong>要点</strong>：<strong>止血优先</strong>（回滚/重启/限流）→ 保留现场（dump、日志）→ 定位（<code>top -Hp</code> + <code>jstack</code>，题库 Q51）→ 复盘写文档。面试官要看的是"慌不慌、有没有优先级"。</p>
+<hr />
+<h2 id="sec-10" class="sec-title">九、基础必刷清单（从 184 题里圈出来的）</h2>
+<p><strong>你的简历决定了面试官会往这些地方深挖，按优先级刷：</strong></p>
+<table>
+<thead>
+<tr>
+<th>优先级</th>
+<th>模块</th>
+<th>必刷题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>★★★</td>
+<td>MySQL（你写了 EXPLAIN）</td>
+<td>Q56-75 全部，重点 Q57/58/59/60/61/62/65/66/72</td>
+</tr>
+<tr>
+<td>★★★</td>
+<td>Redis（你写了缓存）</td>
+<td>Q76-92，重点 Q81/82/83/84</td>
+</tr>
+<tr>
+<td>★★★</td>
+<td>事务与一致性</td>
+<td>Q97/98（事务失效/传播）、Q118/123（分布式事务/幂等）、Q140（支付回调）</td>
+</tr>
+<tr>
+<td>★★</td>
+<td>并发（没有也要会）</td>
+<td>Q26/27（线程池）、Q20-25、Q40（虚拟线程了解即可）</td>
+</tr>
+<tr>
+<td>★★</td>
+<td>MQ（简历缺失，必被问"超时关单怎么做"）</td>
+<td>Q109-116，重点 Q112/113/114</td>
+</tr>
+<tr>
+<td>★★</td>
+<td>Spring</td>
+<td>Q94/96/97/100</td>
+</tr>
+<tr>
+<td>★</td>
+<td>JVM 排查</td>
+<td>Q51/52/53/143</td>
+</tr>
+<tr>
+<td>★</td>
+<td>场景题</td>
+<td>Q131/132/135/136</td>
+</tr>
+<tr>
+<td>睡前</td>
+<td>速记卡</td>
+<td>附录 A 全表</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-11" class="sec-title">十、高风险问题与应答口径</h2>
+<h3 id="q-46" class="q-title">1. "你 6 年了，简历里怎么没有 MQ / 微服务 / 高并发？"</h3>
+<p><strong>口径（诚实 + 有深度）</strong>：</p>
+<blockquote>
+<p>"我们的量级（日均 X 万单、峰值 X）用单体 + 读写分离 + 缓存是<strong>够的</strong>，我们刻意没有上微服务——拆了之后运维成本和链路复杂度反而上来（题库 Q129 分布式单体）。但我自己研究过 MQ 和分布式事务，比如订单超时关单我知道该用延迟消息 + 扫表兜底（现场讲 Q132）。如果贵司是高并发场景，我的支付对账和幂等经验可以直接迁移。"
+<strong>态度</strong>：不吹，但展示"我知道什么时候该用"。</p>
+</blockquote>
+<h3 id="q-46" class="q-title">2. "你所有项目都是一家公司的吧？"</h3>
+<p><strong>口径</strong>：见〇-5——强调平台层角色 + 客户差异化配置，不是 fork 项目。"唐库是产品，沙县、新时代是产品上的租户级定制，我负责的支付通道和财务模块是所有客户共用的。"</p>
+<h3 id="q-46" class="q-title">3. "为什么从上家公司出来 / 为什么看机会？"</h3>
+<p><strong>口径</strong>：讲<strong>成长空间</strong>不讲是非："业务进入平稳期，定制化交付为主，技术上新的挑战少了；我希望去交易量更大的场景，把支付和一致性的经验用在更复杂的链路上。"<strong>永远不说前公司坏话。</strong></p>
+<h3 id="q-46" class="q-title">4. "期望薪资？"</h3>
+<p><strong>口径</strong>：先问再答："想先了解下这个岗位的职责范围和级别，再聊数字比较匹配。"被追问答区间不给点："北京 6 年 Java 后端，结合我支付方向的稀缺性，我的预期在市场 75 分位左右，具体可以根据职责谈。"</p>
+<h3 id="q-46" class="q-title">5. "教育经历怎么回事？"（大专 + 本科时间线）</h3>
+<p><strong>口径</strong>：主动、简洁、不遮掩："大专毕业后工作，本科是工作期间在职读的（专升本）。"<strong>简历上的「2022-2005」务必先改成正确时间</strong>，不然这个问题会从"解释"升级成"诚信问题"。</p>
+<hr />
+<h2 id="sec-12" class="sec-title">收尾</h2>
+<ul>
+<li><strong>面试前一晚只看三样</strong>：〇 的口径、一的自我介绍、Q2/Q3/Q12（支付三件套）。</li>
+<li><strong>每场面试后</strong>把被问倒的题记进对应章节，两周后这本就是你的独门题库。</li>
+<li>简历上那 5 个硬伤<strong>今晚就修</strong>，尤其 <code>EXPLAIN</code> 和「2022-2005」。</li>
+</ul></article></main>
+<button id="top">↑</button>
+<div id="meta">共 46 题</div>
+<div id="tts">
+  <div id="ttsPanel">
+    <label>语速<br><input type="range" id="ttsRate" min="0.5" max="1.2" step="0.05" value="0.85"><span class="rv" id="ttsRateVal">0.85x</span></label>
+    <label>语音<select id="ttsVoice"></select></label>
+    <div class="hint"><b>点正文里任意英文</b>即可发音（浅蓝高亮的就是）。缩写念字母、单词照读，面试照着用。</div>
+  </div>
+  <button id="ttsBtn" title="发音设置 / 点词发声">🔊</button>
+</div>
+<div id="toast">点正文里任意英文，直接听发音 🔈</div>
+<script>
+  const groups=[...document.querySelectorAll('.nav-group')];
+  const qs=[...document.querySelectorAll('.nav-q')];
+  // 默认展开前两组
+  groups.slice(0,2).forEach(g=>g.classList.add('open'));
+  // 搜索
+  const input=document.getElementById('q');
+  input.addEventListener('input',()=>{
+    const k=input.value.trim().toLowerCase();
+    if(!k){groups.forEach(g=>{g.classList.remove('hidden');g.querySelectorAll('.nav-q').forEach(a=>a.classList.remove('hidden'));});return;}
+    groups.forEach(g=>{
+      const items=[...g.querySelectorAll('.nav-q')];
+      let hit=0;
+      items.forEach(a=>{
+        const ok=a.dataset.text.toLowerCase().includes(k);
+        a.classList.toggle('hidden',!ok);
+        if(ok)hit++;
+      });
+      const secOk=g.querySelector('.nav-sec').dataset.text.toLowerCase().includes(k);
+      const show=hit>0||secOk;
+      g.classList.toggle('hidden',!show);
+      if(show)g.classList.add('open');
+    });
+  });
+  // 滚动高亮
+  const heads=[...document.querySelectorAll('h2[id],h3[id]')];
+  const secLinks=new Map([...document.querySelectorAll('.nav-sec')].map(a=>[a.getAttribute('href').slice(1),a]));
+  const qLinks=new Map([...document.querySelectorAll('.nav-q')].map(a=>[a.getAttribute('href').slice(1),a]));
+  const obs=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting)return;
+      const id=e.target.id;
+      document.querySelectorAll('.nav-q.active').forEach(a=>a.classList.remove('active'));
+      document.querySelectorAll('.nav-group.open').forEach(g=>{if(!g.contains(document.activeElement))g.classList.remove('open');});
+      if(qLinks.has(id)){
+        const a=qLinks.get(id);a.classList.add('active');
+        const g=a.closest('.nav-group');g.classList.add('open');
+        a.scrollIntoView({block:'nearest'});
+      }else if(secLinks.has(id)){
+        secLinks.get(id).closest('.nav-group').classList.add('open');
+      }
+    });
+  },{rootMargin:'-10% 0px -80% 0px'});
+  heads.forEach(h=>obs.observe(h));
+  // 进度
+  const bar=document.getElementById('bar'),topBtn=document.getElementById('top');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement;
+    const p=h.scrollTop/(h.scrollHeight-h.clientHeight)*100;
+    bar.style.width=p+'%';
+    topBtn.style.display=h.scrollTop>600?'flex':'none';
+  });
+  topBtn.onclick=()=>scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('menu').onclick=()=>document.querySelector('aside').classList.toggle('show');
+  document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',()=>{
+    if(innerWidth<=1180)document.querySelector('aside').classList.remove('show');
+  }));
+
+  /* ========== 点词发音 ========== */
+  (function(){
+    const synth=window.speechSynthesis||null;
+    const btn=document.getElementById('ttsBtn');
+    const panel=document.getElementById('ttsPanel');
+    const rateEl=document.getElementById('ttsRate');
+    const rateVal=document.getElementById('ttsRateVal');
+    const voiceSel=document.getElementById('ttsVoice');
+    const toast=document.getElementById('toast');
+    if(!synth)btn.style.display='none';
+
+    /* 1. 把正文里的英文包成可点单元 */
+    const RE=new RegExp('[A-Za-z][A-Za-z0-9_.#]*(?:[-/][A-Za-z0-9_.#]+)*','g');
+    const SKIP=/^(SCRIPT|STYLE|A|BUTTON|SELECT|OPTION|TEXTAREA|INPUT)$/;
+    function wrapEng(root){
+      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{
+        acceptNode(n){
+          const p=n.parentElement;
+          if(!p||SKIP.test(p.tagName))return NodeFilter.FILTER_REJECT;
+          if(p.classList&&p.classList.contains('say'))return NodeFilter.FILTER_REJECT;
+          if(!/[A-Za-z]{2,}/.test(n.nodeValue))return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      const nodes=[];
+      while(walker.nextNode())nodes.push(walker.currentNode);
+      nodes.forEach(n=>{
+        const t=n.nodeValue;
+        let last=0,hit=false;
+        const frag=document.createDocumentFragment();
+        RE.lastIndex=0;
+        let m;
+        while((m=RE.exec(t))!==null){
+          if(m[0].length<2)continue;
+          hit=true;
+          if(m.index>last)frag.appendChild(document.createTextNode(t.slice(last,m.index)));
+          const s=document.createElement('span');
+          s.className='say';
+          s.dataset.w=m[0];
+          s.textContent=m[0];
+          frag.appendChild(s);
+          last=m.index+m[0].length;
+        }
+        if(!hit)return;
+        if(last<t.length)frag.appendChild(document.createTextNode(t.slice(last)));
+        n.parentNode.replaceChild(frag,n);
+      });
+    }
+    wrapEng(document.querySelector('article'));
+
+    /* 2. 语音列表 */
+    let voices=[];
+    function loadVoices(){
+      voices=synth.getVoices().filter(v=>/^en/i.test(v.lang));
+      if(!voices.length)voices=synth.getVoices();
+      voiceSel.innerHTML='';
+      voices.forEach((v,i)=>{
+        const o=document.createElement('option');
+        o.value=i;
+        o.textContent=v.name.replace('Microsoft ','').replace(' - English','')+' ('+v.lang+')';
+        voiceSel.appendChild(o);
+      });
+      let idx=voices.findIndex(v=>v.localService&&/Zira|Aria|Jenny|Guy|Samantha|Google US/i.test(v.name));
+      if(idx<0)idx=voices.findIndex(v=>v.localService);
+      if(idx<0)idx=0;
+      voiceSel.value=idx;
+    }
+    if(synth){loadVoices();synth.onvoiceschanged=loadVoices;}
+
+    function curVoice(){
+      const i=parseInt(voiceSel.value,10);
+      return voices[i]||null;
+    }
+
+    /* 3. 点击发音 */
+    let speakingEl=null,timer=null;
+    function say(word,el){
+      if(!synth)return;
+      synth.cancel();
+      if(speakingEl)speakingEl.classList.remove('speaking');
+      speakingEl=el||null;
+      if(speakingEl)speakingEl.classList.add('speaking');
+      const u=new SpeechSynthesisUtterance(word);
+      const v=curVoice();
+      if(v){u.voice=v;u.lang=v.lang;}else{u.lang='en-US';}
+      u.rate=parseFloat(rateEl.value);
+      u.onend=u.onerror=()=>{
+        if(speakingEl)speakingEl.classList.remove('speaking');
+        speakingEl=null;
+      };
+      synth.speak(u);
+    }
+
+    document.addEventListener('click',e=>{
+      const s=e.target.closest('.say');
+      if(!s)return;
+      e.preventDefault();
+      say(s.dataset.w,s);
+    });
+
+    /* 4. 面板 */
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      panel.classList.toggle('show');
+    });
+    document.addEventListener('click',e=>{
+      if(!e.target.closest('#tts'))panel.classList.remove('show');
+    });
+    rateEl.addEventListener('input',()=>{rateVal.textContent=rateEl.value+'x';});
+    rateEl.addEventListener('change',()=>{
+      if(speakingEl)say(speakingEl.dataset.w,speakingEl);
+    });
+
+    /* 5. 首次提示 */
+    const tipKey='ttsTipShown_v1';
+    try{
+      if(!localStorage.getItem(tipKey)){
+        setTimeout(()=>{
+          toast.classList.add('show');
+          setTimeout(()=>toast.classList.remove('show'),4200);
+          localStorage.setItem(tipKey,'1');
+        },1400);
+      }
+    }catch(err){
+      setTimeout(()=>{
+        toast.classList.add('show');
+        setTimeout(()=>toast.classList.remove('show'),4200);
+      },1400);
+    }
+    document.addEventListener('click',e=>{
+      if(e.target.closest('.say'))toast.classList.remove('show');
+    },true);
+  })();
+</script>
+</body>
+</html>
