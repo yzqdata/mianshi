@@ -63,10 +63,17 @@ border:1.5px solid var(--line);background:#fff;cursor:pointer;transition:.15s;co
 .quick button:hover{background:var(--pink);color:#fff;border-color:var(--pink)}
 footer{margin-top:64px;text-align:center;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:22px}
 .empty{text-align:center;color:var(--muted);padding:40px;font-size:14px;display:none}
+#home{position:fixed;right:20px;top:16px;z-index:50;display:flex;align-items:center;gap:6px;
+height:36px;padding:0 15px;border-radius:18px;background:#fff;border:1px solid var(--line);
+color:var(--muted);font-size:13px;text-decoration:none;box-shadow:0 3px 14px #0000000f;
+font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif}
+#home:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 @media(max-width:600px){.grid{grid-template-columns:1fr}header h1{font-size:24px}.player .status{display:none}}
+@media print{#home{display:none}}
 </style>
 </head>
 <body>
+<a id="home" href="index.html" title="返回首页">🏠 首页</a>
 <div class="wrap">
 
 <header>

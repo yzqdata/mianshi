@@ -97,6 +97,17 @@
   }
   #top:hover{border-color:#c2410c66;color:var(--accent);}
   #meta{position:fixed;right:28px;bottom:80px;font-size:11px;color:#b3ada2;letter-spacing:.04em;}
+  /* 返回首页 */
+  #home{
+    position:fixed;right:28px;top:16px;z-index:70;display:flex;align-items:center;gap:6px;
+    height:36px;padding:0 15px;border-radius:18px;background:#fff;border:1px solid var(--line);
+    color:var(--ink-2);font-size:13px;text-decoration:none;box-shadow:0 3px 14px #0000000f;
+    font-family:inherit;
+  }
+  #home:hover{border-color:#c2410c66;color:var(--accent);background:#fdf7f3;}
+  @media(max-width:1180px){
+    #home{right:16px;top:16px;height:34px;padding:0 13px;font-size:12.5px;}
+  }
   @media(max-width:1180px){
     aside{transform:translateX(-100%);transition:transform .22s;}
     aside.show{transform:none;}
@@ -141,7 +152,7 @@
     #tts{bottom:96px;right:20px;}
   }
   @media print{
-    aside,#bar,#top,#menu,#tts,#toast{display:none !important;}
+    aside,#bar,#top,#menu,#tts,#toast,#home{display:none !important;}
     main{margin:0;padding:0;}
     article{border:none;box-shadow:none;padding:0;max-width:none;}
     body{background:#fff;}
@@ -150,6 +161,7 @@
 </head>
 <body>
 <div id="bar"></div>
+<a id="home" href="index.html" title="返回首页">🏠 首页</a>
 <button id="menu">☰</button>
 <aside>
   <div class="brand">
