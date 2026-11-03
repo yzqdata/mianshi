@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的 Java 面试笔记（原稿整理版）</title>
+<style>
+  :root{
+    --bg:#f6f5f2; --paper:#ffffff; --ink:#15181d; --ink-2:#3d444d; --ink-3:#6b7280;
+    --line:#e6e3dc; --accent:#c2410c; --accent-soft:#fdf0e9; --blue:#1d4ed8; --blue-soft:#eef3ff;
+    --warn:#b45309; --code:#f4f2ee;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Source Han Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    font-size:15.5px;line-height:1.85;-webkit-font-smoothing:antialiased;
+  }
+  /* 进度条 */
+  #bar{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#c2410c,#f59e0b);z-index:99;transition:width .1s linear;}
+  /* 侧栏 */
+  aside{
+    position:fixed;top:0;left:0;bottom:0;width:312px;background:#fbfaf8;border-right:1px solid var(--line);
+    display:flex;flex-direction:column;z-index:50;
+  }
+  .brand{padding:22px 22px 14px;border-bottom:1px solid var(--line);}
+  .brand h1{font-size:15px;margin:0 0 4px;letter-spacing:.02em;}
+  .brand p{margin:0;font-size:11.5px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;}
+  .search{padding:12px 16px;border-bottom:1px solid var(--line);}
+  .search input{
+    width:100%;padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;
+    font-size:13px;color:var(--ink);outline:none;font-family:inherit;
+  }
+  .search input:focus{border-color:#c2410c55;box-shadow:0 0 0 3px #c2410c14;}
+  nav{flex:1;overflow-y:auto;padding:10px 10px 40px;}
+  nav::-webkit-scrollbar{width:6px;}
+  nav::-webkit-scrollbar-thumb{background:#d8d4cb;border-radius:3px;}
+  .nav-group{margin-bottom:2px;}
+  .nav-sec{
+    display:flex;gap:9px;align-items:baseline;padding:7px 10px;border-radius:7px;
+    color:var(--ink);text-decoration:none;font-size:13.5px;font-weight:600;line-height:1.5;
+  }
+  .nav-sec:hover{background:#f0ede6;}
+  .nav-idx{font-size:10.5px;color:#b3ada2;font-variant-numeric:tabular-nums;font-weight:500;}
+  .nav-sub{display:none;padding:2px 0 8px 10px;margin-left:14px;border-left:1px solid var(--line);}
+  .nav-group.open .nav-sub{display:block;}
+  .nav-q{
+    display:block;padding:4px 10px;border-radius:6px;color:var(--ink-3);text-decoration:none;
+    font-size:12.5px;line-height:1.55;margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .nav-q:hover{background:#f2efe8;color:var(--ink);}
+  .nav-q.active{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+  .hidden{display:none !important;}
+  /* 内容 */
+  main{margin-left:312px;padding:56px 48px 140px;display:flex;justify-content:center;}
+  article{width:100%;max-width:880px;background:var(--paper);border:1px solid var(--line);border-radius:14px;
+    padding:44px 52px 60px;box-shadow:0 1px 2px #00000006,0 12px 40px -24px #0000001a;}
+  h1{font-size:27px;line-height:1.4;margin:0 0 10px;letter-spacing:-.01em;}
+  h2{
+    font-size:20px;margin:52px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+    letter-spacing:-.005em;scroll-margin-top:24px;
+  }
+  h2:first-of-type{margin-top:36px;}
+  h3.q-title{
+    font-size:15.5px;font-weight:700;margin:26px 0 8px;padding:2px 0 2px 13px;
+    border-left:3px solid #e8d6cc;color:#1b1e24;scroll-margin-top:20px;line-height:1.65;
+  }
+  h3.q-title:hover{border-left-color:var(--accent);}
+  p{margin:8px 0;color:var(--ink-2);}
+  strong{color:var(--ink);font-weight:650;}
+  em{color:var(--ink-3);font-style:normal;font-size:13.5px;}
+  ul,ol{margin:8px 0;padding-left:22px;color:var(--ink-2);}
+  li{margin:4px 0;}
+  li::marker{color:#b3ada2;}
+  code{
+    background:var(--code);padding:1.5px 5px;border-radius:4px;font-size:13px;
+    font-family:"JetBrains Mono","Cascadia Code",Consolas,monospace;color:#9a3412;
+    border:1px solid #ece8e1;
+  }
+  blockquote{
+    margin:14px 0;padding:12px 16px;background:#fdfaf6;border-left:3px solid #e0b48f;
+    border-radius:0 8px 8px 0;color:var(--ink-2);
+  }
+  blockquote p{margin:4px 0;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;}
+  th{background:#faf8f4;font-weight:650;color:var(--ink);white-space:nowrap;}
+  td{color:var(--ink-2);}
+  hr{border:none;border-top:1px dashed var(--line);margin:34px 0;}
+  a{color:var(--blue);}
+  /* 参考答案块 */
+  .ans{
+    margin:16px 0 6px;padding:14px 18px;border-radius:10px;
+    background:linear-gradient(180deg,#f4f8ff,#fbfcff);
+    border:1px solid #d9e4f7;border-left:4px solid #1d4ed8;
+  }
+  .ans > p:first-child{margin:0 0 8px;}
+  .ans .ah{
+    display:inline-block;font-size:13.5px;font-weight:700;color:#1d4ed8;
+    background:#e5edff;padding:2px 9px;border-radius:5px;letter-spacing:.01em;
+  }
+  .ans blockquote{
+    margin:6px 0;padding:8px 13px;background:transparent;border-left:2px solid #c7d7f5;
+    border-radius:0 6px 6px 0;color:var(--ink-2);
+  }
+  .ans .ask{
+    margin:12px 0 4px;font-size:13.5px;font-weight:700;color:#b45309;
+  }
+  .ans ul{margin:4px 0;padding-left:20px;}
+  .ans li{margin:5px 0;font-size:14px;line-height:1.75;}
+  .ans li strong{color:#7c4a03;}
+  .ans code{background:#eef3ff;border-color:#dde7fb;color:#1d4ed8;}
+  @media(max-width:1180px){
+    .ans{padding:12px 13px;}
+  }
+  /* 返回顶部 */
+  #top{
+    position:fixed;right:28px;bottom:28px;width:42px;height:42px;border-radius:50%;
+    background:#fff;border:1px solid var(--line);color:var(--ink-2);font-size:16px;cursor:pointer;
+    display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px #00000012;
+  }
+  #top:hover{border-color:#c2410c66;color:var(--accent);}
+  #meta{position:fixed;right:28px;bottom:80px;font-size:11px;color:#b3ada2;letter-spacing:.04em;}
+  /* 返回首页 */
+  #home{
+    position:fixed;right:28px;top:16px;z-index:70;display:flex;align-items:center;gap:6px;
+    height:36px;padding:0 15px;border-radius:18px;background:#fff;border:1px solid var(--line);
+    color:var(--ink-2);font-size:13px;text-decoration:none;box-shadow:0 3px 14px #0000000f;
+    font-family:inherit;
+  }
+  #home:hover{border-color:#c2410c66;color:var(--accent);background:#fdf7f3;}
+  @media(max-width:1180px){
+    #home{right:16px;top:16px;height:34px;padding:0 13px;font-size:12.5px;}
+  }
+  @media(max-width:1180px){
+    aside{transform:translateX(-100%);transition:transform .22s;}
+    aside.show{transform:none;}
+    main{margin-left:0;padding:40px 20px 100px;}
+    article{padding:30px 24px 40px;}
+    #menu{display:flex !important;}
+  }
+  #menu{display:none;position:fixed;left:16px;top:16px;z-index:60;width:40px;height:40px;
+    background:#fff;border:1px solid var(--line);border-radius:10px;align-items:center;justify-content:center;
+    font-size:16px;cursor:pointer;box-shadow:0 2px 10px #00000010;}
+  /* 点词发音 */
+  .say{cursor:pointer;border-radius:3px;transition:background .12s,color .12s;}
+  .say:hover{background:var(--blue-soft);color:var(--blue);}
+  .say.speaking{background:#ffe9a8;color:#7c4a03;box-shadow:0 0 0 2px #ffe9a8;}
+  #tts{position:fixed;right:28px;bottom:132px;z-index:70;font-family:inherit;}
+  #ttsBtn{
+    width:42px;height:42px;border-radius:50%;background:#fff;border:1px solid var(--line);
+    font-size:16px;cursor:pointer;box-shadow:0 4px 16px #00000012;display:flex;align-items:center;justify-content:center;
+  }
+  #ttsBtn:hover{border-color:#1d4ed866;background:var(--blue-soft);}
+  #ttsBtn.on{background:var(--blue);border-color:var(--blue);}
+  #ttsPanel{
+    display:none;position:absolute;right:0;bottom:52px;width:246px;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:14px 16px;box-shadow:0 12px 40px -12px #00000033;font-size:12.5px;color:var(--ink-2);
+  }
+  #ttsPanel.show{display:block;}
+  #ttsPanel label{display:block;margin-bottom:10px;}
+  #ttsPanel label:last-of-type{margin-bottom:8px;}
+  #ttsPanel select,#ttsPanel input[type=range]{width:100%;margin-top:4px;font-family:inherit;font-size:12px;}
+  #ttsPanel select{padding:5px;border:1px solid var(--line);border-radius:6px;background:#fff;outline:none;}
+  #ttsPanel .rv{float:right;color:var(--accent);font-weight:700;}
+  #ttsPanel .hint{font-size:11.5px;color:#9aa0aa;line-height:1.6;margin-top:2px;border-top:1px dashed var(--line);padding-top:8px;}
+  #ttsPanel .hint b{color:var(--ink-2);}
+  #toast{
+    position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);z-index:80;
+    background:#15181d;color:#fff;font-size:13px;padding:10px 20px;border-radius:24px;
+    box-shadow:0 10px 30px -8px #00000055;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
+    white-space:nowrap;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media(max-width:1180px){
+    #tts{bottom:96px;right:20px;}
+  }
+  @media print{
+    aside,#bar,#top,#menu,#tts,#toast,#home{display:none !important;}
+    main{margin:0;padding:0;}
+    article{border:none;box-shadow:none;padding:0;max-width:none;}
+    body{background:#fff;}
+  }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<a id="home" href="index.html" title="返回首页">🏠 首页</a>
+<button id="menu">☰</button>
+<aside>
+  <div class="brand">
+    <h1>我的 Java 面试笔记（原稿整理版）</h1>
+    <p>原始手稿 · 68 道题 · 10 个模块</p>
+  </div>
+  <div class="search"><input id="q" type="search" placeholder="搜索题目 / 关键词…" autocomplete="off"></div>
+  <nav id="nav"><div class="nav-group" data-text="一、Java 基础"><a class="nav-sec" href="#sec-1"><span class="nav-idx">01</span><span>一、Java 基础</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-1" data-text="Q1 ==和equals的区别">Q1 ==和equals的区别</a>
+<a class="nav-q" href="#q-2" data-text="Q2 final finalize finally">Q2 final finalize finally</a>
+<a class="nav-q" href="#q-3" data-text="Q3 面向对象的三大特征">Q3 面向对象的三大特征</a>
+</div>
+</div>
+<div class="nav-group" data-text="二、集合框架"><a class="nav-sec" href="#sec-2"><span class="nav-idx">02</span><span>二、集合框架</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-4" data-text="Q4 容器介绍">Q4 容器介绍</a>
+<a class="nav-q" href="#q-5" data-text="Q5 转换成文字">Q5 转换成文字</a>
+<a class="nav-q" href="#q-6" data-text="Q6 ArrayList如何可变的？ArrayList底层的数组是怎么变长的？">Q6 ArrayList如何可变的？ArrayList底层的数组是怎么变长的？</a>
+<a class="nav-q" href="#q-7" data-text="Q7 ArrayList 和LinkedList区别？">Q7 ArrayList 和LinkedList区别？</a>
+<a class="nav-q" href="#q-8" data-text="Q8 HashMap底层原理？（特别常见面试问题）">Q8 HashMap底层原理？（特别常见面试问题）</a>
+<a class="nav-q" href="#q-9" data-text="Q9 Java 7 和Java 8 的HashMap区别？">Q9 Java 7 和Java 8 的HashMap区别？</a>
+<a class="nav-q" href="#q-10" data-text="Q10 Vector和ArrayList的区别？">Q10 Vector和ArrayList的区别？</a>
+<a class="nav-q" href="#q-11" data-text="Q11 HashMap和HashTable的区别？">Q11 HashMap和HashTable的区别？</a>
+<a class="nav-q" href="#q-12" data-text="Q12 什么是JUC？">Q12 什么是JUC？</a>
+<a class="nav-q" href="#q-13" data-text="Q13 ConcurrentHashMap的底层原理？ConcurrentHashMap如何保证的线程安全？">Q13 ConcurrentHashMap的底层原理？ConcurrentHashMap如何保证的线程安全？</a>
+<a class="nav-q" href="#q-14" data-text="Q14 什么是重入锁？Java 通过如何实现的重入锁？（外包公司常见）">Q14 什么是重入锁？Java 通过如何实现的重入锁？（外包公司常见）</a>
+<a class="nav-q" href="#q-15" data-text="Q15 请介绍下什么是红黑树？（外包公司）">Q15 请介绍下什么是红黑树？（外包公司）</a>
+</div>
+</div>
+<div class="nav-group" data-text="三、多线程、并发与事务"><a class="nav-sec" href="#sec-3"><span class="nav-idx">03</span><span>三、多线程、并发与事务</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-16" data-text="Q16 请说一下什么是ACID/请说一下事务的四大基本原则？">Q16 请说一下什么是ACID/请说一下事务的四大基本原则？</a>
+<a class="nav-q" href="#q-17" data-text="Q17 什么是Hash碰撞？如何解决Hash碰撞？（常见面试题）">Q17 什么是Hash碰撞？如何解决Hash碰撞？（常见面试题）</a>
+<a class="nav-q" href="#q-18" data-text="Q18 线程生命周期（常见面试题）">Q18 线程生命周期（常见面试题）</a>
+<a class="nav-q" href="#q-19" data-text="Q19 wait()和sleep()的区别(经典面试题)">Q19 wait()和sleep()的区别(经典面试题)</a>
+<a class="nav-q" href="#q-20" data-text="Q20 创建线程的几种方式（较常见面试题）">Q20 创建线程的几种方式（较常见面试题）</a>
+<a class="nav-q" href="#q-21" data-text="Q21 线程池常用参数？（外包公司）">Q21 线程池常用参数？（外包公司）</a>
+<a class="nav-q" href="#q-22" data-text="Q22 线程池拒绝策略？（最近面试问的频率较高）">Q22 线程池拒绝策略？（最近面试问的频率较高）</a>
+<a class="nav-q" href="#q-23" data-text="Q23 lock和synchronized的区别（常见面试题）（至少记住4点，必须记住两点必须被包含）">Q23 lock和synchronized的区别（常见面试题）（至少记住4点，必须记住两点必须被包含）</a>
+<a class="nav-q" href="#q-24" data-text="Q24 了解：synchronized底层原理。">Q24 了解：synchronized底层原理。</a>
+</div>
+</div>
+<div class="nav-group" data-text="四、网络协议、JVM 与杂项高频题"><a class="nav-sec" href="#sec-4"><span class="nav-idx">04</span><span>四、网络协议、JVM 与杂项高频题</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-25" data-text="Q25 OSI七层模型(开放式系统互联通信参考模型)（面试题）">Q25 OSI七层模型(开放式系统互联通信参考模型)（面试题）</a>
+<a class="nav-q" href="#q-26" data-text="Q26 TCP/IP协议集四层模型（面试题）">Q26 TCP/IP协议集四层模型（面试题）</a>
+<a class="nav-q" href="#q-27" data-text="Q27 TCP和UDP的区别？">Q27 TCP和UDP的区别？</a>
+<a class="nav-q" href="#q-28" data-text="Q28 TCP三次握手建立连接流程（面试题）">Q28 TCP三次握手建立连接流程（面试题）</a>
+<a class="nav-q" href="#q-29" data-text="Q29 TCP四次挥手断开连接的流程（面试题）">Q29 TCP四次挥手断开连接的流程（面试题）</a>
+<a class="nav-q" href="#q-30" data-text="Q30 String、StringBuffer、StringBuilder的区别？（）">Q30 String、StringBuffer、StringBuilder的区别？（）</a>
+<a class="nav-q" href="#q-31" data-text="Q31 乐观锁和悲观锁？">Q31 乐观锁和悲观锁？</a>
+<a class="nav-q" href="#q-32" data-text="Q32 Java8新特性?（常见面试题）">Q32 Java8新特性?（常见面试题）</a>
+<a class="nav-q" href="#q-33" data-text="Q33 BIO、NIO、AIO的区别？（面试题）">Q33 BIO、NIO、AIO的区别？（面试题）</a>
+<a class="nav-q" href="#q-34" data-text="Q34 CAS？">Q34 CAS？</a>
+<a class="nav-q" href="#q-35" data-text="Q35 JVM内存结构？（特别常见面试题）">Q35 JVM内存结构？（特别常见面试题）</a>
+<a class="nav-q" href="#q-36" data-text="Q36 GC分类/GC的种类/ JVM支持的垃圾回收有几种？">Q36 GC分类/GC的种类/ JVM支持的垃圾回收有几种？</a>
+<a class="nav-q" href="#q-37" data-text="Q37 GC算法有几种？">Q37 GC算法有几种？</a>
+</div>
+</div>
+<div class="nav-group" data-text="五、JavaWeb 基础"><a class="nav-sec" href="#sec-5"><span class="nav-idx">05</span><span>五、JavaWeb 基础</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-38" data-text="Q38 JSP九大内置对象？">Q38 JSP九大内置对象？</a>
+<a class="nav-q" href="#q-39" data-text="Q39 四大作用域？">Q39 四大作用域？</a>
+<a class="nav-q" href="#q-40" data-text="Q40 Session和Cookie的区别？">Q40 Session和Cookie的区别？</a>
+</div>
+</div>
+<div class="nav-group" data-text="六、Spring 全家桶（Spring / MVC / MyBatis / Boot）"><a class="nav-sec" href="#sec-6"><span class="nav-idx">06</span><span>六、Spring 全家桶（Spring / MVC / MyBatis / Boot）</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-41" data-text="Q41 IoC/DI（常见面试题）">Q41 IoC/DI（常见面试题）</a>
+<a class="nav-q" href="#q-42" data-text="Q42 Spring注入有几种方式？（较常见面试题）">Q42 Spring注入有几种方式？（较常见面试题）</a>
+<a class="nav-q" href="#q-43" data-text="Q43 &amp;lt;bean&amp;gt;标签scope可取值？">Q43 &lt;bean&gt;标签scope可取值？</a>
+<a class="nav-q" href="#q-44" data-text="Q44 AOP？（常见面试题）">Q44 AOP？（常见面试题）</a>
+<a class="nav-q" href="#q-45" data-text="Q45 通知有几种类型？">Q45 通知有几种类型？</a>
+<a class="nav-q" href="#q-46" data-text="Q46 你的项目中哪里使用了AOP/你是否自己写了AOP（偶尔出现的面试题）">Q46 你的项目中哪里使用了AOP/你是否自己写了AOP（偶尔出现的面试题）</a>
+<a class="nav-q" href="#q-47" data-text="Q47 什么是声明式事务？">Q47 什么是声明式事务？</a>
+<a class="nav-q" href="#q-48" data-text="Q48 配置声明式事务时，如何配置事务传播行为？/ 请说一下Spring支持的事务传播行为">Q48 配置声明式事务时，如何配置事务传播行为？/ 请说一下Spring支持的事务传播行为</a>
+<a class="nav-q" href="#q-49" data-text="Q49 配置声明式事务时，如何配置事务隔离级别？/ 请说一下Spring支持的事务隔离行为">Q49 配置声明式事务时，如何配置事务隔离级别？/ 请说一下Spring支持的事务隔离行为</a>
+<a class="nav-q" href="#q-50" data-text="Q50 SpringMVC 运行原理？">Q50 SpringMVC 运行原理？</a>
+<a class="nav-q" href="#q-51" data-text="Q51 SpringMVC常用注解">Q51 SpringMVC常用注解</a>
+<a class="nav-q" href="#q-52" data-text="Q52 Filter和Interceptor的区别？/ 过滤器和拦截器的区别（经典面试题，目前出现频率不高）">Q52 Filter和Interceptor的区别？/ 过滤器和拦截器的区别（经典面试题，目前出现频率不高）</a>
+<a class="nav-q" href="#q-53" data-text="Q53 请说一下MyBatis如何处理查询结果？resultMap？">Q53 请说一下MyBatis如何处理查询结果？resultMap？</a>
+<a class="nav-q" href="#q-54" data-text="Q54 Spring Boot中配置文件加载顺序。">Q54 Spring Boot中配置文件加载顺序。</a>
+<a class="nav-q" href="#q-55" data-text="Q55 Spring Boot 原理？ Spring Boot执行流程？">Q55 Spring Boot 原理？ Spring Boot执行流程？</a>
+</div>
+</div>
+<div class="nav-group" data-text="七、Linux 常用命令"><a class="nav-sec" href="#sec-7"><span class="nav-idx">07</span><span>七、Linux 常用命令</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-56" data-text="Q56 Linux 常用命令？（面试的笔试部分出现频率较高）">Q56 Linux 常用命令？（面试的笔试部分出现频率较高）</a>
+</div>
+</div>
+<div class="nav-group" data-text="八、Redis"><a class="nav-sec" href="#sec-8"><span class="nav-idx">08</span><span>八、Redis</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-57" data-text="Q57 Redis 支持的数据类型（常见面试题）">Q57 Redis 支持的数据类型（常见面试题）</a>
+<a class="nav-q" href="#q-58" data-text="Q58 Redis持久化策略（常见面试题）">Q58 Redis持久化策略（常见面试题）</a>
+<a class="nav-q" href="#q-59" data-text="Q59 缓存穿透（特别常见面试题）">Q59 缓存穿透（特别常见面试题）</a>
+<a class="nav-q" href="#q-60" data-text="Q60 布隆过滤器">Q60 布隆过滤器</a>
+<a class="nav-q" href="#q-61" data-text="Q61 缓存击穿（特别常见面试题）">Q61 缓存击穿（特别常见面试题）</a>
+<a class="nav-q" href="#q-62" data-text="Q62 缓存雪崩（特别常见面试题）">Q62 缓存雪崩（特别常见面试题）</a>
+<a class="nav-q" href="#q-63" data-text="Q63 淘汰策略">Q63 淘汰策略</a>
+</div>
+</div>
+<div class="nav-group" data-text="九、Spring Cloud"><a class="nav-sec" href="#sec-9"><span class="nav-idx">09</span><span>九、Spring Cloud</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-64" data-text="Q64 请介绍一下Spring Cloud常用组件？">Q64 请介绍一下Spring Cloud常用组件？</a>
+</div>
+</div>
+<div class="nav-group" data-text="十、MySQL"><a class="nav-sec" href="#sec-10"><span class="nav-idx">10</span><span>十、MySQL</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-65" data-text="Q65 MySQL优化（常见面试题）、索引优化、SQL优化">Q65 MySQL优化（常见面试题）、索引优化、SQL优化</a>
+<a class="nav-q" href="#q-66" data-text="Q66 MySQL索引分类">Q66 MySQL索引分类</a>
+<a class="nav-q" href="#q-67" data-text="Q67 聚集索引和非聚集索引">Q67 聚集索引和非聚集索引</a>
+<a class="nav-q" href="#q-68" data-text="Q68 MySQ存储引擎">Q68 MySQ存储引擎</a>
+</div>
+</div></nav>
+</aside>
+<main><article><h1 id="doc-title">我的 Java 面试笔记（原稿整理版）</h1>
+<blockquote>
+<p>这是早年自己手写整理的一份笔记，原样搬成网页版，方便手机随时翻。
+里面是<strong>第一遍学习时记的原始要点</strong>，措辞和编号都保留了原样（只做了排版整理）。
+想看的更细、更接近现在面试口径的版本，去看《6 年 Java 后端面试题库》。</p>
+</blockquote>
+<hr />
+<h2 id="sec-1" class="sec-title">一、Java 基础</h2>
+<h3 id="q-1" class="q-title">Q1 ==和equals的区别</h3>
+<p>==:</p>
+<ul>
+<li>① 基本类型，则比较的是基本类型中存储的数值是否相同。相同则返回true，不同则返回false;</li>
+<li>② 引用类型，则比较的两个引用类型的地址，地址相同，则返回true，地址不同则返回false。</li>
+</ul>
+<p>equals:</p>
+<ul>
+<li>作用：比较两个引用类型的内容是否相等的。</li>
+<li>注意：在自己的模板中需要对equals方法进行重写，因为从Object继承的equals方法底层使用的==比较。</li>
+</ul>
+<p>使用场景:</p>
+<ul>
+<li>① 基本类数据比较使用==</li>
+<li>② 如果引用类型比较内容是否相等，则调用其自己的equals方法</li>
+<li>③ 如果比较两个引用类型是否是同一个对象，则使用==;</li>
+</ul>
+<h3 id="q-2" class="q-title">Q2 final finalize finally</h3>
+<p>final修饰不可变 修饰的class不可以继续扩展继承，方法不可以重写， 变量不可以修改</p>
+<p>finally，异常总被执行的</p>
+<p>finalize objecct里面的关键字，一个方法，用于在对象消失时，由jvm进行调用用于对对象进行垃圾回收</p>
+<p>在垃圾收集器执行的时候会调用被回收对象的此方法，供垃圾收集时的其他资源回收，比如关闭文件</p>
+<h3 id="q-3" class="q-title">Q3 面向对象的三大特征</h3>
+<ul>
+<li>封装，继承，多态</li>
+<li>继承， 是子对象可以继承父对象的属性和行为，就是父对象拥有的属性</li>
+<li>多态，允许不同类的对象对同一消息作出响应</li>
+</ul>
+<h2 id="sec-2" class="sec-title">二、集合框架</h2>
+<h3 id="q-4" class="q-title">Q4 容器介绍</h3>
+<pre><code class="language-text">
+   Collection
+   List(有序可重复)   Set（无序不可重复）
+ArrayList（可变长度数组）   LinkedList（链表）  Vector（线程安全的可变长度数组）   HashSet（HashMap，key存储值，value是new Object）  TreeSet（TreeMap）
+
+   Map（Key-Value类型）
+HashMap（哈希表）   Treemap（红黑树）   HashTable（哈希表）
+
+</code></pre>
+<h3 id="q-5" class="q-title">Q5 转换成文字</h3>
+<p>问题：请介绍一下集合、请介绍一下你知道的容器、请介绍一下集合的继承结构？</p>
+<p>集合中分为两大类。一个是Collection接口和Map接口。</p>
+<p>Collection接口的子接口有List接口存储有序可重复数据和Set接口存储无序不可重复数据。</p>
+<p>List接口常用实现类有ArrayList可变长度数组和LinkedList链表结构和线程安全的可变长度数组Vector</p>
+<p>Set接口常用实现类有HashSet和TreeSet，HashSet底层是HashMap，HashSet中的值作为HashMap的key，new Object作为HashMap的value。TreeSet底层是TreeMap，TreeSet中的值作为TreeMap的key，new Object作为TreeMap的value。</p>
+<p>另一大类Map存储的是key-value类型，常用实现类有HashMap哈希表、Treemap红黑树、HashTable。</p>
+<p>从Java5以后推出JUC包含了一些线程安全的容器。如：ConcurrentHashMap等。</p>
+<p>衍生出来的问题：</p>
+<h3 id="q-6" class="q-title">Q6 ArrayList如何可变的？ArrayList底层的数组是怎么变长的？</h3>
+<p>答：当元素个数超过ArrayList的长度时，使用Arrays.copyOf把原数组长度扩大1/2，放到一个新的数组。</p>
+<h3 id="q-7" class="q-title">Q7 ArrayList 和LinkedList区别？</h3>
+<p>ArrayList适合做查询操作。因为是内存的一块连续空间。</p>
+<p>LinkedList适合做新增和删除。因为底层是链表结构。</p>
+<h3 id="q-8" class="q-title">Q8 HashMap底层原理？（特别常见面试问题）</h3>
+<ul>
+<li>答：从Java8开始HashMap底层由数组+链表变成数组+链表+红黑树。</li>
+</ul>
+<p>使用HashMap时，当使用无参构造方法实例化时，设置扩容因子为默认扩容因子0.75。</p>
+<p>当向HashMap添加内容时，会对Key做Hash计算，把得到的值对Hash表长度取余，定位到Hash的位置。把内容添加到对应的链表或红黑树中。</p>
+<p>如果添加后链表长度大于等于8，会判断Hash表长度是否大于64，如果小于64对Hash扩容，扩容长度为原长度的2倍，扩容后把原Hash表内容重新放入到新Hash表中。如果Hash长度大于等于64会把链表转换红黑树。</p>
+<p>最终判断HashMap中元素个数是否已经达到扩容值(threshold)，如果达到扩容值，需要进行扩容，扩容一倍。</p>
+<p>反之，如果删除元素后，红黑树的元素个数小于6，由红黑树转换为链表。</p>
+<h3 id="q-9" class="q-title">Q9 Java 7 和Java 8 的HashMap区别？</h3>
+<ul>
+<li>Java 7 数组+链表  java 8 数组+链表+红黑树</li>
+<li>Java 7 链表数据尾插法。新增数据放在链表的最后。  Java 8 链表数据头插法。新增数据放入到链表的第一个位置</li>
+</ul>
+<h3 id="q-10" class="q-title">Q10 Vector和ArrayList的区别？</h3>
+<p>答：Vector大部分方法都使用synchronized关键字修饰，是线程安全的。在多线程下性能要低于ArrayList。</p>
+<h3 id="q-11" class="q-title">Q11 HashMap和HashTable的区别？</h3>
+<p>答：Hashtable 是线程安全的，HashTable不允许key为null，HashMap允许key为null。</p>
+<h3 id="q-12" class="q-title">Q12 什么是JUC？</h3>
+<p>答：从java5推出的一个包，java.util.concurrent包。里面所有内容统称JUC。</p>
+<p>JUC包含五大功能：原子类、Lock、并发集合、工具类、线程池。</p>
+<h3 id="q-13" class="q-title">Q13 ConcurrentHashMap的底层原理？ConcurrentHashMap如何保证的线程安全？</h3>
+<p>答：通过synchronized和cas算法实现的线程安全。</p>
+<p>java 7 和java 8 中Concurrent HashMap的区别？</p>
+<ul>
+<li>使用synchronized代替Segment分段锁，实现更加简单。</li>
+<li>Java8中HaspMap是链表+红黑树，java7中长链表，查询效率更快了。</li>
+<li>使用synchronized代替ReentrantLock，在锁竞争不激烈情况下，性能相差不大。</li>
+</ul>
+<h3 id="q-14" class="q-title">Q14 什么是重入锁？Java 通过如何实现的重入锁？（外包公司常见）</h3>
+<p>重入：在线程中如果锁已经被其他人持有，是否能够再次获取到锁。如果能够再次获取叫做重入锁，如果不能再次获取叫做非重入锁。</p>
+<p>通过ReentrantLock实现的重入锁。</p>
+<h3 id="q-15" class="q-title">Q15 请介绍下什么是红黑树？（外包公司）</h3>
+<p>前提条件：必须是二叉查找树（不为空的情况下，左边必须比根节点小，右边必须大）</p>
+<ul>
+<li>所有节点必须是红色或黑色</li>
+<li>根节点必须是黑色</li>
+<li>所有叶子节点必须是黑色。</li>
+<li>红色节点下面必须是两个黑色节点。</li>
+<li>任意节点到达叶子节点所包含的黑色节点数量是一样的。</li>
+</ul>
+<h2 id="sec-3" class="sec-title">三、多线程、并发与事务</h2>
+<h3 id="q-16" class="q-title">Q16 请说一下什么是ACID/请说一下事务的四大基本原则？</h3>
+<p>ACID：A是原子性：要不就成功，要不就失败。  C：一致性：数据操作是一致的。  I：隔离性。数据库的隔离级别  D：持久性。数据操作结果持久保存。</p>
+<h3 id="q-17" class="q-title">Q17 什么是Hash碰撞？如何解决Hash碰撞？（常见面试题）</h3>
+<p>Hash碰撞：不同的内容得到相同的Hash结果。</p>
+<p>解决办法：</p>
+<ul>
+<li>链式地址法。Hash表中存储链表头地址。当碰撞后，存储到对应链表中。</li>
+<li>开放定址法。碰撞后，定位到下一个Hash表位置。</li>
+<li>再次Hash法。如果碰撞，对结果再次Hash计算。</li>
+<li>公共溢出区。除Hash表外，额外建立溢出区，碰撞后放入到溢出区。</li>
+</ul>
+<h3 id="q-18" class="q-title">Q18 线程生命周期（常见面试题）</h3>
+<p>线程分为五种状态：新建状态、就绪状态、运行状态、阻塞状态、死亡状态。</p>
+<p>当新建线程对象时，线程处于新建状态。线程对象调用start()方法后线程切换为就绪状态。就绪状态是临时状态，只要线程获取到CPU执行权限，会自动切换为运行状态。</p>
+<p>处于运行状态的线程分为多种情况：</p>
+<ul>
+<li>如果运行时使用线程对象调用yield()，切换状态为就绪状态。如果就绪状态的线程能获取到CPU权限，自动切换为运行状态。</li>
+<li>如果运行时使用Thread.sleep()使线程休眠，线程会切换为阻塞状态。休眠时间结束后，自动切换为就绪状态。</li>
+<li>如果运行时使用suspend()暂停线程，线程会切换阻塞状态。等待调用resume()后才能切换为就绪状态。如果一直不调用resume(),可能出现死锁问题，因为suspend()不释放锁。</li>
+<li>如果运行时使用wait()暂停线程，线程会切换为阻塞状态。调用notify()/notifyAll()或超出wait()最大等待时间，线程会切换为就绪状态。因为wait会释放锁，所以不用担心死锁问题。</li>
+<li>如果运行时使用join()把其他线程加入到当前线程，会把当前线程挂起，切换为阻塞状态。等待加入的线程执行完成，自动切换为就绪状态。</li>
+<li>如果运行时使用stop()强制停止，线程会立即停止，线程切换为死亡状态。</li>
+<li>如果线程成功运行结束，切换为死亡状态。</li>
+<li>如果线程运行中出现Exception或Error，且没有处理，线程切换为死亡状态。</li>
+</ul>
+<p>为了防止线程长时间处于阻塞状态。可以使用interrput()中断线程。中断后会抛出InterrupedException。</p>
+<h3 id="q-19" class="q-title">Q19 wait()和sleep()的区别(经典面试题)</h3>
+<ul>
+<li>所属类不同。wait() 是Object中方法。sleep()是Thread的方法。</li>
+<li>唤醒机制不同。wait() 在没有设置最大时间情况下，必须等待notify。sleep是到指定时间自动唤醒。</li>
+<li>使用位置不同。wait()必须持有对象锁。sleep()可以使用在任意地方。</li>
+<li>方法类型不同。wait()是实例方法。sleep()是静态方法。</li>
+<li>锁机制不同。wait()释放锁。sleep()只是让线程休眠，不会释放锁。</li>
+</ul>
+<h3 id="q-20" class="q-title">Q20 创建线程的几种方式（较常见面试题）</h3>
+<ul>
+<li>继承Thread类</li>
+<li>实现Runnable接口</li>
+<li>实现Callable接口</li>
+</ul>
+<h3 id="q-21" class="q-title">Q21 线程池常用参数？（外包公司）</h3>
+<ul>
+<li>corePoolSize：核心线程数。</li>
+<li>maximumPoolSize：最大线程数。</li>
+<li>queueCapacity:队列最大长度</li>
+<li>keepAliveTime：最大空闲时间</li>
+<li>allowCoreThreadTimeOut：核心线程是否允许超时回收</li>
+<li>hanlder：拒绝策略</li>
+<li>workQueue：队列类型</li>
+</ul>
+<h3 id="q-22" class="q-title">Q22 线程池拒绝策略？（最近面试问的频率较高）</h3>
+<ul>
+<li>先要明白什么时候拒绝（已经到达最大线程数，队列也满了。还要获取线程对象时，启用拒绝策略）</li>
+<li>AbortPolicy：拒绝任务，抛出RejectedExecutionException异常</li>
+<li>DiscardPolicy：拒绝任务，不抛异常。</li>
+<li>DiscardOldestPolicy：去掉队列中最前面任务，把当前任务提交进去。</li>
+<li>CallerRunsPolicy：哪个线程提交任务，哪个线程处理。</li>
+</ul>
+<p>只有在队列已满且线程数到达maximunPoolSize会触发决绝策略。</p>
+<h3 id="q-23" class="q-title">Q23 lock和synchronized的区别（常见面试题）（至少记住4点，必须记住两点必须被包含）</h3>
+<ul>
+<li>类型不同。synchronized是关键字，Lock是接口</li>
+<li>（必须记）加锁和解锁机制同步不同。synchronized是自动加锁和解锁，程序员不需要控制。Lock必须由程序员控制加锁和解锁过程</li>
+<li>异常机制不同。synchronized碰到没有处理的异常，会自动解锁，不会出现死锁。Lock碰到异常不会自动解锁，可能出现死锁。所以写Lock锁时都是把解锁放入到finally中。</li>
+<li>Lock功能更强大。Lock里面提供了tryLock()/isLocked()方法，进行判断是否上锁成功。synchronized因为是关键字，所以无法判断。</li>
+<li>（必须记）Lock性能更优。如果多线程竞争锁特别激烈时，Lock的性能更优。如果竞争不激烈，性能相差不大。</li>
+<li>线程通信方式不同。synchronized 使用wait和notify线程通信。Lock使用Condition的awake和signal通信。</li>
+<li>暂停和恢复方式不同。synchronized 使用suspend和resume暂停和恢复，这俩方法过时了。Lock使用LockSupport中park和unpark暂停和恢复，这俩方法没有过时。</li>
+</ul>
+<h3 id="q-24" class="q-title">Q24 了解：synchronized底层原理。</h3>
+<p>在Java早期，synchronized叫做重量级锁，加锁过程需要操作系统在内核态访问核心资源，因此操作系统会在用户态与内核态之间切换，效率很低下。于是JDK1.6之后，JVM为了提高锁的获取与释放效率，对synchronized进行了优化，引入了偏向锁和轻量级锁，根据线程竞争情况对锁进行升级，在线程竞争不激烈的情况避免使用重量级锁。</p>
+<p>无锁：对象头中有31bit的空间来存储对象的hashcode，4bit用于存放对象分代年龄，1bit来表示是否是偏向锁，2bit存放锁标志位，偏向锁位与锁标志位合起来“001”就代表无锁。无锁就是没有对任何资源进行锁定，所有线程都能访问并修改资源。</p>
+<p>偏向锁：对象头中记录了获得偏向锁的线程ID，偏向锁与锁标志位合起来“101”就代表偏向锁。有研究发现，在大多数情况下，锁很少被多个线程同时竞争，而且总是由同一个线程多次获得，因此只需要将获得锁的线程ID写入到锁对象Mark Word中，相当于告诉其他线程，这块资源已经被我占了。当线程访问资源结束后，不会主动释放偏向锁，当线程再次需要访问资源时，JVM就会通过Mark Word中记录的线程ID判断是否是当前线程，如果是，则继续访问资源。所以，在没有其他线程参与竞争时，锁就一直偏向被当前线程持有，当前线程就可以一直占用资源或者执行代码。</p>
+<p>自旋锁（轻量级锁）：一旦有另外一个线程参与锁竞争，偏向锁就会升级为自旋锁，此时撤销偏向锁，锁标志位变为“00”。竞争的两个线程都在各自的线程栈帧中生成一个Lock Record空间，用于存储锁对象目前Mark Word的拷贝，用CAS操作将Mark Word设置为指向自己这个线程的LR（Lock Record）指针，设置成功者获得锁，其他参与竞争的线程如果未获取到锁，则会一直处于自旋等待的状态，直到竞争到锁。</p>
+<p>重量级锁：长时间的自旋操作是很消耗CPU资源的，为了避免这种盲目的消耗，JVM会在有线程超过10次自旋，或者自旋次数超过CPU核数的一半（JDK1.6以后加入了自适应自旋-Adaptive Self Spinning，由JVM自己控制自旋次数）时，会升级到重量级锁。重量级锁底层是依赖操作系统的mutex互斥锁，也就是有操作系统来负责线程间的调度。重量级锁减少了自旋锁带来的CPU消耗，但是由于操作系统调度线程带来的线程阻塞会使程序响应速度变慢。</p>
+<p>在markword中标记锁的类型</p>
+<p>普通对象在内存中的结构分为多部分，第一部分称为markword，共64位。在对应锁对象的markword字段的低位字段标记锁的类型。</p>
+<h2 id="sec-4" class="sec-title">四、网络协议、JVM 与杂项高频题</h2>
+<h3 id="q-25" class="q-title">Q25 OSI七层模型(开放式系统互联通信参考模型)（面试题）</h3>
+<ul>
+<li>应用层。给操作系统、应用提供接口的。HTTP、FTP</li>
+<li>表示层。把用户数据转换为OSI语法。</li>
+<li>会话层。管理会话。</li>
+<li>传输层。数据传输标准。TCP、UDP</li>
+<li>网络层。挑选合适链路。IP</li>
+<li>数据链路层。传输前检查，纠正等。</li>
+<li>物理层。定义传输介质标准。</li>
+</ul>
+<h3 id="q-26" class="q-title">Q26 TCP/IP协议集四层模型（面试题）</h3>
+<p>为了简化OSI，更适合商用。</p>
+<ul>
+<li>应用层。合并了OSI的应用层，表示层，会话层。主要实现给系统或应用提供接口、数据转换、会话管理等。</li>
+<li>传输层。数据传输标准。</li>
+<li>网络层。挑选合适链路。</li>
+<li>网络接口层或网路链路层。合并了OSI数据链路层、物理层。实现数据向传输介质的传递和接收以及检查和纠正。</li>
+</ul>
+<h3 id="q-27" class="q-title">Q27 TCP和UDP的区别？</h3>
+<ul>
+<li>连接方式不同。TCP需要建立连接。UDP是无连接的。</li>
+<li>数据完整性不同。TCP是可靠的。UDP是不保证数据完整性的。</li>
+<li>数据内容类型不同。TCP是字节流。UDP是报文，即对字节数据的再次封装。</li>
+<li>可接收目标主机数量不同。TCP是标准的点对点。UDP可以是一对一，一对多，多对多数据传输。</li>
+<li>首部开销不同。TCP首部开销20字节。UDP首部开销8字节。</li>
+<li>传输效率不同。UDP要比TCP传输效率更高。</li>
+</ul>
+<h3 id="q-28" class="q-title">Q28 TCP三次握手建立连接流程（面试题）</h3>
+<p>第一次握手：客户端向服务器端发送消息，包含SYN=1希望创建连接，和Seq=X的序列值。</p>
+<p>第二次握手：服务端向客户端发送消息，包含SYN=1表示连接，和ACK=X+1表示接收到了连接的请求，和Seq=Y重列序列值。表示同意建立连接。</p>
+<p>第三次握手：客户端向服务端发送消息。包含ACK=Y+1接收到服务端同意答复，Seq=Z重置序列值。</p>
+<p>之后建立上连接了。</p>
+<h3 id="q-29" class="q-title">Q29 TCP四次挥手断开连接的流程（面试题）</h3>
+<p>第一次挥手：主动方向被动方发送消息。包含Fin=1希望断开连接，ACK=Z希望应答值，Seq=X序列值。表示希望断开连接。</p>
+<p>第二次挥手：被动方向主动方发送消息。ACK=X+1表示接收到断开请求，Seq=Z设置序列值。这次挥手只是告诉主动方，知道了主动方希望断开连接。</p>
+<p>第三次挥手：被动方向主动方发送消息。被动方处理完所有事情以后，告诉主动方可以断开连接连接了。包含Fin=1，ACK=X，Seq=Y</p>
+<p>第四次挥手：主动方向被动方发送消息。包含ACK=Y，Seq=X。表示都可以断开连接了，释放资源。</p>
+<h3 id="q-30" class="q-title">Q30 String、StringBuffer、StringBuilder的区别？（）</h3>
+<p>底层数组修饰符不同：String、StringBuffer、StringBuilder底层都是char数组。但是String数组使用final修饰，是常量数组。</p>
+<p>内存存储位置不同：String在字符串常量池中（Java8字符串常量池在堆中），StringBuffer和StringBuilder存在堆中。</p>
+<p>线程安全不同：StringBuilder是非线程安全的，StringBuffer是线程安全的。</p>
+<p>效率不同：StringBuilder性能高于StringBuffer</p>
+<p>使用场景：如果字符串内容不变使用String，可变字符串且单线程时使用StringBuilder，可变字符串在多线程环境下使用StringBuffer</p>
+<h3 id="q-31" class="q-title">Q31 乐观锁和悲观锁？</h3>
+<p>悲观锁：一般都具有独立性/互斥性/排他性。一个线程操作，其他线程等待。synchronized标准悲观锁</p>
+<p>乐观锁：认为不需要加锁也能保证线程安全。CAS是乐观锁。</p>
+<h3 id="q-32" class="q-title">Q32 Java8新特性?（常见面试题）</h3>
+<p>Lambda表达式、Stream流、函数式接口、Optional、java.time包下时间类、接口中允许静态方法和default方法。</p>
+<h3 id="q-33" class="q-title">Q33 BIO、NIO、AIO的区别？（面试题）</h3>
+<p>BIO：是Blocking I/O,同步阻塞IO。服务端内部代码会阻塞当前线程，所以是同步的。多线程访问时，默认只能处理一个，所以是阻塞的。</p>
+<ul>
+<li>可以通过多线程和线程池实现多线程访问。因为是多线程带来系统资源消耗、线程切换性能消耗的问题。</li>
+</ul>
+<p>BIO是JDK1.4之前唯一的IO模型。</p>
+<p>NIO：称为New IO或Non-Blocking IO。同步非阻塞IO。从JDK1.4推出的。在线程内部依然是同步的。但是可以是单一线程处理多线程访问，所以非阻塞的。</p>
+<p>有效解决了BIO因为多线程带来的资源消耗和性能切换导致的性能消耗问题。</p>
+<p>Tomcat 7 开始默认就是NIO模型。</p>
+<p>AIO：asynchronous IO，称为异步非阻塞IO。从JDK 1.7推出的。有两种实现方案，一种通过Future实现，一种通过CompletionHandler回调机制实现的。</p>
+<h3 id="q-34" class="q-title">Q34 CAS？</h3>
+<p>Compare And Swap 比较和交换算法。</p>
+<p>思路：</p>
+<ul>
+<li>创建副本</li>
+<li>计算最终需要设置的值</li>
+<li>比较副本值是否和内存值相等。</li>
+<li>1 如果相等，修改内存值为需要设置的值。</li>
+<li>2 如果不相等，重新创建副本，重新执行全套流程（循环）</li>
+</ul>
+<h3 id="q-35" class="q-title">Q35 JVM内存结构？（特别常见面试题）</h3>
+<p>JVM按照规范分为：堆、方法区、虚拟机栈、本地方法栈、程序计数器。</p>
+<p>其中堆存放对象或数组信息，里面分为新生代和老年代。实例化的对象放入到新生代中。如果是大对象，直接放入老年代。</p>
+<p>方法区在Java7中使用永久代作为具体实现，永久代和老年代是一块连续空间。在Java8中使用元空间作为具体实现，元空间放入到直接内存中。里面存放类相关的信息。</p>
+<p>虚拟机栈不是线程共享的，每个方法运行会在里面产生一个栈帧。存放方法的全部信息。</p>
+<p>本地方法栈负责native修饰的方法。</p>
+<p>程序计数器每个线程一块空间，存放执行到的行号。</p>
+<h3 id="q-36" class="q-title">Q36 GC分类/GC的种类/ JVM支持的垃圾回收有几种？</h3>
+<p>单线程收集器：Serial和Serial Old。</p>
+<p>Serial升级版多线程收集器：ParNew</p>
+<p>两个并发收集器：Parallel 和Parallel Old</p>
+<p>老年代收集器CMS</p>
+<p>CMS的替代G1回收器。</p>
+<p>简易回答：两个单线程收集器，两个并发收集器。新生代的多线程收集器。CMS和G1收集器。</p>
+<h3 id="q-37" class="q-title">Q37 GC算法有几种？</h3>
+<p>标记清除算法。先标记，把标记的内容清除。但可能有内存碎片。</p>
+<p>复制算法。把不可回收对象复制到另一个空间，再把当前空间全部清除。</p>
+<p>标记整理算法。先标记，把标记内容清除。把剩余内容进行压缩整理</p>
+<p>分代算法。目前JVM使用的是分代算法，分为新生代和老年代。每个代可以使用不同的算法。</p>
+<h2 id="sec-5" class="sec-title">五、JavaWeb 基础</h2>
+<h3 id="q-38" class="q-title">Q38 JSP九大内置对象？</h3>
+<ul>
+<li>request</li>
+<li>response</li>
+<li>session</li>
+<li>application</li>
+<li>out</li>
+<li>exception</li>
+<li>page</li>
+<li>pageContext</li>
+<li>config</li>
+</ul>
+<h3 id="q-39" class="q-title">Q39 四大作用域？</h3>
+<ul>
+<li>page：当前页面</li>
+<li>request：请求域</li>
+<li>session：会话</li>
+<li>application：应用程序</li>
+</ul>
+<h3 id="q-40" class="q-title">Q40 Session和Cookie的区别？</h3>
+<p>session：</p>
+<ul>
+<li>存储在服务器端。更加安全。</li>
+<li>能存储Object值</li>
+</ul>
+<p>cookie：</p>
+<ul>
+<li>存储在客户端浏览器。因为用户可以在客户端浏览器看见，没有session安全。</li>
+<li>只能存储字符串值</li>
+</ul>
+<h2 id="sec-6" class="sec-title">六、Spring 全家桶（Spring / MVC / MyBatis / Boot）</h2>
+<h3 id="q-41" class="q-title">Q41 IoC/DI（常见面试题）</h3>
+<p>IoC叫做控制反转，DI叫做依赖注入。他俩强调的都是一个<strong>过程</strong>.</p>
+<p>整个过程包含：对类进行实例化，并把实例化后的对象属性进行赋值</p>
+<h3 id="q-42" class="q-title">Q42 Spring注入有几种方式？（较常见面试题）</h3>
+<p>构造注入。通过构造方法。</p>
+<p>设值注入（Setter注入）。通过get/set方法注入。</p>
+<p>从Spring5开始把工厂注入认定为实例化对象的方式，而不是注入的方式。</p>
+<h3 id="q-43" class="q-title">Q43 <code>&lt;bean&gt;</code>标签scope可取值？</h3>
+<p>singleton：默认值，对象是单例。</p>
+<p>prototype：原型。每次获取都重新实例化。</p>
+<p>这两个值可以在非web环境使用。</p>
+<p>还有四个只能使用在web环境的值</p>
+<p>request：一次请求内是单例</p>
+<p>session：一次回话内是单例的</p>
+<p>application:在一个应用程序对象内是单例的。</p>
+<p>websocket：在一个websocket对象内是单例的。</p>
+<h3 id="q-44" class="q-title">Q44 AOP？（常见面试题）</h3>
+<p>AOP叫做面向切面编程。</p>
+<p>在不修改原有代码结构的情况下，对方法进行增强，形成切面。增加程序的可扩展性。</p>
+<p>切面包含：</p>
+<ul>
+<li>join point：切入点，目标方法</li>
+<li>pointcut：切点，所有切入点的表达式（execution(* com.bjsxt.<em>.</em>.)）</li>
+<li>advice:通知。</li>
+<li>weaving：织入。把通过和切入点连接到一起的过程。</li>
+</ul>
+<h3 id="q-45" class="q-title">Q45 通知有几种类型？</h3>
+<p>前置通知。</p>
+<p>后置通知。（在AspectJ中又细分为：after和after-returing。after无论是否出现异常都执行的通知，after-returing必须没有异常才能执行的通知）</p>
+<p>环绕通知。</p>
+<p>异常通知。</p>
+<h3 id="q-46" class="q-title">Q46 你的项目中哪里使用了AOP/你是否自己写了AOP（偶尔出现的面试题）</h3>
+<p>在项目很多功能都使用了AOP，例如：登录注册时，记录用户行为日志。具体实现：对于功能的service方法添加了环绕通知，登录前记录触发登录行为，登录结束后记录登录结果。</p>
+<p>但最近很多想都使用interceptor或filter来代替AOP功能了。</p>
+<h3 id="q-47" class="q-title">Q47 什么是声明式事务？</h3>
+<p>声明式事务为了简化编程式事务。使用编程式事务时所有事务管理代码都需要我们自己编写。</p>
+<p>声明式事务中，我们只需要声明出哪些方法需要进行哪些事务管理。具体的事务实现代码交给Spring框架。</p>
+<p>通过声明式事务，可以简化开发。</p>
+<h3 id="q-48" class="q-title">Q48 配置声明式事务时，如何配置事务传播行为？/ 请说一下Spring支持的事务传播行为</h3>
+<p>通过propagation属性进行配置。</p>
+<p>事务传播行为都是在多个具有事务控制的方法相互调用时才能出现的。</p>
+<p>可取值有：</p>
+<ul>
+<li>REQUIRED:默认值。如果当前有事务则加入到事务中。如果当前没有事务则新增事务。</li>
+<li>NEVER:必须在非事务状态下执行,如果当前没有事务,正常执行,如果当前有事务,报错.</li>
+<li>NESTED:必须在事务状态下执行.如果没有事务,新建事务,如果当前有事务,创建一个嵌套事务.</li>
+<li>REQUIRES_NEW：必须在事务中执行,如果当前没有事务,新建事务,如果当前有事务,把当前事务挂起. 在重新建个事务。</li>
+<li>SUPPORTS：如果当前有事务就在事务中执行,如果当前没有事务,就在非事务状态下执行.</li>
+<li>NOT_SUPPORTED：必须在非事务下执行,如果当前没有事务,正常执行,如果当前有事务,把当前事务挂起.</li>
+<li>MANDATORY：必须在事务内部执行,如果当前有事务,就在事务中执行,如果没有事务,报错.</li>
+</ul>
+<p>前四行必须记住的。后面明确和面试官说，还有6个属性，有的需要在事务中执行，有的需要在非事务中执行。具体取值长时间没有使用记不住的。如果需要使用通过百度或开发手册看一眼即可。</p>
+<h3 id="q-49" class="q-title">Q49 配置声明式事务时，如何配置事务隔离级别？/ 请说一下Spring支持的事务隔离行为</h3>
+<p>通过isolation属性进行控制。</p>
+<p>事务隔离级别是在多个事务操作同一个资源时才能出现的。</p>
+<p>DEFAULT表示用数据库的隔离级别，MySQL8默认的事务隔离级别REPEATABLE_READ</p>
+<p>READ_UNCOMMITTED读未提交(脏读，幻读，不可重复读)</p>
+<p>READ_COMMITTED读已提交(幻读，不可重复读)</p>
+<p>REPEATABLE_READ可重复读（幻读）</p>
+<p>SERIALIZABLE串行读来通过牺牲性能解决脏读、不可重复度、幻读问题。</p>
+<h3 id="q-50" class="q-title">Q50 SpringMVC 运行原理？</h3>
+<p>客户端向服务端发起请求，由分发器DispatcherServlet进行处理，交给HandlerMapping进行处理URL，然后再由HandlerAdapter</p>
+<p>调用具体的控制器方法，执行控制单元。最后由DispatcherServlet把最终结果返回给客户端。</p>
+<h3 id="q-51" class="q-title">Q51 SpringMVC常用注解</h3>
+<ul>
+<li>@Controller 控制器类</li>
+<li>@RestController 每个方法都有@ResponseBody</li>
+<li>@RequestMapping 定义映射路径</li>
+<li>@ResponseBody 方法返回值转JSON</li>
+<li>@CrossOrigin  跨域</li>
+<li>@RequestParam 请求参数</li>
+<li>@PathVariable  Restful请求时获取请求参数</li>
+<li>@RequestBody  把请求体中数据转换为Map或对象</li>
+</ul>
+<h3 id="q-52" class="q-title">Q52 Filter和Interceptor的区别？/ 过滤器和拦截器的区别（经典面试题，目前出现频率不高）</h3>
+<ul>
+<li>所属技术不同：Filter中Java EE中的技术，Interceptor是Spring MVC中的技术。</li>
+<li>生效位置不同：在进入到Tomcat就生效，可以过滤所有请求。Interceptor只有进入到DispatcherServlet后才能生效。</li>
+</ul>
+<h3 id="q-53" class="q-title">Q53 请说一下MyBatis如何处理查询结果？resultMap？</h3>
+<p>MyBatis执行完成SQL后把结果进行映射。可以通过auto mapping自动映射，列名和属性名相同自动装配。</p>
+<p>也可以通过<code>&lt;resultMap&gt;</code>标签手动指定映射关系。</p>
+<p>通过<code>&lt;id&gt;</code>配置主键和属性的关系。</p>
+<p>通过<code>&lt;result&gt;</code>配置普通列和属性的关系。</p>
+<p>通过<code>&lt;association&gt;</code>配置对象之间关系。</p>
+<p>通过<code>&lt;collection&gt;</code>配置集合类型对象的映射。</p>
+<h3 id="q-54" class="q-title">Q54 Spring Boot中配置文件加载顺序。</h3>
+<ul>
+<li>config/application.properties</li>
+<li>config/application.yml</li>
+<li>application.properties</li>
+<li>application.yml</li>
+<li>resources/config/application.properties</li>
+<li>resources/config/application.yml</li>
+<li>resources/application.properties</li>
+<li>resources/application.yml</li>
+<li>Spring Boot配置文件可以放在根目录或resource目录中。这两个目录下又可以放config目录。</li>
+<li>config目录优先级高于非config目录，项目根目录优先级高于resource。且同一个目录中.properties优先级高于.yml</li>
+</ul>
+<h3 id="q-55" class="q-title">Q55 Spring Boot 原理？ Spring Boot执行流程？</h3>
+<ul>
+<li>进入SpringApplication构造方法，从META-INF/spring.factories中读取初始化和监听器，并记录主类。</li>
+<li>创建计时器StopWatch</li>
+<li>声明上下文对象ConfigurableApplicationContext</li>
+<li>启动Headless服务器，设置系统属性</li>
+<li>创建并启动运行时监听器</li>
+<li>准备环境Environment并打印Banner</li>
+<li>上下文环境准备及刷新，此时Tomcat被启动。</li>
+<li>停止计时器，并打印启动时间。</li>
+<li>运行时监听器启动。</li>
+<li>返回上下文对象。</li>
+</ul>
+<h2 id="sec-7" class="sec-title">七、Linux 常用命令</h2>
+<h3 id="q-56" class="q-title">Q56 Linux 常用命令？（面试的笔试部分出现频率较高）</h3>
+<ul>
+<li>cd 进入目录</li>
+<li>clear 清屏</li>
+<li>pwd 打印当前目录</li>
+<li>ls/ll  显示当前目录内容</li>
+<li>vim/vi  编辑文件</li>
+<li>cat  显示文件内容</li>
+<li>touch 新建文件</li>
+<li>tar 解压</li>
+<li>yum  在线安装</li>
+<li>mkdir 新建文件夹</li>
+</ul>
+<h2 id="sec-8" class="sec-title">八、Redis</h2>
+<h3 id="q-57" class="q-title">Q57 Redis 支持的数据类型（常见面试题）</h3>
+<p>String 字符串、Hash 散列表 、Set 集合、List 列表、SortedSet 有序集合、Stream 流</p>
+<h3 id="q-58" class="q-title">Q58 Redis持久化策略（常见面试题）</h3>
+<p>rdb：默认的持久化策略。根据SAVE命令配置的规则，每隔一段时间自动保存副本。在非法关闭的情况下可能出现数据丢失问题。但是由于所有数据都在一个rdb文件中，所以数据迁移等比较方便。</p>
+<p>Aof：基于日志的持久化策略。记录执行的命令。每次启动Redis时会跟根据日志内容吧数据加载到内存中。相对于rdb模型安全一些，但性能要低一些。</p>
+<ul>
+<li>AOF默认是不开启的，当AOF和RBD同时存在时，AOF生效。</li>
+</ul>
+<h3 id="q-59" class="q-title">Q59 缓存穿透（特别常见面试题）</h3>
+<p>查询一些不存在的数据，绕过Redis，所有压力都放在数据库上了。例如：id=-1</p>
+<p>解决方案：</p>
+<ul>
+<li>即使数据库查询结果为null，也缓存到Redis中，但应设置个较短的有效时间。</li>
+<li>使用布隆过滤器记录数据库中数据。如果Redis中不存在的缓存，在查询数据库之前先查询布隆过滤器。如果这个数据不存在，则不再访问数据库。</li>
+</ul>
+<h3 id="q-60" class="q-title">Q60 布隆过滤器</h3>
+<p>1970年由布隆研究的一种算法和数据结构。</p>
+<p>核心是对数据做N次不同的Hash计算。把得到的Hash值对数组长度取余。对应脚标位置修改为1.</p>
+<p>如果下次查询时发现某个值的N个Hash值对应数组中某个脚标不为1，说明这个数据一定不存在。</p>
+<h3 id="q-61" class="q-title">Q61 缓存击穿（特别常见面试题）</h3>
+<p>在并发访问时，恰巧Key过期了，瞬间大量请求直接访问数据库。</p>
+<p>解决方案：</p>
+<ul>
+<li>永久数据。缺点：随着数据增加肯定会出现内存不足的情况。</li>
+<li>加锁。并发访问时使用锁让一个请求查询数据库。缺点：并发访问时性能较低。</li>
+</ul>
+<h3 id="q-62" class="q-title">Q62 缓存雪崩（特别常见面试题）</h3>
+<p>在一段时间内大量Key过期，导致数据库访问压力骤增。</p>
+<p>解决办法：</p>
+<ul>
+<li>永久数据。</li>
+<li>自定义算法，设置所有key的有效时间不相同。尽可能的让每个key的实效实现错开。</li>
+</ul>
+<h3 id="q-63" class="q-title">Q63 淘汰策略</h3>
+<ul>
+<li><code>maxmemory-policy noeviction</code> 默认策略noevication</li>
+<li><code>maxmemory &lt;bytes&gt;</code> 缓存最大阈值</li>
+<li><code>volatile-lru</code> → 在设置过期key集中选择使用数最小的。</li>
+<li><code>allkeys-lru</code> → 在所有key中选择使用最小的。</li>
+<li><code>volatile-lfu</code> → 在设置过期时间key集中采用lfu算法。</li>
+<li><code>allkeys-lfu</code> → 在所有key中采用lfu算法。</li>
+<li><code>volatile-random</code> → 在设置过期key集中随机删除。</li>
+<li><code>allkeys-random</code> → 在所有key中随机删除。</li>
+<li><code>volatile-ttl</code> → 在设置了过期时间key中删除最早过期时间的。</li>
+<li><code>noeviction</code> → 不删除key，超过时报错。</li>
+</ul>
+<p>文字描述：默认是超过最大内存大小时，无法新增，报错。</p>
+<p>其他策略是从所有key和设置了过期时间的key中进行删除。</p>
+<p>设置了过期key淘汰策略有4个，分别是lru算法删除，lfu算法删除，随机删除，最小剩余时间删除。</p>
+<p>所有key删除策略有3个，lru算法删除，lfu算法删除，随机删除。</p>
+<h2 id="sec-9" class="sec-title">九、Spring Cloud</h2>
+<h3 id="q-64" class="q-title">Q64 请介绍一下Spring Cloud常用组件？</h3>
+<p>Spring Cloud下分为三大体系：Netflix体系、Alibaba体系、自己或第三方体系。</p>
+<p>其中Netflix中在Spring Cloud最新版本都删除掉了，因为Netflix更新太慢。netflix体系中包含的组件：注册中心Eureka、服务调用Ribbon和Feign、服务容错Hystrix</p>
+<p>其中Alibaba体系包含：注册中心及配置中心Nacos、服务调用Dubbo、容错和限流Sentinel、分布式事务Seata，以及一些列阿里云产品。</p>
+<p>还有一些自己的组件：消息总线Bus、微服务链式跟踪Zipkin、网关Gateway、分布式配置中心Config</p>
+<h2 id="sec-10" class="sec-title">十、MySQL</h2>
+<h3 id="q-65" class="q-title">Q65 MySQL优化（常见面试题）、索引优化、SQL优化</h3>
+<p>如果问的是MySQL优化，要从硬件和数据库两个方向进行回答。如果问的是索引优化或SQL优化，硬件方向不回答。</p>
+<p>硬件方向：</p>
+<ul>
+<li>磁盘角度：升级磁盘。或把所有数据分别放入到多个磁盘中。具体实现可以使用分库分表技术。例如：ShardingSphere。</li>
+<li>替换读写性能更高的磁盘。升级CPU性能。升级服务器的带宽 。</li>
+</ul>
+<p>索引优化和SQL优化</p>
+<ul>
+<li>可以参考面试视频文档。</li>
+</ul>
+<h3 id="q-66" class="q-title">Q66 MySQL索引分类</h3>
+<p>列的个数上：单列索引（索引加到一个列上）、组合索引（加到多个列上）、全文索引（fulltext索引，抽取内容的关键字，通过关键字匹配）。</p>
+<p>类型上：普通索引、唯一索引、主键索引、函数索引。</p>
+<h3 id="q-67" class="q-title">Q67 聚集索引和非聚集索引</h3>
+<p>聚集索引是索引和数据在一起存放，且顺序存放。找到索引就找到了数据，但在新增和删除时性能下降。主键索引就是聚集索引。</p>
+<p>非聚集索引是索引和数据分开存放。找到索引后，还需要通过索引找到数据。</p>
+<h3 id="q-68" class="q-title">Q68 MySQ存储引擎</h3>
+<ul>
+<li>InnoDB 默认存储引擎。支持事务。</li>
+<li>MyISAM 读性能较高的引擎。</li>
+<li>Memory 内存型存储引擎。</li>
+<li>MRG_MYISAM 属于MyISAM的升级版。</li>
+<li>ARCHIVE 备份引擎，存储少量过期数据。</li>
+<li>BLACKHOLD 只能存，不能查。</li>
+<li>CSV  把数据较方便的导出为CSV文件。</li>
+<li>PERFORMANCE_SCHEMA 用于收集一些系统参数。</li>
+</ul>
+<p>至少记住5个。</p></article></main>
+<button id="top">↑</button>
+<div id="meta">共 68 题</div>
+<div id="tts">
+  <div id="ttsPanel">
+    <label>语速<br><input type="range" id="ttsRate" min="0.5" max="1.2" step="0.05" value="0.85"><span class="rv" id="ttsRateVal">0.85x</span></label>
+    <label>语音<select id="ttsVoice"></select></label>
+    <div class="hint"><b>点正文里任意英文</b>即可发音（浅蓝高亮的就是）。缩写念字母、单词照读，面试照着用。</div>
+  </div>
+  <button id="ttsBtn" title="发音设置 / 点词发声">🔊</button>
+</div>
+<div id="toast">点正文里任意英文，直接听发音 🔈</div>
+<script>
+  const groups=[...document.querySelectorAll('.nav-group')];
+  const qs=[...document.querySelectorAll('.nav-q')];
+  // 默认展开前两组
+  groups.slice(0,2).forEach(g=>g.classList.add('open'));
+  // 搜索
+  const input=document.getElementById('q');
+  input.addEventListener('input',()=>{
+    const k=input.value.trim().toLowerCase();
+    if(!k){groups.forEach(g=>{g.classList.remove('hidden');g.querySelectorAll('.nav-q').forEach(a=>a.classList.remove('hidden'));});return;}
+    groups.forEach(g=>{
+      const items=[...g.querySelectorAll('.nav-q')];
+      let hit=0;
+      items.forEach(a=>{
+        const ok=a.dataset.text.toLowerCase().includes(k);
+        a.classList.toggle('hidden',!ok);
+        if(ok)hit++;
+      });
+      const secOk=g.querySelector('.nav-sec').dataset.text.toLowerCase().includes(k);
+      const show=hit>0||secOk;
+      g.classList.toggle('hidden',!show);
+      if(show)g.classList.add('open');
+    });
+  });
+  // 滚动高亮
+  const heads=[...document.querySelectorAll('h2[id],h3[id]')];
+  const secLinks=new Map([...document.querySelectorAll('.nav-sec')].map(a=>[a.getAttribute('href').slice(1),a]));
+  const qLinks=new Map([...document.querySelectorAll('.nav-q')].map(a=>[a.getAttribute('href').slice(1),a]));
+  const obs=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting)return;
+      const id=e.target.id;
+      document.querySelectorAll('.nav-q.active').forEach(a=>a.classList.remove('active'));
+      document.querySelectorAll('.nav-group.open').forEach(g=>{if(!g.contains(document.activeElement))g.classList.remove('open');});
+      if(qLinks.has(id)){
+        const a=qLinks.get(id);a.classList.add('active');
+        const g=a.closest('.nav-group');g.classList.add('open');
+        a.scrollIntoView({block:'nearest'});
+      }else if(secLinks.has(id)){
+        secLinks.get(id).closest('.nav-group').classList.add('open');
+      }
+    });
+  },{rootMargin:'-10% 0px -80% 0px'});
+  heads.forEach(h=>obs.observe(h));
+  // 进度
+  const bar=document.getElementById('bar'),topBtn=document.getElementById('top');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement;
+    const p=h.scrollTop/(h.scrollHeight-h.clientHeight)*100;
+    bar.style.width=p+'%';
+    topBtn.style.display=h.scrollTop>600?'flex':'none';
+  });
+  topBtn.onclick=()=>scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('menu').onclick=()=>document.querySelector('aside').classList.toggle('show');
+  document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',()=>{
+    if(innerWidth<=1180)document.querySelector('aside').classList.remove('show');
+  }));
+
+  /* ========== 点词发音 ========== */
+  (function(){
+    const synth=window.speechSynthesis||null;
+    const btn=document.getElementById('ttsBtn');
+    const panel=document.getElementById('ttsPanel');
+    const rateEl=document.getElementById('ttsRate');
+    const rateVal=document.getElementById('ttsRateVal');
+    const voiceSel=document.getElementById('ttsVoice');
+    const toast=document.getElementById('toast');
+    if(!synth)btn.style.display='none';
+
+    /* 1. 把正文里的英文包成可点单元 */
+    const RE=new RegExp('[A-Za-z][A-Za-z0-9_.#]*(?:[-/][A-Za-z0-9_.#]+)*','g');
+    const SKIP=/^(SCRIPT|STYLE|A|BUTTON|SELECT|OPTION|TEXTAREA|INPUT)$/;
+    function wrapEng(root){
+      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{
+        acceptNode(n){
+          const p=n.parentElement;
+          if(!p||SKIP.test(p.tagName))return NodeFilter.FILTER_REJECT;
+          if(p.classList&&p.classList.contains('say'))return NodeFilter.FILTER_REJECT;
+          if(!/[A-Za-z]{2,}/.test(n.nodeValue))return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      const nodes=[];
+      while(walker.nextNode())nodes.push(walker.currentNode);
+      nodes.forEach(n=>{
+        const t=n.nodeValue;
+        let last=0,hit=false;
+        const frag=document.createDocumentFragment();
+        RE.lastIndex=0;
+        let m;
+        while((m=RE.exec(t))!==null){
+          if(m[0].length<2)continue;
+          hit=true;
+          if(m.index>last)frag.appendChild(document.createTextNode(t.slice(last,m.index)));
+          const s=document.createElement('span');
+          s.className='say';
+          s.dataset.w=m[0];
+          s.textContent=m[0];
+          frag.appendChild(s);
+          last=m.index+m[0].length;
+        }
+        if(!hit)return;
+        if(last<t.length)frag.appendChild(document.createTextNode(t.slice(last)));
+        n.parentNode.replaceChild(frag,n);
+      });
+    }
+    wrapEng(document.querySelector('article'));
+
+    /* 2. 语音列表 */
+    let voices=[];
+    function loadVoices(){
+      voices=synth.getVoices().filter(v=>/^en/i.test(v.lang));
+      if(!voices.length)voices=synth.getVoices();
+      voiceSel.innerHTML='';
+      voices.forEach((v,i)=>{
+        const o=document.createElement('option');
+        o.value=i;
+        o.textContent=v.name.replace('Microsoft ','').replace(' - English','')+' ('+v.lang+')';
+        voiceSel.appendChild(o);
+      });
+      let idx=voices.findIndex(v=>v.localService&&/Zira|Aria|Jenny|Guy|Samantha|Google US/i.test(v.name));
+      if(idx<0)idx=voices.findIndex(v=>v.localService);
+      if(idx<0)idx=0;
+      voiceSel.value=idx;
+    }
+    if(synth){loadVoices();synth.onvoiceschanged=loadVoices;}
+
+    function curVoice(){
+      const i=parseInt(voiceSel.value,10);
+      return voices[i]||null;
+    }
+
+    /* 3. 点击发音 */
+    let speakingEl=null,timer=null;
+    function say(word,el){
+      if(!synth)return;
+      synth.cancel();
+      if(speakingEl)speakingEl.classList.remove('speaking');
+      speakingEl=el||null;
+      if(speakingEl)speakingEl.classList.add('speaking');
+      const u=new SpeechSynthesisUtterance(word);
+      const v=curVoice();
+      if(v){u.voice=v;u.lang=v.lang;}else{u.lang='en-US';}
+      u.rate=parseFloat(rateEl.value);
+      u.onend=u.onerror=()=>{
+        if(speakingEl)speakingEl.classList.remove('speaking');
+        speakingEl=null;
+      };
+      synth.speak(u);
+    }
+
+    document.addEventListener('click',e=>{
+      const s=e.target.closest('.say');
+      if(!s)return;
+      e.preventDefault();
+      say(s.dataset.w,s);
+    });
+
+    /* 4. 面板 */
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      panel.classList.toggle('show');
+    });
+    document.addEventListener('click',e=>{
+      if(!e.target.closest('#tts'))panel.classList.remove('show');
+    });
+    rateEl.addEventListener('input',()=>{rateVal.textContent=rateEl.value+'x';});
+    rateEl.addEventListener('change',()=>{
+      if(speakingEl)say(speakingEl.dataset.w,speakingEl);
+    });
+
+    /* 5. 首次提示 */
+    const tipKey='ttsTipShown_v1';
+    try{
+      if(!localStorage.getItem(tipKey)){
+        setTimeout(()=>{
+          toast.classList.add('show');
+          setTimeout(()=>toast.classList.remove('show'),4200);
+          localStorage.setItem(tipKey,'1');
+        },1400);
+      }
+    }catch(err){
+      setTimeout(()=>{
+        toast.classList.add('show');
+        setTimeout(()=>toast.classList.remove('show'),4200);
+      },1400);
+    }
+    document.addEventListener('click',e=>{
+      if(e.target.closest('.say'))toast.classList.remove('show');
+    },true);
+  })();
+</script>
+</body>
+</html>
