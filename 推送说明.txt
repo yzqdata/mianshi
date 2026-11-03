@@ -1,0 +1,45 @@
+把 D:\面试\_deploy 目录里的 5 个文件推送到 GitHub（更新线上题库）
+
+=== 方式一：命令行（推荐，30 秒） ===
+
+打开 PowerShell 或 Git Bash，依次执行：
+
+  cd D:\面试\_deploy
+  git add -A
+  git commit -m "更新面试题库"
+  git push origin main
+
+如果提示需要登录（Username / Password）：
+  Username: yzqdata
+  Password: 粘贴你的 Personal Access Token（不是账号密码）
+
+如果报 SSL / CONNECT / 502 错误（公司代理常见）：
+  git -c http.version=HTTP/1.1 -c http.sslBackend=openssl push origin main
+
+如果报 "Permission denied"：
+  说明 token 没有仓库写权限，需要在 GitHub
+  Settings → Developer settings → Fine-grained tokens
+  → 点开当前 token → Repository permissions
+  → Contents 改成 "Read and write" → Save
+
+=== 方式二：网页上传（最稳，不用命令行） ===
+
+1. 打开 https://github.com/yzqdata/mianshi
+2. 点 Add file → Upload files
+3. 把 D:\面试\_deploy 里的 5 个文件全拖进去：
+   index.html
+   java-interview.html
+   resume-interview.html
+   pronunciation.html
+   terms.html
+4. Commit changes
+
+注意：github.com 网页上传会给每个标签加上 data-page-node-id 属性，
+文件会变大 40% 左右，但不影响使用，功能完全一样。
+
+=== 推送后验证 ===
+
+打开 https://yzqdata.github.io/mianshi/
+每个页面右上角应该能看到「🏠 首页」按钮
+
+Pages 更新有 1-3 分钟延迟，GitHub 会自动重新构建。

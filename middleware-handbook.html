@@ -1,0 +1,4177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>中间件与搜索引擎实战手册</title>
+<style>
+  :root{
+    --bg:#f6f5f2; --paper:#ffffff; --ink:#15181d; --ink-2:#3d444d; --ink-3:#6b7280;
+    --line:#e6e3dc; --accent:#c2410c; --accent-soft:#fdf0e9; --blue:#1d4ed8; --blue-soft:#eef3ff;
+    --warn:#b45309; --code:#f4f2ee;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Source Han Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    font-size:15.5px;line-height:1.85;-webkit-font-smoothing:antialiased;
+  }
+  /* 进度条 */
+  #bar{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#c2410c,#f59e0b);z-index:99;transition:width .1s linear;}
+  /* 侧栏 */
+  aside{
+    position:fixed;top:0;left:0;bottom:0;width:312px;background:#fbfaf8;border-right:1px solid var(--line);
+    display:flex;flex-direction:column;z-index:50;
+  }
+  .brand{padding:22px 22px 14px;border-bottom:1px solid var(--line);}
+  .brand h1{font-size:15px;margin:0 0 4px;letter-spacing:.02em;}
+  .brand p{margin:0;font-size:11.5px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;}
+  .search{padding:12px 16px;border-bottom:1px solid var(--line);}
+  .search input{
+    width:100%;padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;
+    font-size:13px;color:var(--ink);outline:none;font-family:inherit;
+  }
+  .search input:focus{border-color:#c2410c55;box-shadow:0 0 0 3px #c2410c14;}
+  nav{flex:1;overflow-y:auto;padding:10px 10px 40px;}
+  nav::-webkit-scrollbar{width:6px;}
+  nav::-webkit-scrollbar-thumb{background:#d8d4cb;border-radius:3px;}
+  .nav-group{margin-bottom:2px;}
+  .nav-sec{
+    display:flex;gap:9px;align-items:baseline;padding:7px 10px;border-radius:7px;
+    color:var(--ink);text-decoration:none;font-size:13.5px;font-weight:600;line-height:1.5;
+  }
+  .nav-sec:hover{background:#f0ede6;}
+  .nav-idx{font-size:10.5px;color:#b3ada2;font-variant-numeric:tabular-nums;font-weight:500;}
+  .nav-sub{display:none;padding:2px 0 8px 10px;margin-left:14px;border-left:1px solid var(--line);}
+  .nav-group.open .nav-sub{display:block;}
+  .nav-q{
+    display:block;padding:4px 10px;border-radius:6px;color:var(--ink-3);text-decoration:none;
+    font-size:12.5px;line-height:1.55;margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .nav-q:hover{background:#f2efe8;color:var(--ink);}
+  .nav-q.active{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+  .hidden{display:none !important;}
+  /* 内容 */
+  main{margin-left:312px;padding:56px 48px 140px;display:flex;justify-content:center;}
+  article{width:100%;max-width:880px;background:var(--paper);border:1px solid var(--line);border-radius:14px;
+    padding:44px 52px 60px;box-shadow:0 1px 2px #00000006,0 12px 40px -24px #0000001a;}
+  h1{font-size:27px;line-height:1.4;margin:0 0 10px;letter-spacing:-.01em;}
+  h2{
+    font-size:20px;margin:52px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+    letter-spacing:-.005em;scroll-margin-top:24px;
+  }
+  h2:first-of-type{margin-top:36px;}
+  h3.q-title{
+    font-size:15.5px;font-weight:700;margin:26px 0 8px;padding:2px 0 2px 13px;
+    border-left:3px solid #e8d6cc;color:#1b1e24;scroll-margin-top:20px;line-height:1.65;
+  }
+  h3.q-title:hover{border-left-color:var(--accent);}
+  p{margin:8px 0;color:var(--ink-2);}
+  strong{color:var(--ink);font-weight:650;}
+  em{color:var(--ink-3);font-style:normal;font-size:13.5px;}
+  ul,ol{margin:8px 0;padding-left:22px;color:var(--ink-2);}
+  li{margin:4px 0;}
+  li::marker{color:#b3ada2;}
+  code{
+    background:var(--code);padding:1.5px 5px;border-radius:4px;font-size:13px;
+    font-family:"JetBrains Mono","Cascadia Code",Consolas,monospace;color:#9a3412;
+    border:1px solid #ece8e1;
+  }
+  blockquote{
+    margin:14px 0;padding:12px 16px;background:#fdfaf6;border-left:3px solid #e0b48f;
+    border-radius:0 8px 8px 0;color:var(--ink-2);
+  }
+  blockquote p{margin:4px 0;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;}
+  th{background:#faf8f4;font-weight:650;color:var(--ink);white-space:nowrap;}
+  td{color:var(--ink-2);}
+  hr{border:none;border-top:1px dashed var(--line);margin:34px 0;}
+  a{color:var(--blue);}
+  /* 返回顶部 */
+  #top{
+    position:fixed;right:28px;bottom:28px;width:42px;height:42px;border-radius:50%;
+    background:#fff;border:1px solid var(--line);color:var(--ink-2);font-size:16px;cursor:pointer;
+    display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px #00000012;
+  }
+  #top:hover{border-color:#c2410c66;color:var(--accent);}
+  #meta{position:fixed;right:28px;bottom:80px;font-size:11px;color:#b3ada2;letter-spacing:.04em;}
+  /* 返回首页 */
+  #home{
+    position:fixed;right:28px;top:16px;z-index:70;display:flex;align-items:center;gap:6px;
+    height:36px;padding:0 15px;border-radius:18px;background:#fff;border:1px solid var(--line);
+    color:var(--ink-2);font-size:13px;text-decoration:none;box-shadow:0 3px 14px #0000000f;
+    font-family:inherit;
+  }
+  #home:hover{border-color:#c2410c66;color:var(--accent);background:#fdf7f3;}
+  @media(max-width:1180px){
+    #home{right:16px;top:16px;height:34px;padding:0 13px;font-size:12.5px;}
+  }
+  @media(max-width:1180px){
+    aside{transform:translateX(-100%);transition:transform .22s;}
+    aside.show{transform:none;}
+    main{margin-left:0;padding:40px 20px 100px;}
+    article{padding:30px 24px 40px;}
+    #menu{display:flex !important;}
+  }
+  #menu{display:none;position:fixed;left:16px;top:16px;z-index:60;width:40px;height:40px;
+    background:#fff;border:1px solid var(--line);border-radius:10px;align-items:center;justify-content:center;
+    font-size:16px;cursor:pointer;box-shadow:0 2px 10px #00000010;}
+  /* 点词发音 */
+  .say{cursor:pointer;border-radius:3px;transition:background .12s,color .12s;}
+  .say:hover{background:var(--blue-soft);color:var(--blue);}
+  .say.speaking{background:#ffe9a8;color:#7c4a03;box-shadow:0 0 0 2px #ffe9a8;}
+  #tts{position:fixed;right:28px;bottom:132px;z-index:70;font-family:inherit;}
+  #ttsBtn{
+    width:42px;height:42px;border-radius:50%;background:#fff;border:1px solid var(--line);
+    font-size:16px;cursor:pointer;box-shadow:0 4px 16px #00000012;display:flex;align-items:center;justify-content:center;
+  }
+  #ttsBtn:hover{border-color:#1d4ed866;background:var(--blue-soft);}
+  #ttsBtn.on{background:var(--blue);border-color:var(--blue);}
+  #ttsPanel{
+    display:none;position:absolute;right:0;bottom:52px;width:246px;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:14px 16px;box-shadow:0 12px 40px -12px #00000033;font-size:12.5px;color:var(--ink-2);
+  }
+  #ttsPanel.show{display:block;}
+  #ttsPanel label{display:block;margin-bottom:10px;}
+  #ttsPanel label:last-of-type{margin-bottom:8px;}
+  #ttsPanel select,#ttsPanel input[type=range]{width:100%;margin-top:4px;font-family:inherit;font-size:12px;}
+  #ttsPanel select{padding:5px;border:1px solid var(--line);border-radius:6px;background:#fff;outline:none;}
+  #ttsPanel .rv{float:right;color:var(--accent);font-weight:700;}
+  #ttsPanel .hint{font-size:11.5px;color:#9aa0aa;line-height:1.6;margin-top:2px;border-top:1px dashed var(--line);padding-top:8px;}
+  #ttsPanel .hint b{color:var(--ink-2);}
+  #toast{
+    position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);z-index:80;
+    background:#15181d;color:#fff;font-size:13px;padding:10px 20px;border-radius:24px;
+    box-shadow:0 10px 30px -8px #00000055;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
+    white-space:nowrap;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media(max-width:1180px){
+    #tts{bottom:96px;right:20px;}
+  }
+  @media print{
+    aside,#bar,#top,#menu,#tts,#toast,#home{display:none !important;}
+    main{margin:0;padding:0;}
+    article{border:none;box-shadow:none;padding:0;max-width:none;}
+    body{background:#fff;}
+  }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<a id="home" href="index.html" title="返回首页">🏠 首页</a>
+<button id="menu">☰</button>
+<aside>
+  <div class="brand">
+    <h1>中间件与搜索引擎实战手册</h1>
+    <p>实战手册 · 30 道高频题 + 84 段可运行代码</p>
+  </div>
+  <div class="search"><input id="q" type="search" placeholder="搜索题目 / 关键词…" autocomplete="off"></div>
+  <nav id="nav"><div class="nav-group" data-text="零、怎么用这本手册"><a class="nav-sec" href="#sec-1"><span class="nav-idx">01</span><span>零、怎么用这本手册</span></a>
+</div>
+<div class="nav-group" data-text="一、中间件全景图：先搞清楚每个东西解决什么问题"><a class="nav-sec" href="#sec-2"><span class="nav-idx">02</span><span>一、中间件全景图：先搞清楚每个东西解决什么问题</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-1" data-text="1.1 一张图看懂中间件在链路里的位置">1.1 一张图看懂中间件在链路里的位置</a>
+<a class="nav-q" href="#q-2" data-text="1.2 中间件职责速查表（背这张表，够用 80% 的场景）">1.2 中间件职责速查表（背这张表，够用 80% 的场景）</a>
+<a class="nav-q" href="#q-3" data-text="1.3 面试官问你「为什么用中间件」的标准答法">1.3 面试官问你「为什么用中间件」的标准答法</a>
+</div>
+</div>
+<div class="nav-group" data-text="二、消息队列 MQ：实战全解"><a class="nav-sec" href="#sec-3"><span class="nav-idx">03</span><span>二、消息队列 MQ：实战全解</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-4" data-text="2.0 先选型：RocketMQ / Kafka / RabbitMQ 到底用哪个">2.0 先选型：RocketMQ / Kafka / RabbitMQ 到底用哪个</a>
+<a class="nav-q" href="#q-5" data-text="2.1 RocketMQ 架构：消息到底存在哪">2.1 RocketMQ 架构：消息到底存在哪</a>
+<a class="nav-q" href="#q-6" data-text="2.2 消息不丢：三段式防线 + 代码">2.2 消息不丢：三段式防线 + 代码</a>
+<a class="nav-q" href="#q-7" data-text="2.3 幂等消费：MQ 只能保证「至少一次」">2.3 幂等消费：MQ 只能保证「至少一次」</a>
+<a class="nav-q" href="#q-8" data-text="2.4 顺序消息：只要「局部有序」，不要全局有序">2.4 顺序消息：只要「局部有序」，不要全局有序</a>
+<a class="nav-q" href="#q-9" data-text="2.5 延迟消息：订单超时关单（你的项目必考）">2.5 延迟消息：订单超时关单（你的项目必考）</a>
+<a class="nav-q" href="#q-10" data-text="2.6 事务消息：本地事务与消息的原子性">2.6 事务消息：本地事务与消息的原子性</a>
+<a class="nav-q" href="#q-11" data-text="2.7 消息堆积：先定位，再止血">2.7 消息堆积：先定位，再止血</a>
+<a class="nav-q" href="#q-12" data-text="2.8 MQ 常见坑清单（每一条都真实踩过）">2.8 MQ 常见坑清单（每一条都真实踩过）</a>
+</div>
+</div>
+<div class="nav-group" data-text="三、Elasticsearch 实战全解"><a class="nav-sec" href="#sec-4"><span class="nav-idx">04</span><span>三、Elasticsearch 实战全解</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-13" data-text="3.1 倒排索引：为什么搜得快">3.1 倒排索引：为什么搜得快</a>
+<a class="nav-q" href="#q-14" data-text="3.2 写入流程：为什么 ES 是「近实时」">3.2 写入流程：为什么 ES 是「近实时」</a>
+<a class="nav-q" href="#q-15" data-text="3.3 深分页：from + size 为什么慢">3.3 深分页：from + size 为什么慢</a>
+<a class="nav-q" href="#q-16" data-text="3.4 MySQL 与 ES 数据同步（最容易追问的题）">3.4 MySQL 与 ES 数据同步（最容易追问的题）</a>
+<a class="nav-q" href="#q-17" data-text="3.5 ES 在业务里的典型用法">3.5 ES 在业务里的典型用法</a>
+<a class="nav-q" href="#q-18" data-text="3.6 ES 集群与运维要点">3.6 ES 集群与运维要点</a>
+<a class="nav-q" href="#q-19" data-text="3.7 ES 与 MySQL 对比（面试高频）">3.7 ES 与 MySQL 对比（面试高频）</a>
+</div>
+</div>
+<div class="nav-group" data-text="四、其他中间件补齐"><a class="nav-sec" href="#sec-5"><span class="nav-idx">05</span><span>四、其他中间件补齐</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-20" data-text="4.1 Redis 分布式锁（Redisson）">4.1 Redis 分布式锁（Redisson）</a>
+<a class="nav-q" href="#q-21" data-text="4.2 Nacos：注册中心 + 配置中心">4.2 Nacos：注册中心 + 配置中心</a>
+<a class="nav-q" href="#q-22" data-text="4.3 Sentinel：限流、熔断、降级">4.3 Sentinel：限流、熔断、降级</a>
+<a class="nav-q" href="#q-23" data-text="4.4 Seata AT 模式：分布式事务">4.4 Seata AT 模式：分布式事务</a>
+<a class="nav-q" href="#q-24" data-text="4.5 Nginx：入口层能干什么">4.5 Nginx：入口层能干什么</a>
+<a class="nav-q" href="#q-25" data-text="4.6 ELK：日志怎么收集和查">4.6 ELK：日志怎么收集和查</a>
+<a class="nav-q" href="#q-26" data-text="4.7 Docker 与 K8s：面试够用就行">4.7 Docker 与 K8s：面试够用就行</a>
+</div>
+</div>
+<div class="nav-group" data-text="五、中间件高频面试题 30 道（带答案）"><a class="nav-sec" href="#sec-6"><span class="nav-idx">06</span><span>五、中间件高频面试题 30 道（带答案）</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-27" data-text="MQ 类（15 题）">MQ 类（15 题）</a>
+<a class="nav-q" href="#q-28" data-text="MQ-1 ★ 三种 MQ 怎么选？为什么你项目用 RocketMQ？">MQ-1 ★ 三种 MQ 怎么选？为什么你项目用 RocketMQ？</a>
+<a class="nav-q" href="#q-29" data-text="MQ-2 ★ 消息为什么会丢？三段式怎么保证不丢？">MQ-2 ★ 消息为什么会丢？三段式怎么保证不丢？</a>
+<a class="nav-q" href="#q-30" data-text="MQ-3 ★ 为什么一定会重复消费？幂等怎么做？">MQ-3 ★ 为什么一定会重复消费？幂等怎么做？</a>
+<a class="nav-q" href="#q-31" data-text="MQ-4 ★ 消息堆积了怎么办？">MQ-4 ★ 消息堆积了怎么办？</a>
+<a class="nav-q" href="#q-32" data-text="MQ-5 ★ 怎么保证消息顺序？">MQ-5 ★ 怎么保证消息顺序？</a>
+<a class="nav-q" href="#q-33" data-text="MQ-6 ★ RocketMQ 事务消息的原理？为什么还需要对账？">MQ-6 ★ RocketMQ 事务消息的原理？为什么还需要对账？</a>
+<a class="nav-q" href="#q-34" data-text="MQ-7 ★ 延迟消息怎么做？订单 30 分钟未支付关单？">MQ-7 ★ 延迟消息怎么做？订单 30 分钟未支付关单？</a>
+<a class="nav-q" href="#q-35" data-text="MQ-8 ★ RocketMQ 的事务消息和 Seata 有什么区别？">MQ-8 ★ RocketMQ 的事务消息和 Seata 有什么区别？</a>
+<a class="nav-q" href="#q-36" data-text="MQ-9 ★ Kafka 的消费者组和分区是什么关系？为什么消费者比分区多没用？">MQ-9 ★ Kafka 的消费者组和分区是什么关系？为什么消费者比分区多没用？</a>
+<a class="nav-q" href="#q-37" data-text="MQ-10 ⚠ RocketMQ 和 Kafka 在存储上的本质区别？">MQ-10 ⚠ RocketMQ 和 Kafka 在存储上的本质区别？</a>
+<a class="nav-q" href="#q-38" data-text="MQ-11 ⚠ 消费端异常该怎么处理？为什么不能 catch 住所有异常？">MQ-11 ⚠ 消费端异常该怎么处理？为什么不能 catch 住所有异常？</a>
+<a class="nav-q" href="#q-39" data-text="MQ-12 ⚠ 你怎么排查「消息丢了」？">MQ-12 ⚠ 你怎么排查「消息丢了」？</a>
+<a class="nav-q" href="#q-40" data-text="MQ-13 ⚠ 消息重复消费了几万次，怎么排查？">MQ-13 ⚠ 消息重复消费了几万次，怎么排查？</a>
+<a class="nav-q" href="#q-41" data-text="MQ-14 ⚠ 消息队列和分布式事务有什么区别？什么场景必须用分布式事务？">MQ-14 ⚠ 消息队列和分布式事务有什么区别？什么场景必须用分布式事务？</a>
+<a class="nav-q" href="#q-42" data-text="MQ-15 ⚠ 消息队列引入了哪些新问题？你怎么权衡？">MQ-15 ⚠ 消息队列引入了哪些新问题？你怎么权衡？</a>
+<a class="nav-q" href="#q-43" data-text="ES 类（8 题）">ES 类（8 题）</a>
+<a class="nav-q" href="#q-44" data-text="ES-1 ★ 倒排索引是什么？为什么快？">ES-1 ★ 倒排索引是什么？为什么快？</a>
+<a class="nav-q" href="#q-45" data-text="ES-2 ★ 为什么 ES 是&quot;近实时&quot;？写入流程是怎样的？">ES-2 ★ 为什么 ES 是"近实时"？写入流程是怎样的？</a>
+<a class="nav-q" href="#q-46" data-text="ES-3 ★ 深分页为什么慢？怎么解决？">ES-3 ★ 深分页为什么慢？怎么解决？</a>
+<a class="nav-q" href="#q-47" data-text="ES-4 ★ MySQL 和 ES 怎么同步？三种方案怎么选？">ES-4 ★ MySQL 和 ES 怎么同步？三种方案怎么选？</a>
+<a class="nav-q" href="#q-48" data-text="ES-5 ★ 分片和副本怎么定？为什么不能改分片数？">ES-5 ★ 分片和副本怎么定？为什么不能改分片数？</a>
+<a class="nav-q" href="#q-49" data-text="ES-6 ⚠ 字段类型 text 和 keyword 有什么区别？什么时候用哪个？">ES-6 ⚠ 字段类型 text 和 keyword 有什么区别？什么时候用哪个？</a>
+<a class="nav-q" href="#q-50" data-text="ES-7 ⚠ ES 集群红了/黄了怎么办？查询突然变慢怎么查？">ES-7 ⚠ ES 集群红了/黄了怎么办？查询突然变慢怎么查？</a>
+<a class="nav-q" href="#q-51" data-text="ES-8 ⚠ 为什么不能把 ES 当数据库用？">ES-8 ⚠ 为什么不能把 ES 当数据库用？</a>
+<a class="nav-q" href="#q-52" data-text="其他中间件类（7 题）">其他中间件类（7 题）</a>
+<a class="nav-q" href="#q-53" data-text="OTHER-1 ★ 分布式锁怎么实现？Redisson 和手写 SETNX 的区别？">OTHER-1 ★ 分布式锁怎么实现？Redisson 和手写 SETNX 的区别？</a>
+<a class="nav-q" href="#q-54" data-text="OTHER-2 ★ Sentinel 的限流、熔断、降级有什么区别？">OTHER-2 ★ Sentinel 的限流、熔断、降级有什么区别？</a>
+<a class="nav-q" href="#q-55" data-text="OTHER-3 ★ Seata AT 模式的原理？为什么它能回滚？">OTHER-3 ★ Seata AT 模式的原理？为什么它能回滚？</a>
+<a class="nav-q" href="#q-56" data-text="OTHER-4 ★ Nginx 在架构里承担什么？和 Spring Cloud LoadBalancer 有什么区别？">OTHER-4 ★ Nginx 在架构里承担什么？和 Spring Cloud LoadBalancer 有什么区别？</a>
+<a class="nav-q" href="#q-57" data-text="OTHER-5 ★ 为什么 K8s 滚动更新会丢请求？怎么做优雅停机？">OTHER-5 ★ 为什么 K8s 滚动更新会丢请求？怎么做优雅停机？</a>
+<a class="nav-q" href="#q-58" data-text="OTHER-6 ⚠ 怎么设计一个「日志检索」功能？说说你对 ELK 的理解。">OTHER-6 ⚠ 怎么设计一个「日志检索」功能？说说你对 ELK 的理解。</a>
+<a class="nav-q" href="#q-59" data-text="OTHER-7 ⚠ 你怎么保证「消息 + 数据库」的数据一致？本地消息表具体怎么实现？">OTHER-7 ⚠ 你怎么保证「消息 + 数据库」的数据一致？本地消息表具体怎么实现？</a>
+</div>
+</div>
+<div class="nav-group" data-text="六、项目案例串讲：把中间件串成一个完整故事"><a class="nav-sec" href="#sec-7"><span class="nav-idx">07</span><span>六、项目案例串讲：把中间件串成一个完整故事</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-60" data-text="案例一：订单支付链路（MQ + 事务 + 幂等 + 定时关单）">案例一：订单支付链路（MQ + 事务 + 幂等 + 定时关单）</a>
+<a class="nav-q" href="#q-61" data-text="案例二：门店/商品搜索（ES + Canal + 缓存）">案例二：门店/商品搜索（ES + Canal + 缓存）</a>
+<a class="nav-q" href="#q-62" data-text="案例三：库存扣减与超卖（Redis + Redisson + DB 兜底 + Sentinel）">案例三：库存扣减与超卖（Redis + Redisson + DB 兜底 + Sentinel）</a>
+</div>
+</div>
+<div class="nav-group" data-text="七、排查手册：症状 → 命令 → 根因"><a class="nav-sec" href="#sec-8"><span class="nav-idx">08</span><span>七、排查手册：症状 → 命令 → 根因</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-63" data-text="7.1 通用排查方法论">7.1 通用排查方法论</a>
+<a class="nav-q" href="#q-64" data-text="7.2 症状速查表">7.2 症状速查表</a>
+<a class="nav-q" href="#q-65" data-text="7.3 四个必会的排查命令">7.3 四个必会的排查命令</a>
+<a class="nav-q" href="#q-66" data-text="7.4 中间件&quot;健康检查清单&quot;（每周/上线前跑一遍）">7.4 中间件"健康检查清单"（每周/上线前跑一遍）</a>
+</div>
+</div>
+<div class="nav-group" data-text="八、最后的话：中间件这块怎么学最快"><a class="nav-sec" href="#sec-9"><span class="nav-idx">09</span><span>八、最后的话：中间件这块怎么学最快</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-67" data-text="三条学习路径">三条学习路径</a>
+<a class="nav-q" href="#q-68" data-text="三个最容易忽略但很加分的地方">三个最容易忽略但很加分的地方</a>
+<a class="nav-q" href="#q-69" data-text="最后一句">最后一句</a>
+</div>
+</div>
+<div class="nav-group" data-text="附录：常用命令与配置速查"><a class="nav-sec" href="#sec-10"><span class="nav-idx">10</span><span>附录：常用命令与配置速查</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-70" data-text="A. RocketMQ 运维命令">A. RocketMQ 运维命令</a>
+<a class="nav-q" href="#q-71" data-text="B. Elasticsearch 常用命令">B. Elasticsearch 常用命令</a>
+<a class="nav-q" href="#q-72" data-text="C. Redis 常用命令">C. Redis 常用命令</a>
+<a class="nav-q" href="#q-73" data-text="D. 关键默认参数（记这些就够了）">D. 关键默认参数（记这些就够了）</a>
+<a class="nav-q" href="#q-74" data-text="E. 面试前最后 5 分钟扫一遍">E. 面试前最后 5 分钟扫一遍</a>
+</div>
+</div></nav>
+</aside>
+<main><article><h1 id="doc-title">中间件与搜索引擎实战手册</h1>
+<blockquote>
+<p>面向 6 年经验的 Java 后端，聚焦你项目里真正会用到的中间件：<strong>RocketMQ / Kafka / RabbitMQ、Elasticsearch、Redis 分布式锁、Nacos、Sentinel、Seata、Nginx、ELK、Docker/K8s</strong>。
+每章三段式：<strong>原理（人话）→ 项目里怎么用（方案）→ 可运行代码 → 踩坑与排查</strong>。
+配套使用：《6 年 Java 面试题库》（184 题基础题）、《简历定向面试题》（按你的项目推题）。</p>
+</blockquote>
+<hr />
+<h2 id="sec-1" class="sec-title">零、怎么用这本手册</h2>
+<blockquote>
+<p>🗣 <strong>人话版</strong>：面试官问你「MQ 怎么保证不丢消息」，只背八股没用，他要的是「你项目里哪一步会丢、你怎么兜的、出了事你怎么查」。这本手册就是把你从「知道有这个东西」推到「能说清楚、能写出来、能定位」。</p>
+</blockquote>
+<p><strong>三个层次，读法不同：</strong></p>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>内容</th>
+<th>什么时候看</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>速通（2 小时）</strong></td>
+<td>第一章全景图 + 第五章 30 道高频题</td>
+<td>面试前一晚</td>
+</tr>
+<tr>
+<td><strong>补强（1 天）</strong></td>
+<td>第二章 MQ + 第三章 ES 的完整方案与代码</td>
+<td>系统准备期</td>
+</tr>
+<tr>
+<td><strong>拔高（2 天）</strong></td>
+<td>第四章其他中间件 + 第六章案例串讲 + 第七章排查手册</td>
+<td>冲刺期</td>
+</tr>
+</tbody>
+</table>
+<p><strong>读代码的姿势</strong>：每段代码都标了 <code>// 关键点</code>，先看关键点，再看整段。代码用的是 <strong>Spring Boot 3 + RocketMQ 5 + Spring Data Elasticsearch 5 + Redis/Redisson</strong>，和他项目栈一致。</p>
+<p><strong>一个提醒</strong>：这本的代码是「骨架」，不是「能直接跑」。MQ 消费端、ES 写入端这两块，<strong>一定要在你自己的项目里跑一遍真实链路</strong>，否则面试官追问「异常怎么捕获」「事务怎么回滚」你答不上来。</p>
+<hr />
+<h2 id="sec-2" class="sec-title">一、中间件全景图：先搞清楚每个东西解决什么问题</h2>
+<blockquote>
+<p>🗣 <strong>人话版</strong>：中间件就是<strong>中间商</strong>。你自己不干活，交给中间商干，中间商要么帮你省钱（复用资源）、要么帮你扛量（削峰）、要么帮你找东西（搜索）、要么帮你通信（解耦）。面试官问「你为什么用 XX」，本质是问你：<strong>这个中间商到底帮你省了什么？如果不要它你会怎样？</strong></p>
+</blockquote>
+<h3 id="q-1" class="q-title">1.1 一张图看懂中间件在链路里的位置</h3>
+<pre><code>                          ┌─────────────────────────────┐
+   用户请求 ────────────► │  Nginx（入口层）             │
+                          │  · 静态资源 / 反向代理       │
+                          │  · 限流 / 负载均衡            │
+                          └──────────────┬──────────────┘
+                                         │
+                          ┌──────────────▼──────────────┐
+                          │  应用服务（Spring Boot）      │
+                          │  · 业务逻辑 / 事务            │
+                          └──┬────────┬────────┬────────┘
+                             │        │        │
+              ┌──────────────▼──┐  ┌──▼─────┐  ┌▼──────────────┐
+              │ MySQL / Redis    │  │ MQ     │  │ ES            │
+              │ · 存储 / 缓存    │  │ · 解耦  │  │ · 搜索/分析    │
+              └─────────────────┘  │ · 削峰  │  └───────────────┘
+                                   └────────┘
+                                     │      │
+                    ┌────────────────┘      └──────────────┐
+                    ▼                                      ▼
+             ┌────────────┐                        ┌──────────────┐
+             │ Nacos       │                        │ Sentinel      │
+             │ 注册/配置中心 │                        │ 限流/熔断/降级 │
+             └────────────┘                        └──────────────┘
+</code></pre>
+<h3 id="q-2" class="q-title">1.2 中间件职责速查表（背这张表，够用 80% 的场景）</h3>
+<table>
+<thead>
+<tr>
+<th>中间件</th>
+<th>解决什么</th>
+<th>不解决什么</th>
+<th>6 年经验该讲到多深</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RocketMQ / Kafka</strong></td>
+<td>系统解耦、异步、削峰</td>
+<td>不保证业务幂等、不解决数据一致性</td>
+<td>必答：消息不丢/不重/有序三件套</td>
+</tr>
+<tr>
+<td><strong>Elasticsearch</strong></td>
+<td>全文检索、聚合分析、日志检索</td>
+<td>不是数据库，不能当唯一数据源</td>
+<td>必答：倒排索引 + 深分页 + 与 MySQL 同步</td>
+</tr>
+<tr>
+<td><strong>Redis</strong></td>
+<td>缓存、分布式锁、计数器、排行榜</td>
+<td>不保证强一致（异步删除有窗口）</td>
+<td>必答：缓存三大问题 + 分布式锁（Redisson）</td>
+</tr>
+<tr>
+<td><strong>Nacos</strong></td>
+<td>服务注册发现、配置中心</td>
+<td>不做分布式事务</td>
+<td>配置动态刷新 + 集群搭建</td>
+</tr>
+<tr>
+<td><strong>Sentinel</strong></td>
+<td>流量控制、熔断降级、系统保护</td>
+<td>不做业务限流语义（如"每人限 1 单"）</td>
+<td>限流规则 + 熔断降级预案</td>
+</tr>
+<tr>
+<td><strong>Seata</strong></td>
+<td>跨库/跨服务事务一致性</td>
+<td>不解决跨异构系统（要靠 MQ 最终一致）</td>
+<td>AT 模式原理（undo_log + 全局锁）</td>
+</tr>
+<tr>
+<td><strong>Nginx</strong></td>
+<td>入口层：静态资源、反代、负载均衡</td>
+<td>不做业务逻辑</td>
+<td>配置 + 与 Spring Boot 负载均衡对比</td>
+</tr>
+<tr>
+<td><strong>ELK / EFK</strong></td>
+<td>日志采集、检索、告警</td>
+<td>不做 APM 链路追踪（那用 SkyWalking）</td>
+<td>Logstash/Elasticsearch/Kibana 链路</td>
+</tr>
+<tr>
+<td><strong>Docker / K8s</strong></td>
+<td>环境一致、弹性伸缩、滚动发布</td>
+<td>不解决数据存储</td>
+<td>Dockerfile + K8s 核心对象</td>
+</tr>
+</tbody>
+</table>
+<h3 id="q-3" class="q-title">1.3 面试官问你「为什么用中间件」的标准答法</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：别只答「解耦、异步、削峰」这三个词，要带<strong>代价</strong>。6 年经验的人如果说不出「引入了 MQ 会带来什么问题」，面试官立刻知道你没真用过。</p>
+</blockquote>
+<p><strong>推荐回答结构（60 秒）：</strong></p>
+<pre><code>「我们用 RocketMQ 主要解决三件事：
+ 第一是解耦——订单履约要通知仓储、积分、营销，原来下游挂了整个下单就失败，现在消息发出去就行；
+ 第二是削峰——大促时支付回调峰值是平时 20 倍，MQ 兜住之后按自己节奏消费；
+ 第三是异步提速——下单接口从 800ms 降到 120ms。
+
+ 但代价我们也是清楚的：引入了重复消费、消息丢失、顺序错乱、堆积这四类问题。
+ 所以我们做了三件事保证：
+ ① 消费端幂等，用订单号 + 状态机，重复消息直接被状态拦掉；
+ ② 生产端同步发送 + Broker 同步刷盘 + 主从，消费端手动 ACK；
+ ③ 堆积有监控告警，lag 超过阈值自动扩容消费者。
+
+ 所以我的观点是：MQ 不是银弹，只把非核心、可补偿的链路异步化，核心的扣库存还是同步调用。」
+</code></pre>
+<p><strong>最后那句话是加分点</strong>——它证明你有判断力，不是为了用而用。</p>
+<hr />
+<h2 id="sec-3" class="sec-title">二、消息队列 MQ：实战全解</h2>
+<blockquote>
+<p>🗣 <strong>人话版</strong>：MQ 就是<strong>传菜口</strong>。厨师（生产者）做好放上去，服务员（消费者）自己来取，两边不用互相等。它的毛病也都是传菜口的通病：菜会不会掉（丢消息）、会不会上两遍（重复消费）、会不会排错队（顺序）、堆太多怎么办（堆积）。这一章把四个毛病一个个解决掉。</p>
+</blockquote>
+<h3 id="q-4" class="q-title">2.0 先选型：RocketMQ / Kafka / RabbitMQ 到底用哪个</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th><strong>RocketMQ</strong></th>
+<th><strong>Kafka</strong></th>
+<th><strong>RabbitMQ</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>出身</td>
+<td>阿里开源，电商基因</td>
+<td>LinkedIn 出品，日志/流计算基因</td>
+<td>RabbitMQ 公司，AMQP 标准</td>
+</tr>
+<tr>
+<td>吞吐</td>
+<td>百万级</td>
+<td><strong>千万级</strong>（最高）</td>
+<td>万级（百万就吃力）</td>
+</tr>
+<tr>
+<td>延迟消息</td>
+<td><strong>原生 18 档 + 5.x 任意定时</strong></td>
+<td>无（要自己搭时间轮）</td>
+<td>TTL + 死信队列（队头阻塞）/ 延迟插件</td>
+</tr>
+<tr>
+<td>事务消息</td>
+<td><strong>原生支持</strong></td>
+<td>有事务 API 但复杂</td>
+<td>无</td>
+</tr>
+<tr>
+<td>重试/死信</td>
+<td><strong>原生分级重试 + DLQ</strong></td>
+<td>需自己实现</td>
+<td>原生 DLX + 死信</td>
+</tr>
+<tr>
+<td>消息轨迹</td>
+<td><strong>原生支持</strong>（查收发链路）</td>
+<td>无</td>
+<td>无</td>
+</tr>
+<tr>
+<td>顺序消息</td>
+<td><strong>原生 QueueSelector + 顺序消费</strong></td>
+<td>分区内有序</td>
+<td>单队列 FIFO</td>
+</tr>
+<tr>
+<td>路由能力</td>
+<td>Tag/SQL92 过滤</td>
+<td>无（只能消费端过滤）</td>
+<td><strong>最强</strong>（Exchange 四种类型）</td>
+</tr>
+<tr>
+<td>运维复杂度</td>
+<td>中</td>
+<td>高（ZK 时代）/ 低（KRaft）</td>
+<td>低</td>
+</tr>
+<tr>
+<td><strong>适合你项目的场景</strong></td>
+<td><strong>交易、订单、支付回调</strong></td>
+<td>日志埋点、数据同步、CDC</td>
+<td>复杂路由、量不大</td>
+</tr>
+</tbody>
+</table>
+<p><strong>结论（你项目怎么选）</strong>：</p>
+<ul>
+<li><strong>订单履约、支付回调、库存扣减 → RocketMQ</strong>：需要延迟关单、需要事务消息、需要消息轨迹排查。</li>
+<li><strong>门店操作日志 → Kafka 或 ELK</strong>：量大、不敏感、只进日志系统。</li>
+<li><strong>如果你司已有 MQ 基建 → 跟着公司走</strong>，别自己造轮子（面试加分点：懂成本）。</li>
+</ul>
+<h3 id="q-5" class="q-title">2.1 RocketMQ 架构：消息到底存在哪</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：RocketMQ 收到消息不是一条一条存的，是<strong>所有消息写进同一个文件（CommitLog）</strong>，消费的时候按 Topic+队列去里面「按序号取」。所以它写特别快（顺序写磁盘），但读要靠索引。</p>
+</blockquote>
+<pre><code>生产者
+  │
+  ▼
+┌──────────────────────────────────────────────┐
+│ NameServer（集群，无状态）                     │
+│  记录 Broker 地址、Topic 队列分布              │
+│  客户端每 30s 拉取路由表                        │
+└──────────────────────────────────────────────┘
+  │
+  ▼
+┌──────────────────────────────────────────────┐
+│ Broker（Master）                              │
+│  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ CommitLog    │  │ ConsumeQueue         │  │
+│  │ 所有消息顺序写 │  │ TopicA-Queue0 的逻辑  │  │
+│  │ 一个大文件     │  │ 队列（存消息在       │  │
+│  │ (顺序写=快)   │  │ CommitLog 的物理偏移） │  │
+│  └──────────────┘  └──────────────────────┘  │
+│  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ IndexFile    │  │ 消费进度位点          │  │
+│  │ key→offset   │  │ (ConsumerQueue offset)│  │
+│  └──────────────┘  └──────────────────────┘  │
+└──────────────────────────────────────────────┘
+  │
+  ▼
+消费者（ConsumerGroup 拉模式）
+</code></pre>
+<p><strong>几个必须记住的点：</strong></p>
+<ol>
+<li><strong>NameServer 无状态</strong>，挂了不影响已建立的连接，只影响新连接发现（这就是为什么 RocketMQ 比 ZooKeeper 方案运维简单）。</li>
+<li><strong>Broker 有 Master / Slave</strong>。默认 <code>ASYNC_MASTER</code> 刷盘 + 异步复制，<strong>会丢消息</strong>；生产环境要 <code>SYNC_MASTER</code>（同步复制到从节点）。</li>
+<li><strong>Pull 模式</strong>：消费者主动来拉（<code>DefaultMQPushConsumer</code> 封装了拉取逻辑，内部看起来像推）。</li>
+<li><strong>消费进度存在 Broker 端</strong>（ConsumerQueue 的 offset），所以消费位点是集群共享的。</li>
+</ol>
+<h3 id="q-6" class="q-title">2.2 消息不丢：三段式防线 + 代码</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：一封信要送到，三关都得守住：<strong>发的人确认寄出去了</strong>、<strong>邮局确认入箱了</strong>、<strong>收的人确认拆开看了</strong>。少一关都可能丢。我们项目里三关全上了，还留了第四关——对账兜底。</p>
+</blockquote>
+<h4>三关分别是什么</h4>
+<pre><code>【第一关】生产者 → Broker
+   同步发送 + 失败重试 + 检查 SendStatus
+   ↓
+【第二关】Broker 落盘
+   同步刷盘(SYNC_FLUSH) + 同步复制(SYNC_MASTER)
+   ↓
+【第三关】Broker → 消费者
+   手动 ACK（业务处理成功才提交 offset）
+   ↓
+【兜底】本地消息表 + 定时对账
+</code></pre>
+<h4>生产端代码：同步发送 + 状态校验</h4>
+<pre><code class="language-java">@Service
+@RequiredArgsConstructor
+public class OrderMessageProducer {
+
+    private final RocketMQTemplate rocketMQTemplate;
+    private final MqSendLogMapper mqSendLogMapper;
+
+    /**
+     * 发送订单事件。
+     * 关键点1：syncSend 是同步等待 Broker 的 ack，失败会抛异常
+     * 关键点2：必须检查 sendStatus，SendStatus != SEND_OK 视为失败
+     * 关键点3：先落本地消息表再发消息（或用事务消息），保证本地事务与消息最终一致
+     */
+    public void sendOrderPaid(OrderPaidEvent event) {
+        // 兜底：先写本地消息表，状态 INIT
+        MqSendLog log = new MqSendLog();
+        log.setBizId(event.getOrderNo());
+        log.setTopic(&quot;ORDER_TOPIC&quot;);
+        log.setTag(&quot;ORDER_PAID&quot;);
+        log.setMsgId(IdWorker.getIdStr());
+        log.setStatus(SendStatusEnum.INIT.getCode());
+        log.setCreateTime(LocalDateTime.now());
+        mqSendLogMapper.insert(log);   // 唯一索引：biz_id + topic + tag
+
+        try {
+            Message&lt;String&gt; message = MessageBuilder.withPayload(JSON.toJSONString(event))
+                    .setHeader(RocketMQHeaders.KEYS, event.getOrderNo())
+                    .setHeader(RocketMQHeaders.TAGS, &quot;ORDER_PAID&quot;)
+                    .build();
+
+            // 同步发送，超时 3 秒；sendTimeout 单位毫秒
+            SendResult sendResult = rocketMQTemplate.syncSend(
+                    &quot;ORDER_TOPIC:ORDER_PAID&quot;, message, 3000);
+
+            if (sendResult.getSendStatus() != SendStatus.SEND_OK) {
+                // 关键点：状态不是 SEND_OK，不能当成功，要落 FAIL 等补偿任务捞
+                log.setStatus(SendStatusEnum.FAIL.getCode());
+                log.setErrMsg(sendResult.getMsgId() + &quot;:&quot; + sendResult.getSendStatus());
+                mqSendLogMapper.updateById(log);
+                log.warn(&quot;MQ 发送状态异常 orderNo={} status={}&quot;,
+                        event.getOrderNo(), sendResult.getSendStatus());
+                return;
+            }
+
+            log.setStatus(SendStatusEnum.SUCCESS.getCode());
+            log.setMsgId(sendResult.getMsgId());
+            mqSendLogMapper.updateById(log);
+        } catch (Exception e) {
+            log.setStatus(SendStatusEnum.FAIL.getCode());
+            log.setErrMsg(e.getMessage());
+            mqSendLogMapper.updateById(log);
+            log.error(&quot;MQ 发送异常 orderNo={}&quot;, event.getOrderNo(), e);
+            // 关键点：不要吞异常，让上游感知；失败记录由定时任务兜底重发
+            throw new BizException(&quot;订单事件发送失败&quot;, e);
+        }
+    }
+}
+</code></pre>
+<h4>生产端配置：把可靠性参数打开</h4>
+<pre><code class="language-yaml">rocketmq:
+  name-server: 192.168.31.6:9876
+  producer:
+    group: ORDER_PRODUCER_GROUP
+    send-message-timeout: 3000
+    # 关键：失败重试次数（同步发送失败会按这个次数重试）
+    retry-times-when-send-failed: 3
+    # 关键：超过这个大小就压缩（默认 1024*4），大消息走压缩省带宽
+    compress-message-body-threshold: 4096
+    retry-times-when-send-async-failed: 3
+</code></pre>
+<h4>Broker 端：同步刷盘 + 同步复制</h4>
+<pre><code class="language-properties"># conf/broker.conf
+brokerClusterName = DefaultCluster
+brokerName = broker-a
+brokerId = 0
+brokerRole = ASYNC_MASTER
+
+# 关键1：SYNC_FLUSH = 同步刷盘，消息写入才返回，保证不丢（代价是吞吐下降）
+flushDiskType = SYNC_FLUSH
+
+# 关键2：SYNC_MASTER = 同步复制到 Slave，Master 挂了 Slave 能顶上
+#      代价：延迟增加，Master 故障时数据一致
+haMasterAddress = 192.168.31.7:10911
+</code></pre>
+<blockquote>
+<p>⚠ <strong>常见错误</strong>：很多团队觉得「同步刷盘太慢」就改异步，机器一断电消息全丢，出事才后悔。<strong>建议：交易类 Topic 用 SYNC_FLUSH + SYNC_MASTER，日志类 Topic 用 ASYNC。</strong></p>
+</blockquote>
+<h4>消费端代码：手动 ACK + 业务成功才提交</h4>
+<pre><code class="language-java">@Component
+@RocketMQMessageListener(
+        topic = &quot;ORDER_TOPIC&quot;,
+        consumerGroup = &quot;ORDER_FULFILL_GROUP&quot;,
+        messageModel = MessageModel.CLUSTERING,
+        consumeMode = ConsumeMode.CONCURRENTLY,
+        consumeThreadNumber = 32,          // 关键：消费线程数
+        maxReconsumeTimes = 3              // 关键：重试 3 次后进死信队列
+)
+public class OrderPaidListener implements RocketMQListener&lt;String&gt; {
+
+    private final OrderService orderService;
+
+    @Override
+    public void onMessage(String payload) {
+        OrderPaidEvent event = JSON.parseObject(payload, OrderPaidEvent.class);
+        // 关键点1：这里不抛异常就等于消费成功，会提交 offset
+        // 关键点2：抛异常 = 消费失败，Broker 会按重试策略重投，超过次数进 DLQ
+        // 关键点3：真正的幂等在业务层做（见 2.3）
+        orderService.handleOrderPaid(event);
+    }
+}
+</code></pre>
+<p><strong>如果需要手动控制 ACK</strong>（比如要在多个下游都成功后才提交位点），用 <code>RocketMQListener</code> 的手动模式：</p>
+<pre><code class="language-java">@Service
+public class ManualAckService {
+
+    @Autowired
+    private RocketMQTemplate rocketMQTemplate;
+
+    /**
+     * 拉模式：完全自己控制 ACK 时机。
+     * 关键点1：pullSyncAndDecode 拿到的是 MessageExt，可以拿到 msgId 做幂等
+     * 关键点2：processConsumeResult 返回 CommitState 才能提交 offset
+     */
+    public void consume() {
+        PullRequest request = new PullRequest();
+        request.setConsumerGroup(&quot;ORDER_FULFILL_GROUP&quot;);
+        request.setQueueNames(new String[]{&quot;ORDER_TOPIC&quot;});
+
+        PullResult pullResult = rocketMQTemplate.pullSyncAndDecode(request);
+        for (MessageExt messageExt : pullResult.getFoundList()) {
+            boolean ok = false;
+            try {
+                OrderPaidEvent event = JSON.parseObject(
+                        new String(messageExt.getBody(), StandardCharsets.UTF_8),
+                        OrderPaidEvent.class);
+                orderService.handleOrderPaid(event);
+                ok = true;
+            } catch (BizException e) {
+                // 可重试异常：返回失败，会重试
+                log.error(&quot;业务处理失败，将重试 msgId={}&quot;, messageExt.getMsgId(), e);
+            } catch (Exception e) {
+                // 不可重试异常：直接标记成功，避免无限重试（脏数据）
+                log.error(&quot;数据异常，跳过 msgId={} body={}&quot;, messageExt.getMsgId(), e.getMessage());
+                ok = true;
+            }
+            // 关键点3：只有业务明确成功才提交位点
+            rocketMQTemplate.ackMessageSync(messageExt, ok
+                    ? ConsumeConcurrentlyStatus.CONSUME_SUCCESS
+                    : ConsumeConcurrentlyStatus.RECONSUME_LATER);
+        }
+    }
+}
+</code></pre>
+<h3 id="q-7" class="q-title">2.3 幂等消费：MQ 只能保证「至少一次」</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：MQ 的投递语义是 <strong>at least once（至少一次）</strong>，也就是「宁可多送一次，绝不漏送」。所以重复消费是<strong>必然</strong>发生的，不是意外。你必须在消费端做幂等——这才是 MQ 使用的核心工作量所在。</p>
+</blockquote>
+<h4>为什么一定会重复</h4>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>网络抖动</td>
+<td>Broker 已投递，消费者已收到但 ACK 丢了 → 重投</td>
+</tr>
+<tr>
+<td>消费端宕机</td>
+<td>业务处理完了但还没提交 offset 就挂了 → 重投</td>
+</tr>
+<tr>
+<td>Rebalance</td>
+<td>消费组重新分配时，未 ACK 的消息被分给新消费者 → 重投</td>
+</tr>
+<tr>
+<td>重试机制</td>
+<td>消费失败自动重投</td>
+</tr>
+<tr>
+<td>生产端重试</td>
+<td>同步发送超时但 Broker 实际已收到 → 重复投递</td>
+</tr>
+</tbody>
+</table>
+<h4>幂等的四种方案（按可靠性排序）</h4>
+<p><strong>方案一：数据库唯一索引（最可靠，首选）</strong></p>
+<pre><code class="language-java">/**
+
+ * 方案一：唯一索引 + 状态机。
+ * 关键点1：唯一索引是最后一道防线，靠数据库保证，不会因为并发失效
+ * 关键点2：先查再插在并发下不可靠，必须靠唯一索引兜底
+ */
+@Service
+public class IdempotentService {
+
+    @Autowired
+    private IdempotentRecordMapper idempotentMapper;
+
+    @Autowired
+    private OrderService orderService;
+
+    public void handle(OrderPaidEvent event) {
+        // 尝试插入幂等记录，唯一索引冲突就说明处理过了
+        IdempotentRecord record = new IdempotentRecord();
+        record.setBizId(event.getOrderNo());
+        record.setBizType(&quot;ORDER_PAID&quot;);
+        record.setStatus(ProcessStatusEnum.INIT.getCode());
+        record.setCreateTime(LocalDateTime.now());
+
+        int inserted;
+        try {
+            inserted = idempotentMapper.insertIgnore(record);
+        } catch (DuplicateKeyException e) {
+            // 关键点3：重复消息直接跳过，但要判断上次的处理状态
+            IdempotentRecord exist = idempotentMapper.selectByBizId(
+                    event.getOrderNo(), &quot;ORDER_PAID&quot;);
+            if (exist != null &amp;&amp; ProcessStatusEnum.SUCCESS.getCode() == exist.getStatus()) {
+                log.info(&quot;重复消息，跳过 orderNo={}&quot;, event.getOrderNo());
+                return;
+            }
+            // 存在但状态不是 SUCCESS，可能是上次处理中失败，允许重试
+            inserted = 1;
+        }
+
+        if (inserted &gt; 0) {
+            try {
+                orderService.handleOrderPaid(event);
+                idempotentMapper.updateStatus(event.getOrderNo(), &quot;ORDER_PAID&quot;,
+                        ProcessStatusEnum.SUCCESS.getCode());
+            } catch (Exception e) {
+                idempotentMapper.updateStatus(event.getOrderNo(), &quot;ORDER_PAID&quot;,
+                        ProcessStatusEnum.FAIL.getCode());
+                throw e;   // 抛出让 MQ 重试
+            }
+        }
+    }
+}
+</code></pre>
+<pre><code class="language-sql">-- 关键：这张表就是幂等的核心，靠唯一索引说话
+CREATE TABLE `idempotent_record` (
+  `id`          BIGINT       NOT NULL AUTO_INCREMENT,
+  `biz_id`      VARCHAR(64)  NOT NULL COMMENT '业务唯一标识，如订单号',
+  `biz_type`    VARCHAR(32)  NOT NULL COMMENT '业务类型',
+  `status`      TINYINT      NOT NULL DEFAULT 0 COMMENT '0=处理中 1=成功 2=失败',
+  `create_time` DATETIME     NOT NULL,
+  `update_time` DATETIME     NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_biz` (`biz_id`, `biz_type`)
+) ENGINE=InnoDB COMMENT='消费幂等记录表';
+</code></pre>
+<p><strong>方案二：状态机（业务语义天然幂等）</strong></p>
+<pre><code class="language-java">/**
+
+ * 方案二：状态机。
+ * 关键点：用 WHERE 条件限定状态流转，天然幂等，不依赖额外表。
+ * UPDATE ... WHERE status = '待支付' 受影响行数为 0 就说明已经处理过了。
+ */
+@Transactional(rollbackFor = Exception.class)
+public void handleOrderPaid(OrderPaidEvent event) {
+    int rows = orderMapper.updateStatusIfMatch(
+            event.getOrderNo(),
+            OrderStatus.PAID.getCode(),      // 目标状态
+            OrderStatus.WAIT_PAY.getCode()); // 期望的当前状态
+
+    if (rows == 0) {
+        // 关键：受影响 0 行 = 状态已经流转过，重复消息直接忽略
+        log.info(&quot;订单状态已流转，忽略重复消息 orderNo={}&quot;, event.getOrderNo());
+        return;
+    }
+    // 只有第一次流转才会执行到这里
+    pointService.addPoints(event);
+    couponService.markUsed(event);
+}
+</code></pre>
+<pre><code class="language-sql">UPDATE t_order
+   SET status = 'PAID', pay_time = NOW()
+ WHERE order_no = #{orderNo} AND status = 'WAIT_PAY';
+</code></pre>
+<p><strong>方案三：Redis SETNX（快，但有坑）</strong></p>
+<pre><code class="language-java">/**
+
+ * 方案三：Redis 去重。
+ * ⚠ 大坑：如果「先 SETNX 再处理业务」，业务失败但占位成功，消息会被吞掉。
+ * 正确做法：业务成功后再写 key；或者用两段式状态。
+ */
+public void handleWithRedis(OrderPaidEvent event) {
+    String key = &quot;mq:done:ORDER_PAID:&quot; + event.getOrderNo();
+
+    // 业务前：只做「快速重复过滤」，失败可以删 key
+    if (Boolean.TRUE.equals(redisTemplate.opsForValue().get(key))) {
+        log.info(&quot;Redis 判定重复，跳过 orderNo={}&quot;, event.getOrderNo());
+        return;
+    }
+
+    orderService.handleOrderPaid(event);
+
+    // 业务成功后再标记（key 要设过期时间，防止无限增长）
+    redisTemplate.opsForValue().set(key, &quot;1&quot;, Duration.ofDays(3));
+}
+</code></pre>
+<p><strong>方案四：乐观锁 / 版本号</strong></p>
+<pre><code class="language-java">// 关键：用 version 做 CAS，多端并发更新只有一次生效
+int rows = orderMapper.updateWithVersion(orderNo, newStatus, oldVersion);
+if (rows == 0) {
+    // 说明版本已被其他消费更新过，放弃
+    return;
+}
+</code></pre>
+<h4>四种方案怎么选</h4>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>可靠性</th>
+<th>性能</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DB 唯一索引</td>
+<td>★★★★★</td>
+<td>中</td>
+<td><strong>通用首选</strong>，所有幂等场景都能用</td>
+</tr>
+<tr>
+<td>状态机</td>
+<td>★★★★★</td>
+<td>高</td>
+<td>订单/支付/工单等有明确状态流转的</td>
+</tr>
+<tr>
+<td>Redis SETNX</td>
+<td>★★★</td>
+<td>最高</td>
+<td>高频、对一致性要求略低的场景</td>
+</tr>
+<tr>
+<td>乐观锁</td>
+<td>★★★★</td>
+<td>高</td>
+<td>计数器、库存扣减类</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>💡 <strong>面试加分说法</strong>：「我们没有只依赖 Redis，因为 Redis 主从异步复制切换时可能丢 key，幂等就失效了。我们用数据库唯一索引兜底，Redis 只做前置的快速过滤，减少无效的 DB 查询。」</p>
+</blockquote>
+<h3 id="q-8" class="q-title">2.4 顺序消息：只要「局部有序」，不要全局有序</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：全局有序 = 所有消息走一个队列一个线程消费，吞吐直接废掉。实际业务只要<strong>同一个订单</strong>的消息按顺序处理就行——那就是「同 key 同队列同线程」。</p>
+</blockquote>
+<h4>RocketMQ 顺序消息实现</h4>
+<pre><code class="language-java">@Component
+@RequiredArgsConstructor
+public class OrderMessageSelector implements MessageQueueSelector {
+
+    private final OrderMapper orderMapper;
+
+    /**
+     * 关键点：用订单号做 hash，保证同一个订单的消息永远进同一个队列。
+     * 队列数固定（broker 配置的 queueNums），扩队列会破坏已有映射，慎改。
+     */
+    @Override
+    public MessageQueue select(List&lt;MessageQueue&gt; mqs, Message msg, Object arg) {
+        String orderNo = (String) arg;
+        // 二次 hash 再取模，避免连续订单号落到同一队列（数据倾斜）
+        long hash = Math.abs(orderNo.hashCode());
+        int index = (int) (hash % mqs.size());
+        return mqs.get(index);
+    }
+
+    public void sendOrdered(OrderEvent event) {
+        Message&lt;String&gt; message = MessageBuilder.withPayload(JSON.toJSONString(event))
+                .setHeader(RocketMQHeaders.TAGS, &quot;ORDER_STATUS&quot;)
+                .build();
+        // 关键点2：syncSend 第四个参数传 MessageQueueSelector，第五个参数传 hashKey
+        rocketMQTemplate.syncSend(&quot;ORDER_TOPIC:ORDER_STATUS&quot;, message, 3000,
+                new OrderMessageSelector(), event.getOrderNo());
+    }
+}
+</code></pre>
+<pre><code class="language-java">/**
+
+ * 顺序消费端：consumeMode = ORDERLY。
+ * RocketMQ 会保证同一队列内单线程消费，天然有序。
+ */
+@Component
+@RocketMQMessageListener(
+        topic = &quot;ORDER_TOPIC&quot;,
+        consumerGroup = &quot;ORDER_STATUS_GROUP&quot;,
+        consumeMode = ConsumeMode.ORDERLY,   // 关键
+        messageModel = MessageModel.CLUSTERING,
+        consumeThreadNumber = 16
+)
+public class OrderStatusListener implements RocketMQListener&lt;OrderEvent&gt; {
+    @Override
+    public void onMessage(OrderEvent event) {
+        orderService.updateStatusInOrder(event);
+    }
+}
+</code></pre>
+<blockquote>
+<p>⚠ <strong>顺序消息的代价</strong>：
+1. <strong>吞吐下降</strong>（同队列单线程）
+2. <strong>一条卡住全队列卡住</strong>——所以顺序消费端必须设置<strong>消费超时</strong>（<code>consumeTimeout</code>）和<strong>死信保护</strong>
+3. <strong>扩队列数会破坏顺序</strong>——生产环境队列数一次定好</p>
+</blockquote>
+<h3 id="q-9" class="q-title">2.5 延迟消息：订单超时关单（你的项目必考）</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：下单后 30 分钟没付款就自动关单，这个「30 分钟后执行」就是延迟消息。做法是发一条 30 分钟后才被消费的消息，消费时检查订单状态——没付款就关掉。</p>
+</blockquote>
+<h4>方案 A：RocketMQ 4.x 延迟级别</h4>
+<pre><code class="language-java">/**
+
+ * RocketMQ 4.x：只有固定的 18 个延迟级别。
+ * 级别表：1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h
+ * 关键点：level=4 就是 30 秒，level=14 就是 30 分钟。定死了，改不了。
+ */
+public void sendCloseOrderMessage(String orderNo) {
+    Message&lt;String&gt; msg = MessageBuilder.withPayload(orderNo).build();
+    // 第四个参数 delayLevel=14 → 30 分钟
+    rocketMQTemplate.syncSend(&quot;ORDER_TOPIC:ORDER_TIMEOUT_CLOSE&quot;, msg, 3000, 14);
+}
+</code></pre>
+<h4>方案 B：RocketMQ 5.x 任意定时消息（推荐）</h4>
+<pre><code class="language-java">/**
+
+ * RocketMQ 5.x：可以指定具体的时间点，精度到毫秒。
+ * 关键点：定时消息在服务端做，需要 Broker 开启 timerWheelEnable；
+ *        定时时间必须在 now + 24h 之前（可调整）。
+ */
+public void sendCloseOrderTimer(String orderNo, long closeTimeMillis) {
+    Message&lt;String&gt; msg = MessageBuilder.withPayload(orderNo)
+            .setHeader(RocketMQHeaders.TAGS, &quot;ORDER_TIMEOUT_CLOSE&quot;)
+            .build();
+
+    RocketMQTemplate.syncSend(&quot;ORDER_TOPIC:ORDER_TIMEOUT_CLOSE&quot;, msg, 3000,
+            // delayLevel 传 -1 表示使用定时消息
+            -1,
+            // 定时时间戳
+            MessageBuilder.withPayload(orderNo)
+                    .setHeader(&quot;__STARTDELIVERTIME__&quot;, String.valueOf(closeTimeMillis))
+                    .build().getHeaders().get(&quot;__STARTDELIVERTIME__&quot;).toString());
+}
+</code></pre>
+<blockquote>
+<p>💡 5.x 实际推荐用 <code>TimerMessageBuilder</code>（rocketmq-client 5.x 提供），生产环境请以实际 SDK 版本为准。</p>
+</blockquote>
+<h4>方案 C：Redis ZSet 延时队列（自己实现，灵活）</h4>
+<pre><code class="language-java">/**
+
+ * Redis ZSet 延时队列。
+ * 关键点1：用 ZSet 的 score 存到期时间戳，ZPOPMIN 拿到期任务
+ * 关键点2：需要轮询调度器（多实例要用分布式锁，或者用 Redisson 看门狗）
+ * 关键点3：数据在内存，宕机可能丢（Redis 有持久化但不保证），对可靠性要求高的场景不要用
+ */
+@Component
+public class DelayQueueService {
+
+    private static final String ZSET_KEY = &quot;delay:queue:order:close&quot;;
+    private static final String LOCK_KEY = &quot;delay:queue:lock&quot;;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    private RedissonClient redissonClient;
+
+    public void push(String bizId, long executeAtMillis) {
+        redisTemplate.opsForZSet().add(ZSET_KEY, bizId, executeAtMillis);
+    }
+
+    /**
+     * 调度任务：每 1 秒扫一次到期任务。
+     * 关键点：用 Redisson 分布式锁保证多实例只有一个在扫（否则重复消费）
+     */
+    @Scheduled(fixedDelay = 1000)
+    public void schedule() {
+        RLock lock = redissonClient.getLock(LOCK_KEY);
+        // 关键：tryLock 拿不到就跳过，不要阻塞
+        if (!lock.tryLock()) {
+            return;
+        }
+        try {
+            long now = System.currentTimeMillis();
+            // 关键：一次只取一批，避免单次拉太多把 Redis 拖死
+            Set&lt;String&gt; due = redisTemplate.opsForZSet()
+                    .rangeByScore(ZSET_KEY, 0, now, 0, 100);
+            if (due == null || due.isEmpty()) {
+                return;
+            }
+            for (String bizId : due) {
+                // 关键：ZREM 返回 1 表示删除成功 = 抢到了这个任务
+                Boolean removed = redisTemplate.opsForZSet().remove(ZSET_KEY, bizId);
+                if (Boolean.TRUE.equals(removed)) {
+                    orderService.closeIfUnpaid(bizId);
+                }
+            }
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
+    }
+}
+</code></pre>
+<h4>方案 D：XXL-Job / 定时扫表（最土但最可靠）</h4>
+<pre><code class="language-java">/**
+
+ * 方案 D：定时扫表。
+ * 关键点：不是「延迟消息」，是「轮询到期订单」。
+ * 优点：可查、可补偿、不会丢（DB 是真相）；缺点：有延迟、扫表压力
+ * 适合：订单量不大、要求「一定要关掉」的场景
+ */
+@XxlJob(&quot;orderTimeoutCloseJob&quot;)
+public void orderTimeoutCloseJob() {
+    // 关键点：用状态 + 超时时间做索引条件，不要全表扫
+    List&lt;OrderDO&gt; expired = orderMapper.selectTimeoutOrders(
+            OrderStatus.WAIT_PAY.getCode(), LocalDateTime.now().minusMinutes(30), 500);
+    for (OrderDO order : expired) {
+        orderService.closeIfUnpaid(order.getOrderNo());
+    }
+}
+</code></pre>
+<pre><code class="language-sql">-- 关键：走这个索引，否则百万订单会扫全表
+CREATE INDEX idx_status_timeout ON t_order(status, create_time);
+</code></pre>
+<h4>四种方案怎么选（你的项目建议）</h4>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>可靠性</th>
+<th>精确度</th>
+<th>适合</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RocketMQ 延迟/定时</td>
+<td>高</td>
+<td>秒级</td>
+<td><strong>订单关单首选</strong>（要和其它订单消息统一）</td>
+</tr>
+<tr>
+<td>Redis ZSet</td>
+<td>中（内存）</td>
+<td>秒级</td>
+<td>需要动态改延迟时间、量不大</td>
+</tr>
+<tr>
+<td>XXL-Job 扫表</td>
+<td>最高</td>
+<td>分钟级</td>
+<td>要求「一定关掉」+ 允许延迟</td>
+</tr>
+<tr>
+<td><strong>组合</strong></td>
+<td>高</td>
+<td>秒级</td>
+<td><strong>MQ 做主 + 扫表做兜底</strong>（生产环境最稳）</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>💡 <strong>实战推荐</strong>：MQ 延迟消息（30 分钟）作为主路径，XXL-Job 每 5 分钟扫一次「创建超过 31 分钟仍未支付」的订单作为兜底。理由说清楚：<strong>MQ 延迟消息在极端情况下（集群脑裂、消息被误删）可能不触发，扫表是最后一道保险</strong>。</p>
+</blockquote>
+<h4>消费端：一定要做状态二次确认</h4>
+<pre><code class="language-java">@RocketMQMessageListener(topic = &quot;ORDER_TOPIC&quot;, consumerGroup = &quot;ORDER_CLOSE_GROUP&quot;)
+public class OrderCloseListener implements RocketMQListener&lt;String&gt; {
+    @Override
+    public void onMessage(String orderNo) {
+        // 关键点1：消费时再查一次 DB 状态，不能只信「延迟消息到了就关单」
+        // 场景：用户 29 分 59 秒付款了，30 分 01 秒关单消息到——必须再查
+        orderService.closeIfUnpaid(orderNo);
+    }
+}
+</code></pre>
+<pre><code class="language-java">@Transactional(rollbackFor = Exception.class)
+public void closeIfUnpaid(String orderNo) {
+    // 关键点2：SQL 层面用状态兜住，天然幂等
+    int rows = orderMapper.closeIfWaitPay(orderNo, LocalDateTime.now());
+    if (rows == 0) {
+        log.info(&quot;订单非待支付状态，无需关闭 orderNo={}&quot;, orderNo);
+        return;
+    }
+    // 关键点3：关闭后要还库存、释放优惠券——这些操作也要幂等
+    stockService.restore(orderNo);
+    couponService.release(orderNo);
+}
+</code></pre>
+<h3 id="q-10" class="q-title">2.6 事务消息：本地事务与消息的原子性</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：你改了数据库，然后要发消息通知下游。这俩是「改库」和「发消息」两个动作，中间可能断电。事务消息的办法是：<strong>先发一条「半消息」（消费者看不见），你把库改成功后回复「提交」，它才变成真消息；如果中途挂了，Broker 会回来问「你那事到底成没成」，你查库告诉它。</strong></p>
+</blockquote>
+<h4>RocketMQ 事务消息实现</h4>
+<pre><code class="language-java">@Service
+@RequiredArgsConstructor
+public class OrderTransactionProducer {
+
+    private final TransactionMqProducer producer;   // 或用 rocketMQTemplate 的事务方法
+    private final OrderMapper orderMapper;
+
+    /**
+     * 关键点1：先发半消息，Broker 只存储不投递
+     * 关键点2：拿到 sendResult 后执行本地事务
+     * 关键点3：本地事务执行完，明确回复 COMMIT / ROLLBACK
+     * 关键点4：如果没回复（进程挂了），Broker 会回查 checkLocalTransaction
+     */
+    public void createOrderWithTx(OrderDO order) {
+        Message&lt;String&gt; message = MessageBuilder
+                .withPayload(JSON.toJSONString(order))
+                .setHeader(RocketMQHeaders.KEYS, order.getOrderNo())
+                .setHeader(RocketMQHeaders.TAGS, &quot;ORDER_CREATED&quot;)
+                .setHeader(&quot;TX_XID&quot;, order.getOrderNo())   // 关键：回查时用来定位业务
+                .build();
+
+        TransactionSendResult result = producer.sendMessageInTransaction(
+                new Message(&quot;ORDER_TOPIC:ORDER_CREATED&quot;, message),
+                order,   // 关键：本地事务参数，回查时原样带回
+                this::executeLocalTransaction,
+                this::checkLocalTransaction);
+    }
+
+    /** 本地事务执行 */
+    private LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
+        OrderDO order = (OrderDO) arg;
+        try {
+            orderMapper.insert(order);
+            return LocalTransactionState.COMMIT_MESSAGE;   // 成功 → 提交消息
+        } catch (Exception e) {
+            return LocalTransactionState.ROLLBACK_MESSAGE; // 失败 → 回滚消息
+        }
+    }
+
+    /** Broker 回查：进程重启/网络异常时，Broker 不知道结果，会来问 */
+    private LocalTransactionState checkLocalTransaction(MessageExt msg) {
+        String orderNo = msg.getUserProperty(&quot;TX_XID&quot;);
+        // 关键：回查时必须查真实数据，不能凭内存状态判断
+        OrderDO order = orderMapper.selectByOrderNo(orderNo);
+        if (order == null) {
+            return LocalTransactionState.ROLLBACK_MESSAGE;
+        }
+        return LocalTransactionState.COMMIT_MESSAGE;
+    }
+}
+</code></pre>
+<p><strong>Spring 注解写法（rocketmq-spring-boot-starter）</strong>：</p>
+<pre><code class="language-java">@Component
+@RequiredArgsConstructor
+public class TxOrderService {
+
+    private final RocketMQTemplate rocketMQTemplate;
+    private final OrderMapper orderMapper;
+
+    @RocketMQTransactionListener(
+            txTopic = &quot;ORDER_TOPIC&quot;,
+            consumerGroup = &quot;ORDER_TX_GROUP&quot;,
+            executorService = &quot;txExecutorService&quot;
+    )
+    public class TxOrderListener implements RocketMQLocalTransactionListener {
+
+        @Override
+        public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
+            OrderDO order = (OrderDO) arg;
+            orderMapper.insert(order);
+            return LocalTransactionState.COMMIT_MESSAGE;
+        }
+
+        @Override
+        public LocalTransactionState checkLocalTransaction(MessageExt msg) {
+            String orderNo = msg.getUserProperty(&quot;TX_XID&quot;);
+            return orderMapper.selectByOrderNo(orderNo) != null
+                    ? LocalTransactionState.COMMIT_MESSAGE
+                    : LocalTransactionState.ROLLBACK_MESSAGE;
+        }
+    }
+
+    public void create(OrderDO order) {
+        // 关键：第二个参数是本地事务执行器要用的业务参数
+        TransactionSendResult result = rocketMQTemplate.sendMessageInTransaction(
+                &quot;ORDER_TOPIC:ORDER_CREATED&quot;,
+                MessageBuilder.withPayload(JSON.toJSONString(order)).build(),
+                order);
+    }
+}
+</code></pre>
+<h4>事务消息的局限（面试必答）</h4>
+<blockquote>
+<p>🗣 <strong>人话</strong>：事务消息不是万能的。Broker 回查<strong>最多 15 次</strong>，回查期间消息是「悬着的」；如果你的业务在回查时仍然判断不了（比如依赖了已经回滚的外部系统），还是会有不一致。<strong>所以任何方案都要有对账兜底。</strong></p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>局限</th>
+<th>说明</th>
+<th>兜底</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>回查次数有限</td>
+<td>默认 15 次</td>
+<td>超时后进死信，人工/定时处理</td>
+</tr>
+<tr>
+<td>回查有延迟</td>
+<td>Broker 默认 6s 后开始回查</td>
+<td>下游能接受秒级延迟</td>
+</tr>
+<tr>
+<td>依赖本地库可查</td>
+<td>回查要查 DB</td>
+<td>业务数据要有唯一键可查</td>
+</tr>
+<tr>
+<td>不解决跨异构系统</td>
+<td>支付网关的事务不受你控制</td>
+<td>用「查询 + 补偿」代替事务</td>
+</tr>
+</tbody>
+</table>
+<h4>三种方案的取舍</h4>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>一致性</th>
+<th>复杂度</th>
+<th>场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本地消息表</strong></td>
+<td>最终一致</td>
+<td>中</td>
+<td>通用，推荐</td>
+</tr>
+<tr>
+<td><strong>RocketMQ 事务消息</strong></td>
+<td>最终一致</td>
+<td>中高</td>
+<td>已经在用 MQ 的项目</td>
+</tr>
+<tr>
+<td><strong>Seata AT</strong></td>
+<td>强一致（准）</td>
+<td>高</td>
+<td>同步链路、跨自家服务</td>
+</tr>
+</tbody>
+</table>
+<p><strong>本地消息表（最推荐的通用方案）</strong>：</p>
+<pre><code class="language-java">/**
+
+ * 本地消息表：在同一个事务里写业务数据和消息表，
+ * 再由定时任务扫描消息表发消息，发成功后标记完成。
+ * 关键点1：业务数据 + 消息表在同一个本地事务里，天然一致
+ * 关键点2：定时任务扫描未发送的消息重发（这就是&quot;至少一次&quot;）
+ * 关键点3：消费端做幂等，配合唯一索引
+ */
+@Transactional(rollbackFor = Exception.class)
+public void createOrder(OrderDO order) {
+    orderMapper.insert(order);
+
+    MessageLog msgLog = new MessageLog();
+    msgLog.setBizId(order.getOrderNo());
+    msgLog.setTopic(&quot;ORDER_TOPIC&quot;);
+    msgLog.setTag(&quot;ORDER_CREATED&quot;);
+    msgLog.setPayload(JSON.toJSONString(order));
+    msgLog.setStatus(SendStatusEnum.INIT.getCode());
+    msgLog.setRetryCount(0);
+    msgLog.setCreateTime(LocalDateTime.now());
+    messageLogMapper.insert(msgLog);   // 和业务数据同一个事务
+}
+</code></pre>
+<pre><code class="language-java">/** 定时扫描发送（每 5 秒） */
+@Scheduled(fixedDelay = 5000)
+public void scanAndSend() {
+    List&lt;MessageLog&gt; logs = messageLogMapper.selectPending(100);
+    for (MessageLog msgLog : logs) {
+        try {
+            SendResult result = rocketMQTemplate.syncSend(
+                    msgLog.getTopic() + &quot;:&quot; + msgLog.getTag(), msgLog.getPayload(), 3000);
+            if (result.getSendStatus() == SendStatus.SEND_OK) {
+                messageLogMapper.markSuccess(msgLog.getId());
+            } else {
+                messageLogMapper.markRetry(msgLog.getId());
+            }
+        } catch (Exception e) {
+            messageLogMapper.markRetry(msgLog.getId());
+        }
+    }
+}
+</code></pre>
+<h3 id="q-11" class="q-title">2.7 消息堆积：先定位，再止血</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：队列里消息越堆越多，常见原因就四个：<strong>消费者挂了</strong>、<strong>消费者变慢了</strong>、<strong>上游流量突增</strong>、<strong>有消息一直重试</strong>（毒消息卡住）。先看监控知道是哪个，再对症下药。</p>
+</blockquote>
+<h4>第一步：定位（必须有监控）</h4>
+<pre><code class="language-java">/**
+
+ * 消费端埋点：每条消息的处理耗时 + 成功率。
+ * 关键点1：耗时打点能看出是「整体变慢」还是「个别消息超时」
+ * 关键点2：成功率能看出是异常还是单纯慢
+ */
+@Aspect
+@Component
+public class MqConsumeMetricsAspect {
+
+    @Around(&quot;@annotation(org.apache.rocketmq.spring.annotation.RocketMQMessageListener)&quot;)
+    public Object around(ProceedingJoinPoint pjp) throws Throwable {
+        long start = System.currentTimeMillis();
+        String topic = pjp.getSignature().getName();
+        try {
+            Object result = pjp.proceed();
+            Metrics.counter(&quot;mq.consume.success&quot;, &quot;topic&quot;, topic).increment();
+            return result;
+        } catch (Throwable t) {
+            Metrics.counter(&quot;mq.consume.fail&quot;, &quot;topic&quot;, topic).increment();
+            throw t;
+        } finally {
+            Metrics.timer(&quot;mq.consume.latency&quot;, &quot;topic&quot;, topic)
+                    .record(System.currentTimeMillis() - start);
+        }
+    }
+}
+</code></pre>
+<p><strong>RocketMQ 运维命令（排查必会）</strong>：</p>
+<pre><code class="language-bash"># 1. 看集群整体情况
+mqadmin clusterList -n 192.168.31.6:9876
+
+# 2. 看某个 Topic 的队列分布和消费进度（关键：看 ConsumeProgress）
+mqadmin topicStatus -n 192.168.31.6:9876 -t ORDER_TOPIC
+
+# 3. 看消费者组的消费进度（DIFF 列 = 堆积量）
+mqadmin consumerProgress -n 192.168.31.6:9876 -g ORDER_FULFILL_GROUP
+
+# 4. 导出堆积的 offset（用于重置位点）
+mqadmin consumerProgress -n 192.168.31.6:9876 -g ORDER_FULFILL_GROUP &gt; progress.txt
+
+# 5. 查消息轨迹（查一条消息从发送到消费的完整链路）
+mqadmin traceMsgById -n 192.168.31.6:9876 -i MSG_ID
+
+# 6. 重置消费位点到某个时间点（应急：跳过积压的旧消息）
+mqadmin resetOffsetByTime -n 192.168.31.6:9876 -g ORDER_FULFILL_GROUP \
+  -t ORDER_TOPIC -s 1699999999000
+
+# 7. 查看死信队列
+mqadmin viewMsgById -n 192.168.31.6:9876 -t %DLQ%GROUP_ORDER_FULFILL_GROUP
+</code></pre>
+<h4>第二步：止血（按优先级）</h4>
+<pre><code>优先级 1 —— 临时扩容消费者
+  RocketMQ：直接加机器/加线程，队列数决定并行度上限
+  Kafka：消费者数 ≤ 分区数（超了多出来的空转），只能加分区
+  ⚠ 消费能力受限于「分区数 / 队列数」，不是线程数
+
+优先级 2 —— 提升单条处理效率
+  · 把同步调用改异步
+  · 批量写 DB（一条条 insert 改 batch insert）
+  · 把非关键逻辑挪到消费后置（比如日志上报、埋点）
+
+优先级 3 —— 降级
+  · 把堆积消息转存到临时 Topic / DB，恢复主链路
+  · 丢弃非核心消息（日志、埋点类）
+
+优先级 4 —— 跳过积压
+  · resetOffsetByTime 跳到某个时间点（应急，会丢消息）
+  · 只在「消息本身价值不大」时用
+
+优先级 5 —— 事后补偿
+  · 消费完后再跑一次对账/补偿任务，把漏掉的补齐
+</code></pre>
+<h4>第三步：预防</h4>
+<pre><code class="language-yaml"># 关键：消费端必须有超时和熔断，下游挂了不能拖死整个 topic
+rocketmq:
+  consumer:
+    group: ORDER_FULFILL_GROUP
+    pull-batch-size: 32            # 每次拉 32 条
+    consume-thread-number: 64
+    consume-timeout: 900            # 消费超时 15 分钟
+    max-reconsume-times: 3
+</code></pre>
+<pre><code class="language-java">/**
+
+ * 消费端熔断：下游依赖挂了，快速失败让 MQ 重试，别把自己也拖死。
+ */
+@Service
+public class ResilientOrderHandler {
+
+    private final SentinelSentinel sentinel;  // 或用 Resilience4j
+
+    public void handle(OrderPaidEvent event) {
+        // 关键：熔断降级，避免一个慢下游拖垮整个消费线程
+        if (!sentinel.tryEntry()) {
+            throw new DegradeException(&quot;下游系统繁忙，稍后重试&quot;);
+        }
+        try {
+            orderService.handleOrderPaid(event);
+        } finally {
+            sentinel.exit();
+        }
+    }
+}
+</code></pre>
+<h3 id="q-12" class="q-title">2.8 MQ 常见坑清单（每一条都真实踩过）</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>坑</th>
+<th>症状</th>
+<th>解决</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>消费者数 &gt; 分区数</strong></td>
+<td>多出来的消费者空转，CPU 高但没产出</td>
+<td>Kafka 扩分区或减少消费者</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>消息体太大</strong></td>
+<td>发送超时、Broker 拒绝（默认 4MB）</td>
+<td>压缩、分片、或走文件传输</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Tag 表达式写错</strong></td>
+<td>消费者收不到消息，没有任何报错</td>
+<td>Tag 用 <code>||</code> 不是 <code>&amp;&amp;</code>；用 <code>*</code> 匹配全部前测试</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>消费组名不一致</strong></td>
+<td>消息被另一个组消费了</td>
+<td>组名当常量管理，别硬编码</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>循环依赖消费</strong></td>
+<td>A 消费发消息给 B，B 又发回 A</td>
+<td>加消息链路 ID + 深度限制</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>大事务里发消息</strong></td>
+<td>长事务持锁 + 消息发不出去</td>
+<td>消息发送放事务外，状态表兜底</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>忽略 <code>SendStatus</code></strong></td>
+<td>发送失败但业务当成功</td>
+<td>严格检查 <code>SEND_OK</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>消费端吞异常</strong></td>
+<td>消息丢失（当成消费成功提交 offset）</td>
+<td>异常必须抛出</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>毒消息无限重试</strong></td>
+<td>一个坏消息卡住整个队列</td>
+<td><code>maxReconsumeTimes</code> + DLQ + 死信告警</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>消息 key 没设</strong></td>
+<td>查轨迹困难、日志排查低效</td>
+<td>用业务 ID 做 key，日志打 msgId</td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>时钟不同步</strong></td>
+<td>延迟消息不准、过期判断错</td>
+<td>生产环境配 NTP</td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong>Broker 重启丢消息</strong></td>
+<td>异步刷盘 + 断电</td>
+<td>交易类必须同步刷盘</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-4" class="sec-title">三、Elasticsearch 实战全解</h2>
+<blockquote>
+<p>🗣 <strong>人话版</strong>：ES 是一本<strong>倒着查的书</strong>。普通数据库是「翻到第几页看写了啥」，ES 是「先查关键词索引，直接告诉你哪几页有这个词」。所以它搜得快，但写得慢一点，而且默认不是实时的（差 1 秒）。</p>
+</blockquote>
+<h3 id="q-13" class="q-title">3.1 倒排索引：为什么搜得快</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：正排是「这本书第 300 页写了什么」，倒排是「『支付』这个词出现在第 12、45、300 页」。查词不用从头翻，直接跳到那几页。</p>
+</blockquote>
+<h4>倒排索引长什么样</h4>
+<pre><code>文档（正排视角）：
+  文档1: &quot;用户用微信支付了订单1001&quot;
+  文档2: &quot;用户用支付宝支付了订单1002&quot;
+  文档3: &quot;用户用微信退款了订单1003&quot;
+
+倒排索引（词 → 文档列表）：
+  &quot;用户&quot;  → [文档1, 文档2, 文档3]
+  &quot;微信&quot;  → [文档1, 文档3]
+  &quot;支付宝&quot;→ [文档2]
+  &quot;支付&quot;  → [文档1, 文档2]
+  &quot;退款&quot;  → [文档3]
+</code></pre>
+<p>查「微信 AND 支付」= 倒排表求交集 = [文档1]。</p>
+<h4>两层结构（面试高分点）</h4>
+<pre><code>┌─────────────────────────────────────────┐
+│  Term Dictionary（词典）                │
+│  内存里，压缩成 FST（有限状态转换器）      │
+│  作用：词 → 定位到倒排表文件位置            │
+│  特点：极小、可全内存、查找 O(1)          │
+└───────────────┬─────────────────────────┘
+                │ 指向
+                ▼
+┌─────────────────────────────────────────┐
+│  Posting List（倒排表）                  │
+│  磁盘上，.doc 存文档ID，.tim 存词频+位置  │
+│  特点：用【跳表 SkipList】支持快速求交集  │
+└─────────────────────────────────────────┘
+</code></pre>
+<p><strong>为什么求交快</strong>：跳表让每个文档列表按"每 16 个取一个"建稀疏索引，跳跃查找可以跳过大量元素。</p>
+<p><strong>关键点：分词是罪魁祸首</strong>。搜不到 90% 的原因是分词器或字段类型配错：</p>
+<table>
+<thead>
+<tr>
+<th>字段类型</th>
+<th>分词</th>
+<th>用途</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td>会分词</td>
+<td>全文搜索、模糊匹配</td>
+<td>商品标题、描述</td>
+</tr>
+<tr>
+<td><code>keyword</code></td>
+<td>不分词</td>
+<td>精确匹配、聚合、分组</td>
+<td>商品编码、状态、用户 ID</td>
+</tr>
+<tr>
+<td><code>text</code> + <code>keyword</code> 双字段</td>
+<td>两种都有</td>
+<td>全文搜 + 精确匹配</td>
+<td>最常用做法</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-json">{
+  &quot;mappings&quot;: {
+    &quot;properties&quot;: {
+      &quot;title&quot;: {
+        &quot;type&quot;: &quot;text&quot;,
+        &quot;analyzer&quot;: &quot;ik_max_word&quot;,          // 索引时细粒度切分
+        &quot;search_analyzer&quot;: &quot;ik_smart&quot;,      // 搜索时粗粒度切分
+        &quot;fields&quot;: {
+          &quot;keyword&quot;: {                       // 冗余一个不分词字段，用于精确匹配/聚合
+            &quot;type&quot;: &quot;keyword&quot;,
+            &quot;ignore_above&quot;: 256
+          }
+        }
+      },
+      &quot;status&quot;: { &quot;type&quot;: &quot;keyword&quot; },
+      &quot;createTime&quot;: { &quot;type&quot;: &quot;date&quot;, &quot;format&quot;: &quot;yyyy-MM-dd HH:mm:ss||epoch_millis&quot; }
+    }
+  }
+}
+</code></pre>
+<p><strong>为什么用 <code>ik_max_word</code> 索引、<code>ik_smart</code> 搜索？</strong>
+索引时切得细（"北京大学" → 北京/大学/北京大学），召回全；搜索时切得粗（避免"中国"命中所有含"国"的文档），精度高。这是 IK 的标准用法。</p>
+<h3 id="q-14" class="q-title">3.2 写入流程：为什么 ES 是「近实时」</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：写进去先放内存缓冲区并记日志，默认<strong>每秒</strong>刷一次生成一个新段，这时候才能被搜到——所以叫「近」实时。批量导入时把刷新关掉，导完再手动刷，能快好几倍。</p>
+</blockquote>
+<pre><code>写请求
+  │
+  ▼
+① 写入 memory buffer（内存缓冲）
+  │  同时写 translog（事务日志，防宕机丢数据）
+  ▼
+② refresh（默认 1s）——把 buffer 生成一个新的 segment
+  │  ★ 此时数据才可被搜索 → 这就是 near real-time 的来源
+  ▼
+③ flush ——segment 落盘到磁盘，清空 translog
+  ▼
+④ merge（后台）——小 segment 合并成大 segment
+     ★ merge 很吃 IO 和 CPU，要限流
+</code></pre>
+<pre><code class="language-java">/**
+
+ * 批量导入的正确姿势：关 refresh + 关 merge + 导完手动 refresh。
+ * 关键点1：refresh_interval 设为 -1，导入期间不生成新 segment
+ * 关键点2：导入完成后手动 POST /_refresh 让数据可搜
+ * 关键点3：merge 限流避免影响线上查询
+ */
+public void bulkImport(List&lt;OrderDoc&gt; list) {
+    // 关键点1：临时关 refresh
+    client.indices().putSettings(s -&gt; s
+            .index(INDEX)
+            .settings(st -&gt; st
+                    .indexSettings(is -&gt; is.refreshInterval(r -&gt; r.time(&quot; -1s&quot;)))
+                    .numberOfReplicas(r -&gt; r.value(&quot;0&quot;))   // 导入期间不要副本
+            ));
+
+    try {
+        BulkRequest bulk = new BulkRequest();
+        for (OrderDoc doc : list) {
+            bulk.operations(op -&gt; op.index(idx -&gt; idx
+                    .index(INDEX)
+                    .id(doc.getOrderNo())
+                    .document(doc)));
+        }
+        client.bulk(bulk, BulkRequestOptions.DEFAULT);
+    } finally {
+        // 关键点2：手动刷新 + 恢复副本
+        client.indices().refresh(r -&gt; r.index(INDEX));
+        client.indices().putSettings(s -&gt; s
+                .index(INDEX)
+                .settings(st -&gt; st
+                        .indexSettings(is -&gt; is.refreshInterval(r -&gt; r.time(&quot;1s&quot;)))
+                        .numberOfReplicas(r -&gt; r.value(&quot;1&quot;))
+                ));
+    }
+}
+</code></pre>
+<h3 id="q-15" class="q-title">3.3 深分页：from + size 为什么慢</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：<code>from+size</code> 是「每个分片都把前 N 条搬出来，协调节点再统一排序」——翻到第 1000 页等于搬了几十万条。用 <code>search_after</code> 拿上一页最后一条当书签，实时又没深度限制。</p>
+</blockquote>
+<pre><code class="language-java">/**
+
+ * 深分页方案一：search_after（推荐）。
+ * 关键点1：sort 字段必须唯一且有值（用 createTime + _id 组合）
+ * 关键点2：只能往后翻，不能往前
+ * 关键点3：实时数据，不占资源（不像 scroll 占快照）
+ */
+public SearchResult searchAfter(List&lt;SortValue&gt; lastSort, int size) {
+    SearchRequest request = new SearchRequest.Builder()
+            .index(INDEX)
+            .query(q -&gt; q.bool(b -&gt; b
+                    .must(m -&gt; m.match(mm -&gt; mm.field(&quot;status&quot;).query(&quot;PAID&quot;)))))
+            .sort(s -&gt; s.field(f -&gt; f.field(&quot;createTime&quot;).order(SortOrder.Desc)))
+            .sort(s -&gt; s.field(f -&gt; f.field(&quot;_id&quot;).order(SortOrder.Desc)))
+            .searchAfter(lastSort)          // 关键：传上一页最后一条的 sort 值
+            .size(size)
+            .build();
+
+    SearchResponse&lt;OrderDoc&gt; response = client.search(request, OrderDoc.class);
+
+    List&lt;SearchResult&gt; results = new ArrayList&lt;&gt;();
+    List&lt;SortValue&gt; nextCursor = null;
+    for (Hit&lt;OrderDoc&gt; hit : response.hits().hits()) {
+        results.add(new SearchResult(hit.source(), hit.sort()));
+        nextCursor = hit.sort();          // 关键：保存作为下一页游标
+    }
+    return new SearchResult(results, nextCursor);
+}
+</code></pre>
+<pre><code class="language-java">/**
+
+ * 深分页方案二：scroll（适合导出，不适合分页 UI）。
+ * 关键点1：基于时间点快照，数据是&quot;冻结&quot;的，导完要 clear scroll
+ * 关键点2：大量导出会占用 ES 资源，要限流
+ */
+public void exportAll(Consumer&lt;OrderDoc&gt; consumer) {
+    ScrollRequest scrollRequest = new ScrollRequest.Builder()
+            .indices(INDEX)
+            .scroll(Time.ofMinutes, 1L))
+            .size(500)
+            .query(q -&gt; q.matchAll(m -&gt; m))
+            .build();
+
+    ScrollResponse&lt;OrderDoc&gt; response = client.scroll(scrollRequest, OrderDoc.class);
+    String scrollId = response.scrollId();
+
+    try {
+        while (response.hits().hits().size() &gt; 0) {
+            for (Hit&lt;OrderDoc&gt; hit : response.hits().hits()) {
+                consumer.accept(hit.source());
+            }
+            response = client.scroll(scrollRequest.scrollId(scrollId)
+                    .scroll(Time.ofMinutes, 1L)), OrderDoc.class);
+            scrollId = response.scrollId();
+        }
+    } finally {
+        // 关键点3：必须清理，否则 scroll 上下文一直占资源
+        client.clearScroll(c -&gt; c.scrollId(scrollId));
+    }
+}
+</code></pre>
+<h3 id="q-16" class="q-title">3.4 MySQL 与 ES 数据同步（最容易追问的题）</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：双写最简单但容易不一致；发 MQ 解耦但要处理顺序和重复；最省心的是 <strong>Canal 订阅 binlog</strong>，业务代码一行不用改，还天然有序。</p>
+</blockquote>
+<h4>方案对比</h4>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>一致性</th>
+<th>侵入性</th>
+<th>时延</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>同步双写</strong>（业务代码写完库写 ES）</td>
+<td>弱（ES 失败会不一致）</td>
+<td>高（每个写操作都要管）</td>
+<td>实时</td>
+<td>简单场景</td>
+</tr>
+<tr>
+<td><strong>MQ 异步</strong></td>
+<td>最终一致</td>
+<td>中</td>
+<td>秒级</td>
+<td>有 MQ 基建</td>
+</tr>
+<tr>
+<td><strong>Canal 订阅 binlog</strong></td>
+<td>最终一致</td>
+<td><strong>零</strong>（业务无感）</td>
+<td>秒级</td>
+<td><strong>推荐</strong></td>
+</tr>
+<tr>
+<td><strong>定时全量 + 增量</strong></td>
+<td>最终一致</td>
+<td>零</td>
+<td>分钟级</td>
+<td>报表类</td>
+</tr>
+</tbody>
+</table>
+<h4>Canal 方案完整实现</h4>
+<pre><code>MySQL（开启 binlog）→ Canal Server（伪装成从库拉 binlog）
+  → Canal 解析成 CanalEntry → 投递到 RocketMQ / 直接写 ES
+</code></pre>
+<pre><code class="language-yaml"># canal server 配置 conf/canal.properties
+canal.instance.mysql.slaveId = 1234
+canal.instance.master.address = 192.168.31.6:3306
+canal.instance.dbUsername = canal
+canal.instance.dbPassword = ******
+canal.instance.connectionCharset = utf8mb4
+canal.instance.filter.regex = mianshi\\..*\\..*
+
+# 关键：canal.server.mode = 集群（HA 用 zk/kafka），单机直接 tcp
+canal.instance.filter.black.regex =
+</code></pre>
+<pre><code class="language-java">/**
+
+ * Canal 客户端：监听 binlog 变化，同步到 ES。
+ * 关键点1：按数据库+表名订阅，避免全库监听
+ * 关键点2：增量订阅要记录位点，重启能续上
+ * 关键点3：ES 写入用 bulk，不要一条一条写
+ */
+@Component
+public class CanalSyncService {
+
+    private static final String CANAL_HOST = &quot;192.168.31.6&quot;;
+    private static final int CANAL_PORT = 11111;
+
+    @Autowired
+    private ElasticsearchClient esClient;
+
+    @Autowired
+    private CanalClient canalClient;
+
+    @Autowired
+    private CanalPositionMapper positionMapper;
+
+    /**
+     * 启动监听（放在一个独立线程里，不阻塞主流程）。
+     */
+    @PostConstruct
+    public void start() {
+        Thread thread = new Thread(this::run, &quot;canal-sync&quot;);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void run() {
+        CanalConnector connector = CanalConnectors.newSingleConnector(
+                new InetSocketAddress(CANAL_HOST, CANAL_PORT),
+                &quot;example&quot;, &quot;&quot;, &quot;&quot;);
+        try {
+            connector.connect();
+            connector.subscribe(&quot;.*\\..*\\..*&quot;);
+            logger.info(&quot;Canal 连接成功&quot;);
+
+            while (running) {
+                CanalEntry entry = connector.getWithoutAck(100);
+                long batchId = entry.getHeader().getLogfileOffset();
+                int size = entry.getEntryCount();
+
+                for (int i = 0; i &lt; size; i++) {
+                    CanalEntry.Entry e = entry.getEntries().get(i);
+                    if (e.getEntryType() == EntryType.ROWDATA) {
+                        CanalEntry.RowChange rowChange = CanalEntry.RowChange.parse(e);
+                        for (CanalEntry.RowData rowData : rowChange.getRowDatasList()) {
+                            handleRowChange(rowChange.getEventType(), rowData);
+                        }
+                    }
+                }
+                connector.ack(batchId);   // 关键点2：处理完才 ack，否则会丢
+            }
+        } catch (Exception e) {
+            logger.error(&quot;Canal 同步异常&quot;, e);
+        } finally {
+            connector.disconnect();
+        }
+    }
+
+    private void handleRowChange(EntryType type, CanalEntry.RowData rowData) {
+        String table = rowData.getTableName();
+        // 关键点1：只处理关心的表
+        if (!&quot;t_order&quot;.equals(table)) {
+            return;
+        }
+
+        List&lt;Map&lt;String, Object&gt;&gt; columns = rowData.getAfterColumnsList().stream()
+                .map(c -&gt; {
+                    Map&lt;String, Object&gt; m = new HashMap&lt;&gt;();
+                    m.put(c.getName(), c.getValue());
+                    return m;
+                }).collect(Collectors.toList());
+
+        String orderNo = (String) columns.get(0).get(&quot;order_no&quot;);
+
+        if (type == EntryType.DELETE) {
+            esClient.delete(d -&gt; d.index(INDEX).id(orderNo));
+            return;
+        }
+
+        // 关键点3：走 bulk（这里简化为单条，实际应批量攒 500 条一次提交）
+        esClient.index(i -&gt; i.index(INDEX).id(orderNo).document(columns));
+    }
+}
+</code></pre>
+<h4>MQ 方案（如果你已有 MQ）</h4>
+<pre><code class="language-java">/**
+
+ * MQ 方案：业务写库后发消息，ES 消费端消费。
+ * 关键点1：消息里带全量数据还是只带 ID？带 ID 要回查 DB，带全量省一次查询但数据可能旧
+ * 关键点2：ES 写入要幂等（用业务 ID 做文档 ID，天然幂等——重复写覆盖同一份）
+ * 关键点3：update 用 doc（部分更新）还是全量覆盖？partial update 更快但要注意字段删除
+ */
+@RocketMQMessageListener(topic = &quot;ORDER_TOPIC&quot;, consumerGroup = &quot;ORDER_ES_SYNC_GROUP&quot;)
+public class OrderEsSyncListener implements RocketMQListener&lt;OrderSyncMessage&gt; {
+
+    @Autowired
+    private ElasticsearchClient esClient;
+
+    @Autowired
+    private OrderMapper orderMapper;
+
+    @Override
+    public void onMessage(OrderSyncMessage msg) {
+        // 用业务 ID 作为 ES 文档 ID —— 这就是幂等的关键
+        esClient.index(i -&gt; i
+                .index(&quot;order_index&quot;)
+                .id(msg.getOrderNo())            // 关键点2
+                .document(buildDoc(msg))         // 关键点3：partial update
+                .refresh(Refresh.False));        // 批量场景不 refresh
+    }
+}
+</code></pre>
+<h4>同步方案必须处理的 4 个问题</h4>
+<ol>
+<li><strong>全量初始化</strong>：ES 空索引 → 写个 DataSyncJob 从 MySQL 分批导入（用 <code>scroll</code> 或分页，避免深分页）</li>
+<li><strong>增量追平</strong>：初始化期间的数据用 binlog 位点补齐</li>
+<li><strong>删除同步</strong>：binlog 方案能拿到 DELETE 事件，MQ 方案要在消息里带操作类型</li>
+<li><strong>一致性延迟</strong>：用户写完立刻搜索可能搜不到 → 前端做乐观更新，或搜索时先查主库</li>
+</ol>
+<pre><code class="language-java">/**
+
+ * 全量初始化 + 增量追平。
+ * 关键点1：先记 binlog 起始位点，再导存量，最后追增量
+ * 关键点2：存量导入用 scroll，避免深分页
+ */
+public void initFullSync() {
+    // 1. 记录当前 binlog 位点
+    CanalPosition position = canalClient.getCurrentPosition();
+    positionMapper.save(position);
+
+    // 2. 全量导入（scroll）
+    BulkProcessor bulkProcessor = BulkProcessor.builder(esClient, b -&gt; b)
+            .setBulkActions(500)
+            .setBulkSize(new ByteSizeValue(5, ByteSizeUnit.MB))
+            .setFlushInterval(new TimeValue(5, TimeUnit.SECONDS))
+            .build();
+
+    try {
+        scrollExport(order -&gt; bulkProcessor.add(new IndexOperation&lt;&gt;(
+                b -&gt; b.index(&quot;order_index&quot;).id(order.getOrderNo()).document(order))));
+    } finally {
+        bulkProcessor.close();
+    }
+
+    // 3. 增量追平（从记录的位点开始）
+    canalClient.startFrom(position);
+}
+</code></pre>
+<h3 id="q-17" class="q-title">3.5 ES 在业务里的典型用法</h3>
+<h4>用法一：商品/门店搜索（多条件 + 排序 + 聚合）</h4>
+<pre><code class="language-java">/**
+
+ * 多条件搜索：关键词 + 过滤条件 + 排序 + 分页。
+ * 关键点1：关键词用 match（会分词），精确条件用 term（不分词）
+ * 关键点2：filter 上下文不打分，性能比 must 好
+ */
+public SearchResult&lt;StoreDoc&gt; searchStore(StoreQuery query) {
+    BoolQuery.Builder bool = new BoolQuery.Builder();
+
+    if (StringUtils.hasText(query.getKeyword())) {
+        bool.must(m -&gt; m.multiMatch(mm -&gt; mm
+                .query(query.getKeyword())
+                .fields(&quot;name^3&quot;, &quot;address&quot;, &quot;tags&quot;)));   // ^3 = name 权重 3 倍
+    }
+    if (query.getCityCode() != null) {
+        bool.filter(f -&gt; f.term(t -&gt; t.field(&quot;cityCode&quot;).value(query.getCityCode())));
+    }
+    if (query.getStatus() != null) {
+        bool.filter(f -&gt; f.term(t -&gt; t.field(&quot;status&quot;).value(query.getStatus())));
+    }
+    if (query.getMinScore() != null) {
+        bool.filter(f -&gt; f.range(r -&gt; r.field(&quot;score&quot;).gte(JsonData.of(query.getMinScore()))));
+    }
+
+    SearchRequest request = new SearchRequest.Builder()
+            .index(&quot;store_index&quot;)
+            .query(q -&gt; q.bool(bool.build()))
+            .sort(s -&gt; s.field(f -&gt; f.field(&quot;_score&quot;).order(SortOrder.Desc)))
+            .sort(s -&gt; s.field(f -&gt; f.field(&quot;distance&quot;).order(SortOrder.Asc)))  // 地理位置
+            .from(query.getPage() * query.getSize())
+            .size(query.getSize())
+            .highlight(h -&gt; h
+                    .fields(&quot;name&quot;, f -&gt; f.highlightType(HighlightType.Marked))
+                    .preTags(&quot;&lt;em&gt;&quot;).postTags(&quot;&lt;/em&gt;&quot;))
+            .build();
+
+    return client.search(request, StoreDoc.class);
+}
+</code></pre>
+<h4>用法二：聚合分析（报表、看板）</h4>
+<pre><code class="language-java">/**
+
+ * 聚合分析：按状态分组统计 + 求和 + 去重计数。
+ * 关键点1：terms 聚合要设置 size，不然返回的桶不够
+ * 关键点2：基数聚合（cardinality）有精度代价，基数不大时用 terms + 子聚合更准
+ * 关键点3：聚合字段必须 doc_values 开启（默认开启，别设 &quot;index&quot;: false）
+ */
+public Map&lt;String, Object&gt; orderStatistics(LocalDateTime start, LocalDateTime end) {
+    SearchRequest request = new SearchRequest.Builder()
+            .index(&quot;order_index&quot;)
+            .size(0)   // 只要聚合结果，不要文档
+            .query(q -&gt; q.bool(b -&gt; b
+                    .filter(f -&gt; f.range(r -&gt; r.field(&quot;createTime&quot;)
+                            .gte(JsonData.of(start.toString()))
+                            .lte(JsonData.of(end.toString()))))))
+            .aggregations(&quot;by_status&quot;, a -&gt; a.terms(t -&gt; t
+                    .field(&quot;status&quot;)
+                    .size(50)
+                    .aggregations(&quot;amount_sum&quot;, s -&gt; s.sum(x -&gt; x.field(&quot;payAmount&quot;)))
+                    .aggregations(&quot;store_count&quot;, c -&gt; c.cardinality(x -&gt; x.field(&quot;storeId&quot;)))
+                    .aggregations(&quot;avg_time&quot;, av -&gt; av.avg(x -&gt; x.field(&quot;payDuration&quot;)))))
+            .build();
+
+    SearchResponse&lt;Void&gt; response = client.search(request, Void.class);
+    // 解析聚合结果
+    return parseAggregations(response);
+}
+</code></pre>
+<h4>用法三：日志检索（ELK 场景）</h4>
+<pre><code class="language-java">/**
+
+ * 日志检索：时间范围 + 关键字 + 排除噪音 + 采样。
+ * 关键点1：日志必须按天/按月分索引，否则单个索引文档数爆炸
+ * 关键点2：traceId 精确匹配用 term，消息内容模糊用 match
+ * 关键点3：大范围查询要加采样或限流
+ */
+public SearchResponse&lt;LogDoc&gt; searchLog(LogQuery query) {
+    return client.search(s -&gt; s
+            .index(&quot;app-log-*&quot;)                      // 通配符匹配所有日志索引
+            .query(q -&gt; q.bool(b -&gt; b
+                    .filter(f -&gt; f.range(r -&gt; r.field(&quot;@timestamp&quot;)
+                            .gte(JsonData.of(query.getFrom()))
+                            .lte(JsonData.of(query.getTo()))))
+                    .must(m -&gt; m.queryString(qs -&gt; qs
+                            .query(query.getKeyword() + &quot;*&quot;)
+                            .defaultField(&quot;message&quot;)))
+                    .mustNot(mn -&gt; mn.term(t -&gt; t.field(&quot;level&quot;).value(&quot;DEBUG&quot;)))))
+            .sort(s -&gt; s.field(f -&gt; f.field(&quot;@timestamp&quot;).order(SortOrder.Desc)))
+            .size(100)
+            .trackTotalHits(t -&gt; t.enabled(true)),
+            LogDoc.class);
+}
+</code></pre>
+<h3 id="q-18" class="q-title">3.6 ES 集群与运维要点</h3>
+<pre><code class="language-yaml"># 关键参数（都影响性能，别乱改）
+cluster.name: my-es-cluster
+node.name: es-node-1
+network.host: 0.0.0.0
+discovery.seed_hosts: &quot;192.168.31.6:9300,192.168.31.7:9300&quot;
+cluster.initial_master_nodes: &quot;es-node-1,es-node-2,es-node-3&quot;
+
+# 关键：堆内存不超过节点内存的 50%，且不超过 31GB（JDK 限制）
+# jvm.options
+-Xms4g
+-Xmx4g
+
+# 关键：关闭内存锁定（配合上面的 Xms=Xmx）
+bootstrap.memory_lock: true
+
+# 关键：禁用 mmap（Windows 上 mmap 有问题）
+node.store.allow_mmap: false
+
+# 关键：单分片最大 50GB，超过就分索引
+# action.auto_create_index: false（生产环境别自动建索引）
+</code></pre>
+<p><strong>分片（Shard）怎么定</strong>：</p>
+<ul>
+<li>单分片建议 <strong>20～50GB</strong>，最大 50GB</li>
+<li><strong>副本数 ≥ 1</strong>（生产至少 1 副本）</li>
+<li>分片数在<strong>建索引时确定，之后不能改</strong>（只能 reindex 或 split）</li>
+<li>3 个节点 → 1 主分片 + 1 副本（3 副本会导致节点不足）</li>
+</ul>
+<p><strong>常见 ES 事故与处置</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>症状</th>
+<th>原因</th>
+<th>处置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>查询突然变慢</td>
+<td>有大查询 / merge 风暴 / 分片不均</td>
+<td><code>_cat/thread_pool</code>、<code>_tasks?actions=*search</code> 找出大查询杀掉</td>
+</tr>
+<tr>
+<td>集群 yellow</td>
+<td>副本没分配成功（节点不足）</td>
+<td>扩节点，或接受 yellow</td>
+</tr>
+<tr>
+<td>集群 red</td>
+<td>主分片没分配</td>
+<td>立刻查 <code>_cluster/allocation/explain</code></td>
+</tr>
+<tr>
+<td>磁盘满</td>
+<td>日志/旧索引没清</td>
+<td>ILM 生命周期策略 + 手动清理</td>
+</tr>
+<tr>
+<td>写入变慢</td>
+<td>refresh 频繁 / merge 压力 / 内存不足</td>
+<td>关 refresh、调 merge 限流、扩内存</td>
+</tr>
+<tr>
+<td>查询报 <code>max_result_window</code></td>
+<td>from+size 超 10000</td>
+<td>改 search_after</td>
+</tr>
+<tr>
+<td>大量 <code>circuit_breaking_exception</code></td>
+<td>熔断器触发（内存/父级）</td>
+<td>减小聚合范围、加大堆内存</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-bash"># ES 排查命令（面试不会用，但实际工作天天用）
+curl 'localhost:9200/_cat/indices?v&amp;s=store:desc'          # 看索引
+curl 'localhost:9200/_cat/nodes?v&amp;h=name,heap.percent,cpu' # 看节点负载
+curl 'localhost:9200/_cat/thread_pool/write?v'             # 看线程池队列
+curl 'localhost:9200/_cat/shards?v'                         # 看分片分布
+curl 'localhost:9200/_cluster/allocation/explain?pretty'   # 查分片为什么没分配
+curl 'localhost:9200/_tasks?actions=*search&amp;detailed'      # 看正在跑的大查询
+curl 'localhost:9200/_nodes/stats/indices,os?pretty'        # 节点详细统计
+</code></pre>
+<h3 id="q-19" class="q-title">3.7 ES 与 MySQL 对比（面试高频）</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>MySQL</th>
+<th>Elasticsearch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>定位</td>
+<td><strong>事务型数据库</strong>（CRUD 准确）</td>
+<td><strong>搜索引擎</strong>（检索/聚合）</td>
+</tr>
+<tr>
+<td>事务</td>
+<td>支持 ACID</td>
+<td>不支持（只支持单文档操作原子性）</td>
+</tr>
+<tr>
+<td>写入</td>
+<td>快（行存 + 索引）</td>
+<td>慢（分词 + 建倒排 + merge）</td>
+</tr>
+<tr>
+<td>查询</td>
+<td>精确查询快，模糊查询慢</td>
+<td>全文/聚合快</td>
+</tr>
+<tr>
+<td>一致性</td>
+<td>强一致</td>
+<td>近实时（默认 1s 延迟）</td>
+</tr>
+<tr>
+<td>JOIN</td>
+<td>支持</td>
+<td>不支持（应用层拼装）</td>
+</tr>
+<tr>
+<td>数据量级</td>
+<td>单表千万级开始吃力</td>
+<td>十亿级文档无压力</td>
+</tr>
+<tr>
+<td>典型用法</td>
+<td><strong>真相来源</strong>（Source of Truth）</td>
+<td><strong>查询加速 + 分析</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>标准答法</strong>：</p>
+<blockquote>
+<p>「MySQL 是我们的真相来源，ES 只是它的查询视图。写操作走 MySQL，通过 Canal 订阅 binlog 异步同步到 ES。这样既有 MySQL 的事务保证，又有 ES 的检索能力。代价是秒级延迟，所以用户写完立刻查的场景会先读主库再回源。」</p>
+</blockquote>
+<hr />
+<h2 id="sec-5" class="sec-title">四、其他中间件补齐</h2>
+<h3 id="q-20" class="q-title">4.1 Redis 分布式锁（Redisson）</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：分布式锁就是「多个机器抢一把钥匙，谁拿到谁干活」。手写 SETNX 有坑：① 没设过期时间会死锁；② 到期释放前业务没执行完锁就没了（删了别人的锁）；③ 释放锁时删错了别人的锁。Redisson 用 Lua + 看门狗把这些都解决了。</p>
+</blockquote>
+<pre><code class="language-java">/**
+
+ * Redisson 分布式锁。
+ * 关键点1：tryLock(waitTime, leaseTime, unit) —— waitTime 是等待时间，leaseTime 是自动释放时间
+ * 关键点2：不想传 leaseTime 就用 tryLock(waitTime, unit)，Redisson 会启动看门狗每 10s 续期
+ * 关键点3：业务必须在 try 块里，finally 里解锁
+ */
+@Service
+@RequiredArgsConstructor
+public class StockService {
+
+    private final RedissonClient redissonClient;
+    private final StockMapper stockMapper;
+
+    public boolean deduct(Long skuId, int quantity) {
+        RLock lock = redissonClient.getLock(&quot;stock:lock:&quot; + skuId);
+        try {
+            // 关键点2：等待 3 秒，拿到锁后自动续期
+            if (!lock.tryLock(3, TimeUnit.SECONDS)) {
+                return false;   // 抢不到锁，交给上层重试或降级
+            }
+            try {
+                // 关键点3：真正的扣减要原子，用 SQL 条件更新而不是先查后改
+                int rows = stockMapper.deductIfEnough(skuId, quantity);
+                return rows &gt; 0;
+            } finally {
+                // 只有当前线程持有才解锁，防止误解别人的锁
+                if (lock.isHeldByCurrentThread()) {
+                    lock.unlock();
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+}
+</code></pre>
+<pre><code class="language-sql">-- 关键：原子扣减的正确写法，靠数据库保证，不靠 Redis
+UPDATE t_stock
+   SET stock = stock - #{quantity}
+ WHERE sku_id = #{skuId} AND stock &gt;= #{quantity};
+</code></pre>
+<p><strong>Redisson 锁的坑</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>坑</th>
+<th>说明</th>
+<th>解决</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>看门狗续期</td>
+<td>默认 30s 过期，每 10s 续期到 30s</td>
+<td>正常；但服务挂掉锁最多 30s 后释放</td>
+</tr>
+<tr>
+<td>锁粒度</td>
+<td>按 skuId 加锁，不同 sku 互不阻塞</td>
+<td>粒度别太粗（别锁整张表）</td>
+</tr>
+<tr>
+<td>Redisson 集群</td>
+<td>用的是 Redis 集群的分布式锁，不是单机</td>
+<td>主从切换时锁安全性依赖 Redis 自身的持久化配置</td>
+</tr>
+<tr>
+<td>误用 <code>lock()</code></td>
+<td>无限等待，会把线程池耗尽</td>
+<td>生产必须用 <code>tryLock</code> 带超时</td>
+</tr>
+</tbody>
+</table>
+<h3 id="q-21" class="q-title">4.2 Nacos：注册中心 + 配置中心</h3>
+<pre><code class="language-java">/**
+
+ * 动态配置：@RefreshScope + @Value。
+ * 关键点1：@RefreshScope 的 bean 才能感知配置变更
+ * 关键点2：@Value 注入的值不会自动刷新，要用 @ConfigurationProperties 或 @NacosValue
+ */
+@Component
+@RefreshScope
+public class PaymentConfig {
+
+    @Value(&quot;${payment.timeout:3000}&quot;)
+    private int timeout;
+
+    @Value(&quot;${payment.retry-times:2}&quot;)
+    private int retryTimes;
+
+    // 关键点3：配置变更时的回调（做缓存清理、连接重建）
+    @PostConstruct
+    public void init() {
+        log.info(&quot;支付配置加载 timeout={} retry={}&quot;, timeout, retryTimes);
+    }
+}
+</code></pre>
+<pre><code class="language-java">/**
+
+ * 手动监听配置变更（更灵活的方式）。
+ * 关键点：Listener 接收新旧配置，自己决定怎么刷新缓存
+ */
+@NacosConfigListener(dataId = &quot;payment.yaml&quot;, group = &quot;DEFAULT_GROUP&quot;)
+public void onPaymentConfigChange(String content) {
+    PaymentProperties props = YAML.parseObject(content, PaymentProperties.class);
+    paymentCache.set(props);
+    log.info(&quot;支付配置已更新, 主动刷新本地缓存&quot;);
+}
+</code></pre>
+<pre><code class="language-yaml"># nacos 配置示例
+payment:
+  timeout: 3000
+  retry-times: 2
+  wechat:
+    mch-id: &quot;1900000109&quot;
+    notify-url: &quot;https://api.example.com/pay/notify&quot;
+</code></pre>
+<p><strong>注册中心在项目里的实际作用</strong>：</p>
+<ul>
+<li>服务实例注册与健康检查（心跳 5s，剔除 15s）</li>
+<li>客户端每 30s 拉取订阅服务的实例列表（<code>NacosNamingService</code>）</li>
+<li>配合 OpenFeign 做服务调用，不需要写死 IP</li>
+</ul>
+<h3 id="q-22" class="q-title">4.3 Sentinel：限流、熔断、降级</h3>
+<pre><code class="language-java">/**
+
+ * Sentinel 限流：QPS 模式。
+ * 关键点1：@SentinelResource 的 value 是资源名，blockHandler 处理限流
+ * 关键点2：fallback 处理业务异常，blockHandler 处理限流异常，两者都要配
+ * 关键点3：参数要加 @SentinelResource 才会被管理
+ */
+@Service
+public class OrderService {
+
+    @SentinelResource(
+            value = &quot;createOrder&quot;,
+            blockHandler = &quot;createOrderBlocked&quot;,     // 限流/熔断时走这里
+            fallback = &quot;createOrderFallback&quot;,       // 业务异常时走这里
+            blockHandlerClass = OrderService.class,
+            fallbackClass = OrderService.class)
+    public OrderResult createOrder(@RequestParam(&quot;userId&quot;) Long userId,
+                                   @RequestParam(&quot;skuId&quot;) Long skuId) {
+        return doCreateOrder(userId, skuId);
+    }
+
+    /** 限流处理：返回友好提示 + 埋点告警 */
+    public OrderResult createOrderBlocked(Long userId, Long skuId, BlockException ex) {
+        Metrics.counter(&quot;order.blocked&quot;).increment();
+        return OrderResult.fail(&quot;当前访问人数较多，请稍后再试&quot;);
+    }
+
+    /** 业务降级 */
+    public OrderResult createOrderFallback(Long userId, Long skuId, Throwable t) {
+        log.error(&quot;创建订单异常 userId={} skuId={}&quot;, userId, skuId, t);
+        return OrderResult.fail(&quot;系统繁忙，请稍后重试&quot;);
+    }
+}
+</code></pre>
+<p><strong>限流规则怎么配（在 Sentinel 控制台）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>规则类型</th>
+<th>配置示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>保护后端不被压垮</td>
+<td>QPS 限流</td>
+<td>资源名 <code>createOrder</code>，QPS=100</td>
+</tr>
+<tr>
+<td>热点商品</td>
+<td>参数限流</td>
+<td>单个 userId QPS=5</td>
+</tr>
+<tr>
+<td>下游 DB 挂了</td>
+<td>慢调用比例熔断</td>
+<td>慢调用阈值 500ms，比例 50%，熔断 30s</td>
+</tr>
+<tr>
+<td>下游异常变多</td>
+<td>异常比例熔断</td>
+<td>异常比例 50%，熔断时长 30s</td>
+</tr>
+</tbody>
+</table>
+<p><strong>熔断降级的三个状态</strong>：</p>
+<pre><code>Closed（正常）──异常率超阈值──► Open（熔断，直接拒绝）──冷却时间到──► Half-Open（半开，放少量请求试探）
+                                                  ▲                                        │
+                                                  └──────还有异常────────────────────────┘
+</code></pre>
+<p><strong>降级方案设计（面试加分）</strong>：</p>
+<pre><code>一级降级：返回兜底数据（推荐）——推荐商品用运营配置的默认列表
+二级降级：返回静态页面/提示文案
+三级降级：直接返回失败（保命）
+❌ 不要：降级时还去查另一个数据库（故障扩散）
+</code></pre>
+<h3 id="q-23" class="q-title">4.4 Seata AT 模式：分布式事务</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：Seata AT 帮你自动"撤销"操作。改数据前拍张照（before image），改完提交时如果失败了，用照片把数据改回去。它靠<strong>全局锁</strong>保证并发安全——改的行在事务结束前别人不能改。</p>
+</blockquote>
+<pre><code class="language-java">/**
+
+ * Seata AT 模式：全局事务入口。
+ * 关键点1：@GlobalTransactional 标在「事务发起方」
+ * 关键点2：每个参与方（写库的操作）都要有 undo_log 表
+ * 关键点3：多个 @GlobalTransactional 不能嵌套（会冲突）
+ */
+@Service
+@RequiredArgsConstructor
+public class OrderTransactionService {
+
+    private final OrderMapper orderMapper;
+    private final AccountMapper accountMapper;
+    private final InventoryMapper inventoryMapper;
+
+    /**
+     * 关键点2：这个方法里的所有 DB 操作都是全局事务的一部分，
+     * 任一失败，全局回滚
+     */
+    @GlobalTransactional(name = &quot;order-create-tx&quot;, rollbackFor = Exception.class)
+    public void createOrder(OrderDO order) {
+        // 1. 建单
+        orderMapper.insert(order);
+        // 2. 扣库存
+        inventoryMapper.deduct(order.getSkuId(), order.getQuantity());
+        // 3. 扣账户余额
+        accountMapper.deductBalance(order.getUserId(), order.getAmount());
+        // 4. 调用远程服务（如果远程服务也接了 Seata，同样加入全局事务）
+        // remoteInventoryService.deductWithTx(...);
+    }
+}
+</code></pre>
+<pre><code class="language-sql">-- 关键：每个参与全局事务的库都要建 undo_log 表
+CREATE TABLE `undo_log` (
+  `branch_id`     BIGINT       NOT NULL COMMENT '分支事务 ID',
+  `xid`           VARCHAR(128) NOT NULL COMMENT '全局事务 ID',
+  `context`       VARCHAR(128) NOT NULL COMMENT '上下文（序列化方式等）',
+  `rollback_info` LONGBLOB     NOT NULL COMMENT '回滚信息',
+  `log_status`    INT          NOT NULL COMMENT '状态 0=正常 1=防悬挂标记',
+  `log_created`   DATETIME(6)  NOT NULL,
+  `log_modified`  DATETIME(6)  NOT NULL,
+  UNIQUE KEY `ux_undo_log` (`xid`, `branch_id`)
+) ENGINE=InnoDB;
+</code></pre>
+<p><strong>AT 模式的三个限制（必背）</strong>：</p>
+<ol>
+<li><strong>隔离性不是真正的隔离</strong>：靠<strong>全局锁</strong>（行级）在事务期间锁住被修改的行，所以是"读未提交"级别的隔离</li>
+<li><strong>只支持关系型数据库</strong>：不支持 MongoDB、Redis 等</li>
+<li><strong>不能有非 SQL 副作用</strong>：AT 靠解析 SQL 撤销，如果你在事务里发了 MQ、写了 Redis，<strong>回滚时不会撤销</strong>，必须用 <code>TCC</code> 或 <code>Saga</code></li>
+</ol>
+<p><strong>TCC 模式（业务侵入但能力强）</strong>：</p>
+<pre><code class="language-java">/**
+
+ * TCC：Try 阶段预留资源，Confirm 确认，Cancel 取消。
+ * 关键点1：每个服务都要实现三个接口
+ * 关键点2：Confirm/Cancel 必须幂等（网络重试会导致重复调用）
+ * 关键点3：空回滚（Cancel 先到）、幂等、悬挂（Try 后到）三个问题必须处理
+ */
+public interface InventoryTccService {
+    void tryDeduct(String bizId, Long skuId, int qty);   // 冻结库存
+    void confirmDeduct(String bizId);                     // 真正扣减
+    void cancelDeduct(String bizId);                     // 解冻
+}
+</code></pre>
+<p><strong>AT vs TCC vs MQ 最终一致</strong>：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>AT</th>
+<th>TCC</th>
+<th>MQ + 本地消息表</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>代码侵入</td>
+<td>低（加注解）</td>
+<td>高（写三个方法）</td>
+<td>中</td>
+</tr>
+<tr>
+<td>隔离性</td>
+<td>低（全局锁）</td>
+<td>高（业务自己控制）</td>
+<td>无（最终一致）</td>
+</tr>
+<tr>
+<td>性能</td>
+<td>好（无额外 RPC）</td>
+<td>差（多次 RPC）</td>
+<td>好</td>
+</tr>
+<tr>
+<td>适用</td>
+<td>关系库、同构服务</td>
+<td>异构、要强一致</td>
+<td><strong>大多数场景</strong>（推荐）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="q-24" class="q-title">4.5 Nginx：入口层能干什么</h3>
+<pre><code class="language-nginx"># 完整配置示例：反向代理 + 负载均衡 + 限流 + 静态资源
+upstream backend {
+    # 关键：least_conn 按最少连接，比轮询更适合长连接场景
+    least_conn;
+    server 192.168.31.6:8080 max_fails=3 fail_timeout=30s;
+    server 192.168.31.7:8080 max_fails=3 fail_timeout=30s;
+    keepalive 64;                    # 关键：长连接复用，减少 TIME_WAIT
+}
+
+# 限流区（按 IP 限速，每秒 10 个请求）
+limit_req_zone $binary_remote_addr zone=req_per_ip:10m rate=10r/s;
+limit_conn_zone $binary_remote_addr zone=conn_per_ip:10m;
+
+server {
+    listen 80;
+    server_name api.example.com;
+
+    # 关键1：上传大小限制（默认 1m，很多人的坑）
+    client_max_body_size 20m;
+
+    # 关键2：真实 IP（后面是网关/负载均衡时要用）
+    set_real_ip_from 192.168.31.0/24;
+    real_ip_header X-Forwarded-For;
+
+    location / {
+        limit_req zone=req_per_ip burst=20 nodelay;   # 允许突发 20 个
+        limit_conn conn_per_ip 50;
+
+        proxy_pass http://backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        # 关键3：超时三件套，不配的话上游卡住会拖死 worker
+        proxy_connect_timeout 5s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
+    # 关键4：静态资源单独走，Tomcat 不处理
+    location /static/ {
+        alias /data/nginx/static/;
+        expires 30d;
+        access_log off;
+    }
+
+    # 关键5：后端返回 502/504 时，用上一份缓存兜底（提高可用性）
+    proxy_next_upstream error timeout http_502 http_504;
+}
+</code></pre>
+<p><strong>Nginx 负载均衡 vs Spring Cloud LoadBalancer</strong>：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Nginx</th>
+<th>Ribbon/LoadBalancer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>层级</td>
+<td>入口层（外部流量）</td>
+<td>应用层（内部服务调用）</td>
+</tr>
+<tr>
+<td>特点</td>
+<td>能扛十万级连接</td>
+<td>只能在内网服务间用</td>
+</tr>
+<tr>
+<td>典型配置</td>
+<td><code>upstream</code> + <code>least_conn</code></td>
+<td><code>@LoadBalanced</code> + IRule</td>
+</tr>
+</tbody>
+</table>
+<h3 id="q-25" class="q-title">4.6 ELK：日志怎么收集和查</h3>
+<pre><code>应用日志 → Filebeat（轻量采集）→ Elasticsearch → Kibana（可视化）
+                                        ↓
+                                  Logstash（需要清洗/转换时才用）
+</code></pre>
+<pre><code class="language-yaml"># filebeat.yml 关键配置
+filebeat.inputs:
+
+  - type: log
+    enabled: true
+    paths:
+      - /data/logs/*.log
+    # 关键：多行日志合并（Java 堆栈信息会被拆成多行）
+    multiline.type: pattern
+    multiline.pattern: '^[[:space:]]*([0-9]{4}-[0-9]{2}-[0-9]{2})'
+    multiline.negate: true
+    multiline.match: after
+
+    # 关键：字段解析，把非结构化日志转成结构化（ES 才能聚合）
+    fields_under_root: true
+    fields:
+      env: prod
+      service: order-service
+
+processors:
+
+  - add_host_metadata: ~
+  - add_cloud_metadata: ~
+
+output.elasticsearch:
+  hosts: [&quot;http://192.168.31.6:9200&quot;]
+  # 关键：按天分索引，别都写一个
+  index: &quot;app-log-%{+yyyy.MM.dd}&quot;
+
+setup.template.name: &quot;logstash&quot;
+setup.template.pattern: &quot;app-log-*&quot;
+setup.ilm.enabled: false
+</code></pre>
+<p><strong>面试加分点——「日志怎么做成可检索的」</strong>：</p>
+<ol>
+<li><strong>结构化</strong>：应用直接输出 JSON 日志（Logback 的 <code>logstash-logback-encoder</code>），不要自己拼字符串</li>
+<li><strong>链路 ID</strong>：每次请求生成 traceId（用 <code>TraceIdFilter</code> 或 SkyWalking/Micrometer Tracing），打进所有日志</li>
+<li><strong>分索引</strong>：按天或按服务分，避免单索引爆炸</li>
+<li><strong>生命周期</strong>：ILM 策略，热 3 天 → 温 7 天 → 删除 30 天后</li>
+</ol>
+<pre><code class="language-xml">&lt;!-- logback-spring.xml：输出结构化 JSON --&gt;
+&lt;appender name=&quot;LOG_FILE&quot; class=&quot;ch.qos.logback.core.rolling.RollingFileAppender&quot;&gt;
+    &lt;file&gt;${LOG_HOME}/app.log&lt;/file&gt;
+    &lt;rollingPolicy class=&quot;ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy&quot;&gt;
+        &lt;fileNamePattern&gt;${LOG_HOME}/app-%d{yyyy-MM-dd}.%i.log.gz&lt;/fileNamePattern&gt;
+        &lt;maxFileSize&gt;100MB&lt;/maxFileSize&gt;
+        &lt;maxHistory&gt;15&lt;/maxHistory&gt;
+        &lt;totalSizeCap&gt;10GB&lt;/totalSizeCap&gt;
+    &lt;/rollingPolicy&gt;
+    &lt;encoder class=&quot;net.logstash.logback.encoder.LogstashEncoder&quot;&gt;
+        &lt;includeMdcKeyName&gt;traceId&lt;/includeMdcKeyName&gt;
+    &lt;/encoder&gt;
+&lt;/appender&gt;
+</code></pre>
+<h3 id="q-26" class="q-title">4.7 Docker 与 K8s：面试够用就行</h3>
+<pre><code class="language-dockerfile"># 多阶段构建：镜像小、构建快
+FROM eclipse-temurin:17-jre-alpine AS builder
+WORKDIR /app
+COPY target/app.jar app.jar
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+# 关键：用非 root 用户运行
+RUN addgroup -S spring &amp;&amp; adduser -S spring -G spring
+USER spring:spring
+COPY --from=builder /app/app.jar app.jar
+EXPOSE 8080
+# 关键：加 JVM 容器参数，限制堆内存
+ENTRYPOINT [&quot;java&quot;, &quot;-XX:MaxRAMPercentage=75.0&quot;, &quot;-jar&quot;, &quot;app.jar&quot;]
+</code></pre>
+<pre><code class="language-bash"># 关键：用 dmesg 检查容器内 OOM（Java 不设 MaxRAMPercentage 会被 OOMKill）
+dmesg -T | grep -i &quot;killed process&quot; | tail -20
+</code></pre>
+<p><strong>K8s 核心对象（面试会问）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>对象</th>
+<th>作用</th>
+<th>关键配置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Deployment</strong></td>
+<td>管理 Pod 副本，支持滚动更新</td>
+<td><code>replicas</code>, <code>strategy.rollingUpdate</code></td>
+</tr>
+<tr>
+<td><strong>Service</strong></td>
+<td>稳定访问入口 + 负载均衡</td>
+<td><code>type: ClusterIP/NodePort/LoadBalancer</code></td>
+</tr>
+<tr>
+<td><strong>ConfigMap</strong></td>
+<td>非敏感配置</td>
+<td>环境变量或文件挂载</td>
+</tr>
+<tr>
+<td><strong>Secret</strong></td>
+<td>敏感配置</td>
+<td>base64（<strong>不是加密！</strong>，要配 RBAC 加密存储）</td>
+</tr>
+<tr>
+<td><strong>Ingress</strong></td>
+<td>外部 HTTP 入口</td>
+<td>需要 Ingress Controller（如 Nginx Ingress）</td>
+</tr>
+<tr>
+<td><strong>HPA</strong></td>
+<td>自动扩缩容</td>
+<td>基于 CPU/内存/自定义指标</td>
+</tr>
+<tr>
+<td><strong>Probe</strong></td>
+<td>健康检查</td>
+<td><code>livenessProbe</code>（重启）/ <code>readinessProbe</code>（摘流量）</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # 关键：最多多起 1 个
+      maxUnavailable: 0  # 关键：更新时不减少可用副本（零停机）
+  template:
+    spec:
+      containers:
+        - name: order-service
+          image: registry.example.com/order-service:1.2.0
+          resources:
+            requests: { cpu: &quot;500m&quot;, memory: &quot;1Gi&quot; }
+            limits:   { cpu: &quot;1000m&quot;, memory: &quot;2Gi&quot; }   # 关键：request &lt; limit
+          readinessProbe:      # 关键：就绪探针决定是否接流量
+            httpGet: { path: /actuator/health/readiness, port: 8080 }
+            initialDelaySeconds: 20
+            periodSeconds: 5
+          livenessProbe:       # 关键：存活探针决定是否重启
+            httpGet: { path: /actuator/health/liveness, port: 8080 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+spec:
+  type: ClusterIP
+  selector:
+    app: order-service
+  ports:
+
+    - port: 80
+      targetPort: 8080
+</code></pre>
+<p><strong>优雅停机（面试高频）</strong>：</p>
+<pre><code class="language-yaml">  # 关键：preStop 睡 30 秒，让 K8s 先从 Endpoints 摘除再发 SIGTERM
+  lifecycle:
+    preStop:
+      exec:
+        command: [&quot;sh&quot;, &quot;-c&quot;, &quot;sleep 30&quot;]
+  # 关键：给足够时间处理完在途请求
+  terminationGracePeriodSeconds: 60
+</code></pre>
+<pre><code class="language-java">/**
+
+ * 优雅停机：收到 SIGTERM 后停止接收新请求，处理完存量再退出。
+ * 关键点1：先关 readiness（K8s 摘流量）再等一会
+ * 关键点2：等存量请求处理完
+ */
+@Component
+public class GracefulShutdownHandler implements ApplicationListener&lt;ContextClosedEvent&gt; {
+
+    @Value(&quot;${server.shutdown:graceful}&quot;)
+    private String shutdownMode;
+
+    @Value(&quot;${spring.lifecycle.timeout-per-shutdown-phase:30s}&quot;)
+    private Duration timeout;
+
+    @Override
+    public void onApplicationEvent(ContextClosedEvent event) {
+        log.info(&quot;开始优雅停机，等待 {} &quot;, timeout);
+        // Nacos 主动注销（关键：不等心跳超时，快速摘流量）
+        nacosNamingService.deregisterInstance(serviceName, groupName, ip, port);
+        // 等待在途请求处理完
+        try {
+            Thread.sleep(timeout.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        log.info(&quot;优雅停机完成&quot;);
+    }
+}
+</code></pre>
+<pre><code class="language-yaml">server:
+  shutdown: graceful
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+</code></pre>
+<hr />
+<h2 id="sec-6" class="sec-title">五、中间件高频面试题 30 道（带答案）</h2>
+<blockquote>
+<p>🗣 <strong>人话版</strong>：这 30 道是中间件板块最常被问的。答案按「<strong>结论 → 原理 → 项目里的做法 → 代价</strong>」四段写，背这个结构比背句子管用。每道都标了 ★（必问）和 ⚠（高频追问）。</p>
+</blockquote>
+<h3 id="q-27" class="q-title">MQ 类（15 题）</h3>
+<hr />
+<h3 id="q-28" class="q-title">MQ-1 ★ 三种 MQ 怎么选？为什么你项目用 RocketMQ？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：选型看四件事——量多大、要不要延迟/事务消息、团队会不会运维、业务能不能容忍最终一致。别说什么都能干，选型是取舍。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>RocketMQ</strong>：电商交易首选。原生支持<strong>事务消息</strong>、<strong>延迟/定时消息</strong>（18 档 + 5.x 任意时间）、<strong>分级重试 + 死信队列</strong>、<strong>消息轨迹</strong>（能查一条消息的收发链路，排查问题救命）、<strong>顺序消息</strong>（QueueSelector）。吞吐百万级。</li>
+<li><strong>Kafka</strong>：吞吐最高（千万级），<strong>顺序写 + 零拷贝 + 批量</strong>。但<strong>延迟消息、事务消息、重试死信、消息轨迹</strong>都弱，topic 多了性能下降。适合日志/埋点/流计算/CDC 数据管道。</li>
+<li><strong>RabbitMQ</strong>：<strong>路由能力最强</strong>（Exchange 四种类型：direct/fanout/topic/headers），延迟低，但<strong>堆积能力弱</strong>（百万级就吃力）。适合复杂路由、中小规模业务解耦。</li>
+<li><strong>你的项目</strong>：订单履约、支付回调 → <strong>RocketMQ</strong>（要延迟关单、要事务消息、要消息轨迹）；门店操作日志 → <strong>Kafka 或 ELK</strong>；<strong>如果公司已有 MQ 基建，跟着公司走</strong>（这是加分点：懂成本）。</li>
+</ul>
+<hr />
+<h3 id="q-29" class="q-title">MQ-2 ★ 消息为什么会丢？三段式怎么保证不丢？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：一封信要送到，三关都得守住——发的确认寄出去了、邮局确认入箱了、收的人确认拆开了。少一关都可能丢。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ol>
+<li><strong>生产端</strong>：<code>syncSend</code> 同步发送 + 检查 <code>sendStatus == SEND_OK</code> + 失败重试（<code>retry-times-when-send-failed</code>）。<strong>不能用 <code>sendOneWay</code></strong>（完全不等确认）。</li>
+<li><strong>Broker 端</strong>：<strong>同步刷盘</strong> <code>flushDiskType=SYNC_FLUSH</code> + <strong>同步复制</strong> <code>haMasterAddress</code>（SYNC_MASTER）+ 主从。异步刷盘断电会丢。</li>
+<li><strong>消费端</strong>：<strong>手动 ACK</strong>，业务处理成功才提交 offset；异常必须抛出（吞异常 = 消息丢了）。</li>
+<li><strong>兜底</strong>：<strong>本地消息表 + 定时对账</strong>（业务数据和消息表同事务落库，定时任务扫描发送 + 对账补偿）。这是"不丢"的最后一道防线。</li>
+</ol>
+<hr />
+<h3 id="q-30" class="q-title">MQ-3 ★ 为什么一定会重复消费？幂等怎么做？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：MQ 的语义是 <strong>at least once（至少一次）</strong>，宁可多送绝不漏送，所以重复是必然的不是意外。你要在消费端解决。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li>重复原因：网络抖动（ACK 丢了）、消费端宕机（处理完没提交 offset）、<strong>Rebalance</strong>（未 ACK 的消息分给新消费者）、重试机制、生产端超时重试。</li>
+<li>方案（按可靠性）：</li>
+<li><strong>DB 唯一索引</strong>（首选，靠数据库兜底）：<code>UNIQUE(biz_id, biz_type)</code>，插入冲突即重复。</li>
+<li><strong>状态机</strong>：<code>UPDATE ... WHERE status='待支付'</code> 受影响 0 行 = 已处理过，天然幂等。</li>
+<li><strong>Redis SETNX</strong>（快，但<strong>不能先占位后处理</strong>——业务失败消息会被吞；必须业务成功后再写 key）。</li>
+<li><strong>乐观锁/version</strong>。</li>
+<li><strong>反面案例</strong>（要能说）：只靠 Redis 去重 + 主从异步复制 → 主从切换丢 key → 幂等失效。</li>
+</ul>
+<hr />
+<h3 id="q-31" class="q-title">MQ-4 ★ 消息堆积了怎么办？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：先搞清楚为什么堆——消费者挂了、变慢了、流量突增、还是毒消息一直重试。然后临时加消费者，最后要能从根上防。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>定位</strong>：<code>mqadmin consumerProgress -g GROUP</code> 看 <strong>DIFF 列</strong>（堆积量）；消费端埋点看耗时和成功率。</li>
+<li><strong>止血（优先级）</strong>：
+  1. 临时扩容消费者（<strong>注意上限：Kafka 消费者数 ≤ 分区数，RocketMQ ≤ 队列数</strong>）
+  2. 提升单条效率（异步化、批量写 DB、把非关键逻辑后置）
+  3. 降级（消息转存临时 topic/DB；丢弃日志类消息）
+  4. 跳过积压（<code>resetOffsetByTime</code>，应急，会丢消息）
+  5. 事后补偿（对账补齐）</li>
+<li><strong>预防</strong>：lag 监控告警、消费超时、<strong>消费端熔断</strong>（下游挂了不能拖死整个 topic）、毒消息进 DLQ 后告警。</li>
+</ul>
+<hr />
+<h3 id="q-32" class="q-title">MQ-5 ★ 怎么保证消息顺序？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：全局有序等于单线程消费，吞吐直接废。实际只要<strong>同一个订单</strong>有序——同 key 同队列同线程。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>全局顺序</strong> = 单队列单消费者，吞吐极低，一般不做。</li>
+<li><strong>局部顺序</strong>（同订单/同用户）：RocketMQ 用 <code>MessageQueueSelector</code> 按业务 key 选队列 + <code>ConsumeMode.ORDERLY</code>；Kafka 用相同 key hash 到同一 partition + 单消费者单线程。</li>
+<li><strong>坑</strong>：① 顺序消费时一条卡住会阻塞整个队列 → 必须配消费超时；② <strong>扩队列数会破坏已有映射</strong>，生产环境队列数一次定好；③ 用订单号 hash 会有数据倾斜 → 二次 hash 打散。</li>
+</ul>
+<hr />
+<h3 id="q-33" class="q-title">MQ-6 ★ RocketMQ 事务消息的原理？为什么还需要对账？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：先发一条「半消息」（消费者看不见），执行本地事务，成功了才转成真消息；中途挂了 Broker 会回来问「你那事成没成」。就是为了让「改库」和「发消息」要么都成要么都不成。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li>流程：发<strong>半消息</strong>（half message，不投递）→ 执行本地事务 → 返回 COMMIT/ROLLBACK → <strong>没回复时 Broker 回查</strong> <code>checkLocalTransaction</code> → 决定提交或回滚。</li>
+<li><strong>解决什么</strong>：本地事务与发消息的<strong>原子性</strong>。</li>
+<li><strong>局限（必答）</strong>：回查<strong>最多 15 次</strong>；回查有延迟（默认 6s 起）；回查依赖业务数据可查（要有唯一键）；<strong>不解决跨异构系统</strong>。</li>
+<li><strong>所以</strong>：任何方案都要<strong>对账兜底</strong>。事务消息 + 本地消息表是同一个思路的两面。</li>
+</ul>
+<hr />
+<h3 id="q-34" class="q-title">MQ-7 ★ 延迟消息怎么做？订单 30 分钟未支付关单？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：发一条 30 分钟后才被消费的消息，消费时查一下订单状态——没付款就关掉。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>RocketMQ 4.x</strong>：固定 18 个延迟级别（1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h），level=14 是 30 分钟。</li>
+<li><strong>RocketMQ 5.x</strong>：支持<strong>任意时间点</strong>的定时消息（精度毫秒）。</li>
+<li><strong>RabbitMQ</strong>：TTL + 死信队列（<strong>有队头阻塞问题</strong>）或延迟插件。</li>
+<li><strong>Kafka</strong>：原生不支持，要自建时间轮 / 多级 topic。</li>
+<li><strong>Redis ZSet</strong>：score 存到期时间戳，轮询 + 分布式锁抢任务。灵活但数据在内存。</li>
+<li><strong>XXL-Job 扫表</strong>：最土但最可靠，可查可补偿。</li>
+<li><strong>生产推荐</strong>：<strong>MQ 延迟消息做主路径 + 定时扫表做兜底</strong>。理由：MQ 延迟消息在极端情况（脑裂、误删）可能不触发，扫表是最后保险。</li>
+<li><strong>消费端铁律</strong>：消费时<strong>必须再查一次 DB 状态</strong>——用户 29:59 付款，30:01 关单消息到，不能误关。</li>
+</ul>
+<hr />
+<h3 id="q-35" class="q-title">MQ-8 ★ RocketMQ 的事务消息和 Seata 有什么区别？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：Seata 是「全程锁着，改完一起提交」，强一致但慢；MQ 事务消息是「先发信后做事，中间靠回查补」，最终一致但快。</p>
+</blockquote>
+<p><strong>要点</strong>：
+| | RocketMQ 事务消息 | Seata AT |
+|---|---|---|
+| 一致性 | 最终一致 | 准强一致（隔离性靠全局锁） |
+| 侵入性 | 低（加 TransactionListener） | 低（加 @GlobalTransactional） |
+| 性能 | 好 | 较差（全局锁会阻塞） |
+| 跨异构 | 不支持（只管自己的库） | 不支持 |
+| 适用 | 异步链路、削峰 | 同步核心链路 |</p>
+<p><strong>选型原则</strong>：核心链路（下单扣库存）要强一致 → Seata；非核心可补偿（通知、积分、日志）→ MQ 事务消息。</p>
+<hr />
+<h3 id="q-36" class="q-title">MQ-9 ★ Kafka 的消费者组和分区是什么关系？为什么消费者比分区多没用？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：分区像货架格子，一个消费者组一次只能占一个格子。货架有 5 格，派 8 个人来，多出来的 3 个只能站着看。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>一个分区同一时刻只能被组内一个消费者消费</strong>（保证分区内有序）。</li>
+<li><strong>消费者数 &gt; 分区数 → 多出来的空转</strong>，CPU 高但无产出，<strong>Rebalance 还会更频繁</strong>。</li>
+<li>想提高消费能力 → <strong>加分区</strong>（但会破坏 key 的分区映射，慎改）+ 加消费者。</li>
+<li><strong>Rebalance 危害</strong>：消费暂停（stop the world）+ 可能重复消费 + 频繁 GC。优化：<code>session.timeout</code>（心跳检测）、<code>max.poll.records</code>（单批拉取量，配合 <code>max.poll.interval.ms</code>）、<code>cooperative-sticky</code> 增量 Rebalance 策略。</li>
+</ul>
+<hr />
+<h3 id="q-37" class="q-title">MQ-10 ⚠ RocketMQ 和 Kafka 在存储上的本质区别？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：RocketMQ 顺序写一个大文件，Kafka 也是顺序写大文件，但 Kafka 是<strong>每个分区一个文件</strong>，RocketMQ 是<strong>所有消息共用一个 CommitLog</strong>。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>RocketMQ</strong>：所有 Topic 的消息写进<strong>同一个 CommitLog</strong>（顺序写，磁盘 IO 友好）；消费时通过 <strong>ConsumeQueue</strong>（逻辑队列，存消息在 CommitLog 的物理偏移）来定位。<strong>一条消息在 CommitLog 只存一份</strong>，各队列只存索引。</li>
+<li><strong>Kafka</strong>：<strong>每个 Partition 一个独立文件</strong>（<code>.log</code> + <code>.index</code>），消息在分区内顺序追加。</li>
+<li><strong>后果</strong>：RocketMQ 扩队列不影响存储（只是多一份索引）；Kafka 扩分区会<strong>改变 key 的分布</strong>，且老分区数据不会自动迁移。</li>
+</ul>
+<hr />
+<h3 id="q-38" class="q-title">MQ-11 ⚠ 消费端异常该怎么处理？为什么不能 catch 住所有异常？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：能重试的异常要抛出去让 MQ 重试，不能重试的（脏数据）要跳过不然会卡死队列。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>不 catch 异常</strong> → MQ 认为消费失败 → 按重试策略重投 → 超过 <code>maxReconsumeTimes</code> 进<strong>死信队列（DLQ）</strong>。</li>
+<li><strong>catch 住不抛</strong> → MQ 认为消费成功 → <strong>提交 offset → 消息永久丢失</strong>。这是最危险的写法。</li>
+<li><strong>区分异常类型</strong>：</li>
+<li><strong>可重试</strong>（下游超时、DB 抖动）：抛异常，让 MQ 重试。</li>
+<li><strong>不可重试</strong>（参数非法、数据格式错、幂等命中）：记录日志 + 标记成功跳过，<strong>否则一条毒消息能卡住整个队列</strong>。</li>
+<li><strong>注意</strong>：用 <code>catch(Exception e)</code> 全兜住是最常见的错误姿势。</li>
+</ul>
+<hr />
+<h3 id="q-39" class="q-title">MQ-12 ⚠ 你怎么排查「消息丢了」？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：先定位丢在哪一段——是发送端没发出去、Broker 没存住、还是消费端吞了。<strong>消息轨迹是最快的手段</strong>。</p>
+</blockquote>
+<p><strong>要点</strong>（标准排查流程）：</p>
+<ol>
+<li><strong>确认消息有没有发出去</strong>：查 <code>mq_send_log</code> / 本地消息表有没有这条记录、状态是什么。</li>
+<li><strong>查消息轨迹</strong>：<code>mqadmin traceMsgById -n ns -i MSG_ID</code> → 能看到<strong>从哪个 Broker 哪个队列发出、被哪个消费者消费、消费结果</strong>。RocketMQ 这招能省一半时间。</li>
+<li><strong>Broker 侧</strong>：<code>topicStatus</code> 看队列分布和消费进度；<code>consumerProgress</code> 看 lag 和消费位点。</li>
+<li><strong>消费侧</strong>：查消费日志里有没有这条 msgId；查 DLQ 里有没有（<code>viewMsgById -t %DLQ%GROUP_xxx</code>）。</li>
+<li><strong>对账</strong>：定时任务比对 DB 业务数据与消费记录，这是最终裁判。</li>
+</ol>
+<hr />
+<h3 id="q-40" class="q-title">MQ-13 ⚠ 消息重复消费了几万次，怎么排查？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：先看是「同一条消息重复」还是「很多条消息都重复」——前者是幂等问题，后者是消费端异常（比如处理失败一直重试）。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>同一条重复</strong> → 幂等没做对。检查：幂等键是不是错的（用了随机 UUID 而不是业务 ID）、幂等记录业务失败后没删、幂等和业务不在一个事务。</li>
+<li><strong>很多条重复</strong> → 消费端有问题：某条消息处理抛异常但被 catch 住还返回成功、下游超时但实际已执行、<strong>消费端 Rebalance 频繁</strong>（心跳超时，会把正在处理的消息重投）。</li>
+<li><strong>排查命令</strong>：看该 msgId 的消费次数（轨迹里能看到）、看消费者日志里同一 msgId 出现次数、看 <code>consumerProgress</code> 的 DIFF 是否异常大。</li>
+</ul>
+<hr />
+<h3 id="q-41" class="q-title">MQ-14 ⚠ 消息队列和分布式事务有什么区别？什么场景必须用分布式事务？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：分布式事务是「一起成或一起败」，消息队列是「最终会对上」。前者慢但准，后者快但要兜底。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>分布式事务</strong>：跨资源操作需要<strong>原子性</strong>，如订单 + 库存 + 账户余额必须同时成功。方案：Seata AT（侵入低、有全局锁）、TCC（侵入高、无锁）、XA（性能差）。</li>
+<li><strong>消息队列</strong>：<strong>最终一致</strong>。靠「本地消息表 + 重试 + 幂等 + 对账」达成。</li>
+<li><strong>必须用分布式事务的场景</strong>：金融扣款、库存强一致、余额不能出现中间态。</li>
+<li><strong>可以不用</strong>：通知类（发短信）、积分赠送、日志上报、缓存刷新——这些失败可以补偿。</li>
+<li><strong>面试金句</strong>：<strong>「能用最终一致解决的，不要上分布式事务；分布式事务是把一致性换成了复杂度和性能成本。」</strong></li>
+</ul>
+<hr />
+<h3 id="q-42" class="q-title">MQ-15 ⚠ 消息队列引入了哪些新问题？你怎么权衡？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：MQ 不是银弹，用它要付出：系统复杂度上升、一致性问题、运维成本、排查链路变长。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>四个代价</strong>：① 重复消费 ② 消息丢失 ③ 顺序错乱 ④ 堆积。</li>
+<li><strong>额外代价</strong>：<strong>排查难度上升</strong>（一个请求横跨多个服务）、<strong>数据一致性窗口</strong>（写完立刻读可能不一致）、<strong>运维成本</strong>（监控、扩容、死信处理）。</li>
+<li><strong>引入原则（要能说出来）</strong>：</li>
+<li>只把<strong>非核心、可补偿</strong>的环节异步化；核心链路（下单扣库存）不要为了"看起来高级"而异步。</li>
+<li>引入前先想清楚：<strong>如果 MQ 挂了，这笔业务怎么办</strong>？要有降级方案。</li>
+<li><strong>中间件的引入成本 &gt; 收益时不要引入</strong>。</li>
+</ul>
+<hr />
+<h3 id="q-43" class="q-title">ES 类（8 题）</h3>
+<hr />
+<h3 id="q-44" class="q-title">ES-1 ★ 倒排索引是什么？为什么快？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：普通数据库是「翻到第几页看写了啥」，ES 是「先查词索引，直接告诉你哪几页有这个词」。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>正排</strong> = 文档 → 词；<strong>倒排</strong> = <strong>词 → 文档列表（含位置、词频）</strong>。</li>
+<li><strong>两层结构</strong>：</li>
+<li><strong>Term Dictionary（词典）</strong>：内存中，压缩为 <strong>FST</strong>（有限状态转换器），负责词 → 倒排表位置，查找 O(1)。</li>
+<li><strong>Posting List（倒排表）</strong>：磁盘上（<code>.doc</code> 文档ID、<code>.tim</code> 词频+位置），用<strong>跳表（SkipList）</strong>支持快速求交集。</li>
+<li><strong>求交是核心</strong>：<code>AND</code> 查询 = 多个 posting list 求交，跳表让交集计算跳过大量元素。</li>
+<li><strong>一句话</strong>：倒排索引把「查数据」变成了「查词」。</li>
+</ul>
+<hr />
+<h3 id="q-45" class="q-title">ES-2 ★ 为什么 ES 是"近实时"？写入流程是怎样的？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：写进去先放缓冲区并记日志，默认<strong>每秒</strong>刷一次生成新段，这时候才能被搜到——所以叫「近」实时。批量导入关掉刷新能快好几倍。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li>流程：写 <strong>memory buffer</strong> + <strong>translog</strong>（防宕机丢）→ 每 <strong>1s refresh</strong> 生成新 <strong>segment</strong>（<strong>此时才可搜索</strong>）→ <strong>flush</strong> 落盘清 translog → 后台 <strong>merge</strong> 合并小 segment。</li>
+<li><strong>关键参数</strong>：<code>refresh_interval</code>（批量导入时设 <code>-1</code>，导完手动 <code>POST /_refresh</code>，能快数倍）、<code>translog.durability</code>（<code>request</code>=每次都落盘，最安全；<code>async</code>=异步，性能好）。</li>
+<li><strong>merge 很吃 IO/CPU</strong>，要限流（<code>indices.merge.max_num_threads</code>）。</li>
+<li><strong>结论</strong>：别用 ES 做实时强一致查询；写完立刻要读 → <code>refresh=true</code>（性能差）或直接读 MySQL。</li>
+</ul>
+<hr />
+<h3 id="q-46" class="q-title">ES-3 ★ 深分页为什么慢？怎么解决？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：<code>from+size</code> 是「每个分片都把前 N 条搬出来，协调节点再统一排序」，翻到第 1000 页等于搬了几十万条。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>原因</strong>：每个分片都要取 <code>from+size</code> 条，协调节点做全局排序 → 内存和 CPU 双爆。默认 <code>index.max_result_window=10000</code>。</li>
+<li><strong>方案</strong>：</li>
+<li><strong><code>search_after</code></strong>（推荐）：用上一页最后一条的 sort 值当游标，实时、无深度限制。<strong>sort 字段必须唯一且有值</strong>（用 <code>createTime + _id</code> 组合）。</li>
+<li><strong><code>scroll</code></strong>：基于时间点快照，适合导出，<strong>导完必须 clear scroll</strong>。</li>
+<li><strong><code>PIT</code>（Point In Time）</strong>：scroll 的升级版，避免导出期间数据变化导致重复/遗漏。</li>
+<li>限制最大页数、默认不支持跳页。</li>
+<li><strong>别做</strong>：把 <code>max_result_window</code> 调成 10 万——那是把问题从「慢查询」变成「OOM」。</li>
+</ul>
+<hr />
+<h3 id="q-47" class="q-title">ES-4 ★ MySQL 和 ES 怎么同步？三种方案怎么选？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：双写最简单但容易不一致；发 MQ 解耦但要处理顺序和重复；<strong>Canal 订阅 binlog 最省心</strong>，业务代码一行不用改。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>方案对比</strong>：
+  | | 一致性 | 侵入性 | 时延 | 适用 |
+  |---|---|---|---|---|
+  | 同步双写 | 弱 | 高 | 实时 | 简单场景 |
+  | MQ 异步 | 最终一致 | 中 | 秒级 | 有 MQ 基建 |
+  | <strong>Canal 订阅 binlog</strong> | 最终一致 | <strong>零</strong> | 秒级 | <strong>推荐</strong> |
+  | 定时全量+增量 | 最终一致 | 零 | 分钟级 | 报表 |</li>
+<li><strong>Canal 链路</strong>：MySQL 开 binlog → Canal Server（伪装从库）→ 解析成 CanalEntry → 投递 MQ / 直写 ES。</li>
+<li><strong>必须处理</strong>：<strong>全量初始化 + 增量追平</strong>、失败重试、删除同步、<strong>对账</strong>。</li>
+<li><strong>幂等</strong>：用业务 ID 做 ES 文档 ID，重复写覆盖同一份，天然幂等。</li>
+<li><strong>延迟问题</strong>：用户写完立刻搜不到 → 前端乐观更新，或搜索时先读主库回源。</li>
+</ul>
+<hr />
+<h3 id="q-48" class="q-title">ES-5 ★ 分片和副本怎么定？为什么不能改分片数？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：分片像把大表切成几块分开放，副本是每个分片的拷贝。分片数建索引时定死，之后改只能重建。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>分片数</strong>：单分片建议 <strong>20～50GB</strong>，最大 50GB。分片太多 → 集群元数据大、查询扇出慢；太少 → 单分片过大、恢复慢。</li>
+<li><strong>副本数</strong>：生产至少 1。3 节点 → 1 主 1 副本（3 副本会因节点不足而 yellow）。副本数 ≥ 分片数会有一半分片没副本 → yellow。</li>
+<li><strong>为什么不能改</strong>：分片数决定数据分布和路由，<strong>改了就等于数据重分布</strong>。方案：<strong>reindex</strong>（新索引 + 数据迁移 + alias 切换）或 <strong>split/shrink</strong>（有前置条件）。</li>
+<li><strong>用 alias</strong>：业务代码访问 alias（<code>order_index</code>），切换时改 alias 指向新索引，<strong>应用无感知</strong>。</li>
+</ul>
+<hr />
+<h3 id="q-49" class="q-title">ES-6 ⚠ 字段类型 text 和 keyword 有什么区别？什么时候用哪个？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：text 会把内容切碎存（能模糊搜），keyword 原样存（能精确匹配和分组）。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><code>text</code>：<strong>分词</strong>，存倒排索引。用于<strong>全文搜索</strong>（商品标题、文章内容）。</li>
+<li><code>keyword</code>：<strong>不分词</strong>，整个值当一个 term。用于<strong>精确匹配</strong>（订单号、状态、用户 ID）、<strong>聚合分组</strong>、<strong>排序</strong>。</li>
+<li><strong>标准做法</strong>：<code>text</code> + 子字段 <code>keyword</code>（<code>title.keyword</code>），既能搜又能精确匹配。</li>
+<li><strong>大坑</strong>：<strong>聚合/排序的字段必须是 keyword 或数值类型</strong>（要有 doc_values）。把 <code>status</code> 建成 <code>text</code> → 聚合报错或很慢。</li>
+<li><strong>中文分词</strong>：索引用 <code>ik_max_word</code>（细），搜索用 <code>ik_smart</code>（粗）。搜不到先查分词器和字段类型。</li>
+</ul>
+<hr />
+<h3 id="q-50" class="q-title">ES-7 ⚠ ES 集群红了/黄了怎么办？查询突然变慢怎么查？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：红 = 有主分片丢了（数据不完整），黄 = 副本没分配上（数据还在但不安全）。变慢先看是不是有大查询或 merge 风暴。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>查原因</strong>：<code>_cluster/allocation/explain</code>（直接告诉你为什么没分配），<code>_cat/shards?v</code>，<code>_cat/nodes?v&amp;h=name,heap.percent,cpu</code>。</li>
+<li><strong>red</strong>：主分片没分配 → 立刻查节点是否掉线、磁盘是否满、是否有大量 unassigned shards。</li>
+<li><strong>yellow</strong>：副本没分配 → 节点数不足（3 节点放 2 副本就不够）、磁盘水位。<strong>生产可以接受 yellow（数据不丢），但要处理原因</strong>。</li>
+<li><strong>查询变慢排查</strong>：
+  1. <code>_tasks?actions=*search&amp;detailed</code> 找正在跑的大查询 → 杀掉
+  2. <code>_cat/thread_pool/search?v</code> 看线程池队列堆积
+  3. <code>_cat/indices?v&amp;s=store:desc</code> 找大索引 → 检查 mapping 和分片数
+  4. <code>_cat/segments?v</code> 看 merge 是否堆积
+  5. 是不是<strong>深分页</strong>（from+size 大）
+  6. 是不是<strong>聚合范围太大</strong>（触发 <code>circuit_breaking_exception</code>）</li>
+<li><strong>预防</strong>：慢查询日志 <code>search.slowlog.threshold.query.warn=10s</code>，索引模板设 ILM 生命周期。</li>
+</ul>
+<hr />
+<h3 id="q-51" class="q-title">ES-8 ⚠ 为什么不能把 ES 当数据库用？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：ES 强在搜，弱在存。它不保证事务、更新是覆盖式的（不是真正的更新）、默认数据 1 秒后才可见、不能当唯一数据源。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>无事务</strong>：只保证单文档操作原子，多文档操作没有 ACID。</li>
+<li><strong>近实时</strong>：默认 1s 延迟，写完立刻读可能读不到。</li>
+<li><strong>更新语义</strong>：是「删旧文档 + 加新文档」，文档 ID 相同才表现为覆盖，版本号会 +1。</li>
+<li><strong>无 JOIN</strong>：跨索引关联要应用层拼装（ES 7.x 有 nested 和 join 字段，但都不是真 JOIN）。</li>
+<li><strong>删除是标记</strong>：磁盘空间不立刻释放，要靠 merge 回收 → 大量删除要配合 ILM 重建索引。</li>
+<li><strong>正确姿势</strong>：<strong>MySQL 是真相来源，ES 是查询视图</strong>。</li>
+</ul>
+<hr />
+<h3 id="q-52" class="q-title">其他中间件类（7 题）</h3>
+<hr />
+<h3 id="q-53" class="q-title">OTHER-1 ★ 分布式锁怎么实现？Redisson 和手写 SETNX 的区别？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：手写 SETNX 有三个坑：没过期时间会死锁、到期释放前业务没做完锁就没了、释放时可能删了别人的锁。Redisson 用 Lua + 看门狗全解决了。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>手写 SETNX 三个必踩的坑</strong>：
+  1. <code>SETNX</code> 后没设过期 → 服务挂了锁永远不释放 → <strong>必须用 <code>SET key value NX EX 30</code> 原子设置</strong>
+  2. 业务没执行完锁就过期 → 别人进来同时改数据 → <strong>需要续期</strong>
+  3. 释放锁时 <code>DEL</code> 删掉了别人的锁 → <strong>必须用 Lua 脚本比对 value 再删</strong></li>
+<li><strong>Redisson 优势</strong>：</li>
+<li><code>tryLock(waitTime, leaseTime, unit)</code> 带超时</li>
+<li><strong>看门狗自动续期</strong>（默认 30s 过期、每 10s 续期）</li>
+<li>解锁自动校验持有者（<code>isHeldByCurrentThread</code>）</li>
+<li>支持公平锁、读写锁、红锁（<code>RedissonRedLock</code>，多节点 Redis 场景）</li>
+<li><strong>注意</strong>：Redisson 集群模式用的是 Redis 集群分布式锁，主从切换时的安全性依赖 Redis 持久化配置。</li>
+<li><strong>根本解法</strong>：<strong>库存扣减这类最终必须靠 DB 的原子 SQL 兜底</strong>（<code>UPDATE ... WHERE stock &gt;= n</code>），锁只是减少冲突。</li>
+</ul>
+<hr />
+<h3 id="q-54" class="q-title">OTHER-2 ★ Sentinel 的限流、熔断、降级有什么区别？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：限流是「不让你进太多」，熔断是「下游挂了直接不打了」，降级是「打不了就给个凑合的结果」。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>限流（FlowRule）</strong>：QPS 限流、并发数限流（线程池隔离）、<strong>热点参数限流</strong>（单个 userId 限 QPS）。资源名 + 阈值。</li>
+<li><strong>熔断（DegradeRule）</strong>：按<strong>慢调用比例</strong>、<strong>异常比例</strong>、<strong>异常数</strong>触发。三个状态：Closed（正常）→ Open（熔断拒绝）→ Half-Open（试探）。</li>
+<li><strong>降级</strong>：熔断/限流触发后返回兜底结果（默认数据、静态页、提示语）。</li>
+<li><strong>区别</strong>：限流是<strong>主动</strong>按流量控制（下游还能扛，只是压力大）；熔断是<strong>被动</strong>发现下游不行了才断。</li>
+<li><strong>降级设计原则</strong>：① 返回兜底数据 &gt; 静态页 &gt; 失败提示；② <strong>降级路径绝不能再依赖故障的下游</strong>（否则故障扩散）；③ 降级要埋点告警。</li>
+</ul>
+<hr />
+<h3 id="q-55" class="q-title">OTHER-3 ★ Seata AT 模式的原理？为什么它能回滚？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：改数据前拍张照（before image），提交时如果失败了，用照片把数据改回去。它靠<strong>全局锁</strong>保证并发安全——被改的行在事务期间别人不能动。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>流程</strong>：① 解析 SQL 生成 before/after image → ② 校验 undo_log → ③ <strong>写 undo_log</strong> → ④ 执行业务 SQL → ⑤ 提交；失败则读 undo_log 反向补偿。</li>
+<li><strong>三个核心</strong>：</li>
+<li><strong>undo_log</strong>：记录回滚信息，每个参与方都要建表</li>
+<li><strong>全局锁</strong>：事务期间锁住被修改的行（<code>SELECT ... FOR UPDATE</code>），防止其它事务读到脏数据</li>
+<li><strong>默认隔离级别是「读未提交」</strong>（靠全局锁而非 MVCC 保证一致）</li>
+<li><strong>三个限制</strong>：① 只支持关系型数据库；② <strong>事务里的非 SQL 副作用（发 MQ、写 Redis）不会回滚</strong> → 要用 TCC/Saga；③ 全局锁会影响并发。</li>
+<li><strong>对比</strong>：AT 侵入低但有锁；TCC 无锁、性能好但要写三个方法且处理空回滚/幂等/悬挂。</li>
+</ul>
+<hr />
+<h3 id="q-56" class="q-title">OTHER-4 ★ Nginx 在架构里承担什么？和 Spring Cloud LoadBalancer 有什么区别？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：Nginx 在门口挡着（外部流量），LoadBalancer 在楼里调度（内部服务）。两个都要有。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>Nginx 能做</strong>：反向代理、<strong>负载均衡</strong>（round-robin / least_conn / ip_hash / hash）、静态资源托管（不占 Tomcat）、<strong>限流</strong>（<code>limit_req</code>）、HTTPS 终结、<strong>灰度路由</strong>、gzip。</li>
+<li><strong>LoadBalancer 能做</strong>：服务间调用的负载均衡（<code>@LoadBalanced</code> + <code>IRule</code>），<strong>支持灰度/自定义路由规则</strong>（Nginx 做不到按用户标签路由）。</li>
+<li><strong>区别</strong>：Nginx 在<strong>四/七层</strong>（L7 能看 URL），只认 IP+端口；LoadBalancer 在<strong>应用层</strong>，能读请求头做精细路由。</li>
+<li><strong>两者都要配</strong>：Nginx 抗连接数，LoadBalancer 做服务发现后的精细调度。</li>
+<li><strong>常见坑</strong>：<code>proxy_read_timeout</code> 不配（默认 60s）、<code>client_max_body_size</code> 默认 1m（上传失败）、上游没配 keepalive（TIME_WAIT 爆炸）。</li>
+</ul>
+<hr />
+<h3 id="q-57" class="q-title">OTHER-5 ★ 为什么 K8s 滚动更新会丢请求？怎么做优雅停机？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：K8s 杀 Pod 时，先发 SIGTERM，Spring Boot 默认<strong>立刻退出</strong>，在途请求就挂了。正确做法是先「告诉 K8s 别给我流量了」，再等一会儿。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>默认行为的问题</strong>：Spring Boot 收到 SIGTERM 后<strong>立即停止</strong>（<code>server.shutdown=immediate</code>），在途请求被切断。</li>
+<li><strong>正确配置</strong>：
+  1. <code>server.shutdown: graceful</code> —— 开始优雅停机
+  2. <code>spring.lifecycle.timeout-per-shutdown-phase: 30s</code> —— 给 30s 处理在途请求
+  3. <strong>Nacos 主动注销</strong>（不等心跳超时，快速摘流量）
+  4. K8s <code>preStop: sleep 30</code> —— 关键，等 K8s 把 Pod 从 Endpoints 摘掉（<strong>摘流量需要时间</strong>，否则优雅停机白配）
+  5. <code>terminationGracePeriodSeconds: 60</code> —— 给足够时间</li>
+<li><strong>面试金句</strong>：<strong>优雅停机配了没生效，90% 是因为少了 <code>preStop</code> 那几秒——K8s 摘流量比发 SIGTERM 慢，Pod 收到信号时流量还在进来。</strong></li>
+</ul>
+<hr />
+<h3 id="q-58" class="q-title">OTHER-6 ⚠ 怎么设计一个「日志检索」功能？说说你对 ELK 的理解。</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：应用把日志按 JSON 格式打出来，采集器搬到 ES，然后 Kibana 上按时间、关键字、traceId 查。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>链路</strong>：应用（结构化 JSON 日志）→ <strong>Filebeat</strong>（轻量采集，比 Logstash 省资源）→ Elasticsearch → Kibana。<strong>需要复杂清洗/多源聚合时才加 Logstash。</strong></li>
+<li><strong>三个关键设计</strong>：
+  1. <strong>结构化输出</strong>：用 <code>logstash-logback-encoder</code> 输出 JSON，不要自己拼字符串（拼的没法聚合）。
+  2. <strong>按天分索引</strong>：<code>app-log-%{+yyyy.MM.dd}</code>，别都写一个索引（ES 官方明确不建议超过 500GB/索引）。
+  3. <strong>traceId 贯穿</strong>：请求入口生成 traceId 打进所有日志，排查时按 traceId 一捞全链路。</li>
+<li><strong>多行日志</strong>：Java 堆栈是多行，Filebeat 要配 <code>multiline</code> 合并，否则一条堆栈被拆成 20 条。</li>
+<li><strong>生命周期</strong>：ILM 策略，热 3 天 → 温 7 天 → 删除 30 天后。</li>
+<li><strong>与 SkyWalking 的区别</strong>：ELK 是<strong>日志</strong>检索，SkyWalking 是<strong>链路追踪</strong>（ APM），两者互补。</li>
+</ul>
+<hr />
+<h3 id="q-59" class="q-title">OTHER-7 ⚠ 你怎么保证「消息 + 数据库」的数据一致？本地消息表具体怎么实现？</h3>
+<blockquote>
+<p>🗣 <strong>人话</strong>：在同一个事务里，业务数据和一张消息表一起写进去；再有个定时任务每 5 秒扫没发出去的消息补发。业务成功消息就在，消息丢了也能补回来。</p>
+</blockquote>
+<p><strong>要点</strong>：</p>
+<ul>
+<li><strong>核心</strong>：业务写库和写消息表<strong>在同一个本地事务</strong>里 → 要么都成功要么都失败。</li>
+<li><strong>定时补发</strong>：扫描 <code>status=INIT</code> 的记录重发；成功标记 <code>SUCCESS</code>；失败累加重试次数，超过阈值告警。</li>
+<li><strong>消费端幂等</strong>配套（DB 唯一索引）。</li>
+<li><strong>对账兜底</strong>：定时任务比对「业务表该有的记录」和「消息表/消费记录」，差异告警。</li>
+<li><strong>方案对比</strong>：
+  | | 本地消息表 | RocketMQ 事务消息 | Seata AT |
+  |---|---|---|---|
+  | 一致性 | 最终一致 | 最终一致 | 准强一致 |
+  | 侵入 | 中（多一张表） | 低 | 低 |
+  | 额外依赖 | 无 | MQ | Seata Server |
+  | 推荐场景 | <strong>通用</strong> | 已有 MQ | 强一致核心链路 |</li>
+</ul>
+<hr />
+<h2 id="sec-7" class="sec-title">六、项目案例串讲：把中间件串成一个完整故事</h2>
+<blockquote>
+<p>🗣 <strong>人话版</strong>：面试官最爱问「你项目里怎么用的」。这一章给你 3 个能直接讲的完整场景——<strong>订单支付链路、门店搜索、库存扣减</strong>——把 MQ、ES、Redis、Sentinel、Seata 串起来讲。每个场景都有「架构、时序、代码要点、面试话术」。</p>
+</blockquote>
+<h3 id="q-60" class="q-title">案例一：订单支付链路（MQ + 事务 + 幂等 + 定时关单）</h3>
+<p><strong>架构</strong>：</p>
+<pre><code>用户下单
+  │
+  ▼
+[订单服务] ──写库──► MySQL (t_order: WAIT_PAY)
+  │                        │
+  │                   Canal/binlog ──┐
+  │                                 ▼
+  │                          [本地消息表] ──定时补发──► RocketMQ: ORDER_TOPIC
+  │                                                      │
+  │                                    ┌─────────────────┼─────────────────┐
+  ▼                                    ▼                 ▼                 ▼
+[支付服务]                      [履约服务]         [积分服务]         [营销服务]
+  │ 回调幂等                       扣库存            加积分            发券
+  ▼
+支付回调 → 状态机流转 PAID → 发 ORDER_PAID 消息 → 各下游消费（幂等）
+  │
+  └── 30 分钟未支付 → RocketMQ 延迟消息 + XXL-Job 扫表兜底 → 关闭订单 + 还库存
+</code></pre>
+<p><strong>关键设计（每条都是面试加分点）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>环节</th>
+<th>设计</th>
+<th>为什么这么设计</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>下单</td>
+<td>主库写订单 + 本地消息表，<strong>同一事务</strong></td>
+<td>保证「订单存在」和「待发消息」同时存在</td>
+</tr>
+<tr>
+<td>发消息</td>
+<td>定时任务扫 INIT 状态补发</td>
+<td>不依赖 MQ 发送是否成功</td>
+</tr>
+<tr>
+<td>支付回调</td>
+<td><strong>状态机</strong> <code>WAIT_PAY → PAID</code>，SQL 条件更新</td>
+<td>天然幂等，回调重复 100 次结果一样</td>
+</tr>
+<tr>
+<td>下游消费</td>
+<td>DB 唯一索引 <code>(biz_id, biz_type)</code></td>
+<td>幂等的最后防线</td>
+</tr>
+<tr>
+<td>关单</td>
+<td>MQ 延迟消息（主）+ 扫表（兜底）</td>
+<td>双保险</td>
+</tr>
+<tr>
+<td>关单消费</td>
+<td><strong>再查一次订单状态</strong></td>
+<td>防止误关已支付订单</td>
+</tr>
+<tr>
+<td>库存扣减</td>
+<td>DB 原子 SQL + Redisson 锁减少冲突</td>
+<td>Redis 不可靠，DB 才是真相</td>
+</tr>
+<tr>
+<td>消息积压</td>
+<td>lag 监控 + 告警 + 消费者熔断</td>
+<td>提前发现，别等用户投诉</td>
+</tr>
+</tbody>
+</table>
+<p><strong>60 秒面试话术</strong>：</p>
+<blockquote>
+<p>「我们的订单链路是这样：下单时在同一个本地事务里写订单表和本地消息表，然后定时任务扫消息表发到 RocketMQ。这样做主要是为了解决本地事务和消息发送的原子性问题。</p>
+<p>支付回调这块，我们用的是状态机——<code>UPDATE t_order SET status='PAID' WHERE order_no=? AND status='WAIT_PAY'</code>，靠受影响行数判断是不是重复回调。下游的积分、履约这些服务各消费一次，我们靠数据库唯一索引做最终幂等。</p>
+<p>超时关单用了 RocketMQ 延迟消息做主路径，同时还有一个定时任务每 5 分钟扫一次超时订单兜底——因为极端情况下延迟消息可能不触发，扫表是最后一道保险。消费的时候我们会再查一次订单状态，避免把刚付的订单误关。</p>
+<p>消息这块我们踩过几个坑：最早消费端 catch 住所有异常，导致消息静默丢失；后来改成可重试异常抛出、不可重试异常跳过加告警。还有就是毒消息卡队列，现在配了 maxReconsumeTimes 加上死信队列告警。」</p>
+</blockquote>
+<hr />
+<h3 id="q-61" class="q-title">案例二：门店/商品搜索（ES + Canal + 缓存）</h3>
+<p><strong>架构</strong>：</p>
+<pre><code>MySQL (t_store) ──binlog──► Canal ──► MQ/直写──► Elasticsearch
+     │                                                  │
+     │ 商品变更                                          │ 查询
+     ▼                                                  ▼
+  Redis 缓存更新                                    ES 检索（关键词/筛选/聚合）
+</code></pre>
+<p><strong>查询流程</strong>：</p>
+<pre><code class="language-java">@Service
+@RequiredArgsConstructor
+public class StoreSearchService {
+
+    private final ElasticsearchClient esClient;
+    private final StoreMapper storeMapper;
+    private final RedisTemplate&lt;String, Object&gt; redisTemplate;
+
+    /**
+     * 搜索门店：ES 检索 + 结果聚合 + Redis 缓存热门查询。
+     */
+    public PageResult&lt;StoreDoc&gt; search(StoreQuery query) {
+        // 关键点1：热门查询走 Redis 缓存（避免重复的 ES 查询打满集群）
+        String cacheKey = &quot;search:store:&quot; + DigestUtils.md5Hex(JSON.toJSONString(query));
+        List&lt;StoreDoc&gt; cached = redisTemplate.opsForList().range(cacheKey, 0, 19);
+        if (cached != null &amp;&amp; !cached.isEmpty()) {
+            return new PageResult&lt;&gt;(cached, query.getTotal());
+        }
+
+        BoolQuery.Builder bool = new BoolQuery.Builder();
+        if (StringUtils.hasText(query.getKeyword())) {
+            bool.must(m -&gt; m.multiMatch(mm -&gt; mm
+                    .query(query.getKeyword())
+                    .fields(&quot;name^3&quot;, &quot;address^2&quot;, &quot;tags&quot;)));
+        }
+        if (query.getCityCode() != null) {
+            bool.filter(f -&gt; f.term(t -&gt; t.field(&quot;cityCode&quot;).value(query.getCityCode())));
+        }
+
+        SearchRequest request = new SearchRequest.Builder()
+                .index(&quot;store_index&quot;)
+                .query(q -&gt; q.bool(bool.build()))
+                .sort(s -&gt; s.field(f -&gt; f.field(&quot;_score&quot;).order(SortOrder.Desc)))
+                .from(query.getPage() * query.getSize())
+                .size(query.getSize())
+                .highlight(h -&gt; h.fields(&quot;name&quot;,
+                        f -&gt; f.preTags(&quot;&lt;em&gt;&quot;).postTags(&quot;&lt;/em&gt;&quot;)))
+                .build();
+
+        SearchResponse&lt;StoreDoc&gt; response = esClient.search(request, StoreDoc.class);
+
+        List&lt;StoreDoc&gt; docs = response.hits().hits().stream()
+                .map(Hit::source).collect(Collectors.toList());
+
+        // 关键点2：热门查询结果缓存 5 分钟
+        if (query.getKeyword() != null &amp;&amp; query.getKeyword().length() &gt;= 2) {
+            redisTemplate.opsForList().rightPushAll(cacheKey, docs);
+            redisTemplate.expire(cacheKey, Duration.ofMinutes(5));
+        }
+        return new PageResult&lt;&gt;(docs, response.hits().total().value());
+    }
+}
+</code></pre>
+<p><strong>面试话术</strong>：</p>
+<blockquote>
+<p>「搜索这块我们用 MySQL + ES 的组合。MySQL 是真相来源，ES 是查询视图。同步用的是 Canal 订阅 binlog，业务代码完全无侵入，秒级延迟。</p>
+<p>索引设计上吃过亏——最早把 status 字段建成 text 类型，做聚合分组的时候直接报错；而且中文搜索搜不到，排查下来是分词器的问题。现在是 title 用 ik_max_word 索引、ik_smart 搜索，同时冗余一个 title.keyword 子字段，status 这些做精确匹配的字段统一用 keyword。</p>
+<p>深分页我们没用 from+size，因为翻到后面会拖垮集群，现在用 search_after 加游标。导出用 scroll，但记得导完要 clear。</p>
+<p>另外我们在 ES 前面加了一层 Redis 缓存热门查询词，因为发现很多用户搜的是同样的词，重复打 ES 收益很低。」</p>
+</blockquote>
+<hr />
+<h3 id="q-62" class="q-title">案例三：库存扣减与超卖（Redis + Redisson + DB 兜底 + Sentinel）</h3>
+<p><strong>完整方案</strong>：</p>
+<pre><code class="language-java">@Service
+@RequiredArgsConstructor
+public class InventoryService {
+
+    private final RedissonClient redissonClient;
+    private final StockMapper stockMapper;
+    private final RedisTemplate&lt;String, Integer&gt; redisTemplate;
+
+    /**
+     * 扣库存：Redis 预扣 + DB 原子扣减（两道防线）。
+     */
+    public DeductResult deduct(Long skuId, Long userId, int quantity, String requestId) {
+
+        // 【第一道】Redis 预扣，快速失败
+        String stockKey = &quot;stock:&quot; + skuId;
+        // 关键点：Lua 脚本保证「判断 + 扣减」原子
+        Long result = redisTemplate.execute(new DefaultRedisScript&lt;&gt;(DEDUCT_LUA,
+                Long.class), Collections.singletonList(stockKey),
+                String.valueOf(quantity));
+
+        if (result == null || result == 0L) {
+            return DeductResult.fail(&quot;库存不足&quot;);
+        }
+
+        try {
+            // 【第二道】DB 原子扣减（最终真相）
+            // 关键点：这里不用 Redis 锁也可以，因为 SQL 本身就是原子的
+            int rows = stockMapper.deductIfEnough(skuId, quantity);
+
+            if (rows == 0) {
+                // DB 说不够（Redis 数据过期/不一致），回补 Redis
+                redisTemplate.opsForValue().increment(stockKey, quantity);
+                return DeductResult.fail(&quot;库存不足&quot;);
+            }
+
+            // 关键点：扣减成功后发 MQ，异步创建流水/通知下游
+            // 这里用本地消息表保证「扣库存」和「发消息」一致
+            messageLogService.save(DeductMessageLog.of(requestId, skuId, quantity));
+
+            return DeductResult.success();
+
+        } catch (Exception e) {
+            // DB 异常，回补 Redis
+            redisTemplate.opsForValue().increment(stockKey, quantity);
+            throw e;
+        }
+    }
+
+    /** Lua 脚本：判断库存 + 扣减，原子执行 */
+    private static final String DEDUCT_LUA =
+            &quot;local stock = tonumber(redis.call('GET', KEYS[1])) &quot; +
+            &quot;if stock == nil then return 0 end &quot; +
+            &quot;if stock &lt; tonumber(ARGV[1]) then return 0 end &quot; +
+            &quot;redis.call('DECRBY', KEYS[1], ARGV[1]) &quot; +
+            &quot;return 1&quot;;
+}
+</code></pre>
+<p><strong>库存和对账</strong>：</p>
+<pre><code class="language-sql">-- 关键：定时对账任务，比较 Redis 库存和 DB 真实库存
+SELECT s.sku_id, s.stock AS db_stock, r.stock AS redis_stock
+  FROM t_stock s
+  LEFT JOIN (SELECT ...) r ON ...
+ WHERE ABS(s.stock - r.stock) &gt; 0;
+</code></pre>
+<p><strong>面试话术</strong>：</p>
+<blockquote>
+<p>「超卖这个问题我们分两层解决。Redis 预扣是快路径，用 Lua 脚本保证判断和扣减的原子性，秒级返回，绝大部分请求在这里就结束了。</p>
+<p>但 Redis 不是真相——它会过期，主从切换也可能丢数据。所以下面还有一道 DB 原子扣减：<code>UPDATE t_stock SET stock = stock - ? WHERE sku_id = ? AND stock &gt;= ?</code>，靠这条 SQL 保证最终不会超卖。Redis 扣成功但 DB 扣失败的情况，用 Lua 回补 Redis。</p>
+<p>我们不用 Redis 分布式锁来兜底，因为 DB 的原子 SQL 已经够了，加锁反而多一层复杂度和故障点。不过在活动开始瞬间我们用 Redisson 锁做了预热，避免大量并发同时打 DB。</p>
+<p>还有一个细节是幂等：同一个 requestId 重复提交要返回第一次的结果，我们用 requestId 做流水表的唯一索引。」</p>
+</blockquote>
+<hr />
+<h2 id="sec-8" class="sec-title">七、排查手册：症状 → 命令 → 根因</h2>
+<blockquote>
+<p>🗣 <strong>人话版</strong>：这章是「真出事了怎么办」。面试不会问，但工作天天用，也是你从「会用」变成「能扛」的差别。</p>
+</blockquote>
+<h3 id="q-63" class="q-title">7.1 通用排查方法论</h3>
+<pre><code>① 先定范围：是一个用户、一批用户，还是全部？
+        ↓
+② 再定时间：什么时候开始的？和什么时候的变更相关？（发版/活动/配置变更）
+        ↓
+③ 看现象：是慢、错、还是堆积？（先分类，别一上来就动手）
+        ↓
+④ 找证据：监控指标 → 日志 → 链路追踪 → 数据本身
+        ↓
+⑤ 定位到层：应用 / 中间件 / 数据库 / 网络 / 依赖方
+        ↓
+⑥ 先止血（恢复业务），再定位根因（治本）
+        ↓
+⑦ 复盘：加监控、加测试、加告警，防止复发
+</code></pre>
+<p><strong>核心原则</strong>：</p>
+<ul>
+<li><strong>先止血，再定位</strong>。业务不等人。</li>
+<li><strong>不要在没有证据的情况下改配置</strong>。改参数是最容易掩盖问题也最容易造成二次故障的操作。</li>
+<li><strong>一个参数只改一个</strong>，否则出问题不知道是哪个起的作用。</li>
+</ul>
+<h3 id="q-64" class="q-title">7.2 症状速查表</h3>
+<table>
+<thead>
+<tr>
+<th>症状</th>
+<th>第一步查什么</th>
+<th>常见根因</th>
+<th>处置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>接口大量超时</strong></td>
+<td>看下游依赖的 P99 耗时</td>
+<td>下游服务慢 / DB 慢查询 / 连接池耗尽 / 线程池打满</td>
+<td>熔断降级、扩容、限流</td>
+</tr>
+<tr>
+<td><strong>MQ 消费 lag 涨</strong></td>
+<td><code>consumerProgress</code> 看 DIFF</td>
+<td>消费者挂了 / 下游慢 / 毒消息重试</td>
+<td>查死信、扩容、跳过积压</td>
+</tr>
+<tr>
+<td><strong>MQ 消息丢失</strong></td>
+<td>查消息轨迹 <code>traceMsgById</code></td>
+<td>生产端没检查 SendStatus / Broker 异步刷盘 / 消费端吞异常</td>
+<td>补发 + 改配置 + 加对账</td>
+</tr>
+<tr>
+<td><strong>ES 查询慢</strong></td>
+<td><code>_tasks?actions=*search</code></td>
+<td>深分页 / 聚合范围大 / merge 风暴 / 分片不均 / 慢查询</td>
+<td>改 search_after、限聚合、加分片</td>
+</tr>
+<tr>
+<td><strong>ES 集群 yellow</strong></td>
+<td><code>_cluster/allocation/explain</code></td>
+<td>节点数不够 / 磁盘水位 / 副本数过多</td>
+<td>扩节点或调副本</td>
+</tr>
+<tr>
+<td><strong>ES 写入慢</strong></td>
+<td><code>_cat/thread_pool/write</code></td>
+<td>refresh 太频繁 / merge 压力 / 磁盘 IO 瓶颈</td>
+<td>关 refresh、调 merge、扩磁盘</td>
+</tr>
+<tr>
+<td><strong>Redis 内存爆</strong></td>
+<td><code>INFO memory</code> / <code>MEMORY USAGE</code></td>
+<td>大 key / 没设过期 / 内存碎片</td>
+<td>删大 key、设 TTL、<code>maxmemory-policy</code></td>
+</tr>
+<tr>
+<td><strong>Redis 响应慢</strong></td>
+<td><code>SLOWLOG GET</code></td>
+<td>大 key 操作 / 慢命令 / RDB fork 卡顿 / 网络</td>
+<td>拆分大 key、调 <code>vm.overcommit</code></td>
+</tr>
+<tr>
+<td><strong>数据库连接池耗尽</strong></td>
+<td><code>SHOW PROCESSLIST</code></td>
+<td>慢查询占连接 / 连接未释放 / DB 慢</td>
+<td>查慢日志、加超时、扩池</td>
+</tr>
+<tr>
+<td><strong>应用 OOM</strong></td>
+<td><code>jmap -histo:live &lt;pid&gt;</code></td>
+<td>缓存无限增长 / 内存泄漏 / 堆太小</td>
+<td>定位泄漏、设上限</td>
+</tr>
+<tr>
+<td><strong>Full GC 频繁</strong></td>
+<td><code>jstat -gcutil</code> + GC 日志</td>
+<td>老年代满 / 内存泄漏 / 大对象</td>
+<td>调堆大小、排查泄漏</td>
+</tr>
+<tr>
+<td><strong>CPU 100%</strong></td>
+<td><code>top -Hp &lt;pid&gt;</code> 找线程</td>
+<td>死循环 / 正则回溯 / GC 线程 / 序列化</td>
+<td>jstack 看线程栈</td>
+</tr>
+<tr>
+<td><strong>Nginx 502/504</strong></td>
+<td>看 nginx error log</td>
+<td>后端进程挂了 / 超时 / 端口错</td>
+<td>重启后端、调超时、查后端日志</td>
+</tr>
+<tr>
+<td><strong>容器频繁重启</strong></td>
+<td><code>kubectl describe pod</code></td>
+<td>健康检查失败 / OOMKilled / 镜像拉取失败</td>
+<td>调探针、设 <code>MaxRAMPercentage</code>、查镜像</td>
+</tr>
+</tbody>
+</table>
+<h3 id="q-65" class="q-title">7.3 四个必会的排查命令</h3>
+<pre><code class="language-bash"># ① CPU 飙高：找到是哪个线程
+top -Hp &lt;pid&gt;                       # 按 CPU 排序的线程
+printf '%x\n' &lt;tid&gt;                 # 转成十六进制
+jstack &lt;pid&gt; | grep -A 30 &lt;tid-hex&gt; # 看这个线程在干什么
+
+# ② 排查内存泄漏
+jmap -histo:live &lt;pid&gt; | head -20    # 看哪个对象最多
+jmap -dump:live,format=b,file=dump.hprof &lt;pid&gt;
+# 用 MAT（Eclipse Memory Analyzer）打开分析
+
+# ③ 看 GC 情况
+jstat -gcutil &lt;pid&gt; 1000 10         # 每秒打印一次 GC 情况
+# 关注 O（老年代使用率），连续上涨不下降 = 内存泄漏
+
+# ④ 看网络连接状态（排查 TIME_WAIT 堆积）
+netstat -an | grep TIME_WAIT | wc -l
+ss -s                                  # 统计概览
+</code></pre>
+<pre><code class="language-java">/**
+
+ * 应用内埋点：慢请求日志（比 APM 轻，排查时最实用）。
+ * 关键点1：超过阈值才打印，避免日志刷屏
+ * 关键点2：必须带 traceId，否则查到日志也不知道是哪个请求
+ */
+public class SlowRequestFilter extends OncePerRequestFilter {
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest req,
+                                    HttpServletResponse resp,
+                                    FilterChain chain) throws ServletException, IOException {
+        long start = System.currentTimeMillis();
+        try {
+            chain.doFilter(req, resp);
+        } finally {
+            long cost = System.currentTimeMillis() - start;
+            if (cost &gt; 1000) {
+                log.warn(&quot;慢请求 uri={} cost={}ms traceId={} params={}&quot;,
+                        req.getRequestURI(), cost,
+                        MDC.get(&quot;traceId&quot;), Arrays.toString(req.getParameterMap().values().toArray()));
+            }
+        }
+    }
+}
+</code></pre>
+<h3 id="q-66" class="q-title">7.4 中间件"健康检查清单"（每周/上线前跑一遍）</h3>
+<pre><code>□ MQ：
+  ├ 各消费组的 lag 是否在阈值内？
+  ├ 死信队列是否有新消息？（有就要处理）
+  ├ Broker 磁盘水位？（&gt; 80% 要清理）
+  └ 主从是否同步正常？
+
+□ ES：
+  ├ 集群状态（green / yellow 都要能解释原因）
+  ├ 各索引大小和分片分布
+  ├ 是否有堆积的 merge
+  └ 磁盘水位
+
+□ Redis：
+  ├ 内存使用率（&gt; 80% 报警）
+  ├ 大 key 列表（redis-cli --bigkeys）
+  ├ 慢日志
+  ├ 主从延迟（INFO replication 的 master_repl_offset 差值）
+  └ 过期 key 淘汰率（INFO stats 的 evicted_keys）
+
+□ MySQL：
+  ├ 慢查询数量
+  ├ 连接数使用率（&gt; 80% 报警）
+  ├ 主从延迟
+  └ 表/索引膨胀情况
+
+□ 应用：
+  ├ Full GC 频率
+  ├ 线程池活跃数
+  ├ 外部接口成功率与 P99
+  └ 慢请求日志条数
+</code></pre>
+<hr />
+<h2 id="sec-9" class="sec-title">八、最后的话：中间件这块怎么学最快</h2>
+<blockquote>
+<p>🗣 <strong>人话</strong>：中间件是所有面试题里<strong>最看真实项目</strong>的一块。八股谁都能背，但「你项目里为什么用 RocketMQ 不用 Kafka」「你 ES 深分页怎么解决的」「你线上 OOM 怎么定位的」——这些答不出来，6 年经验就打折。</p>
+</blockquote>
+<h3 id="q-67" class="q-title">三条学习路径</h3>
+<p><strong>路径 A：时间紧（1 天）</strong></p>
+<ol>
+<li>读本手册第一、二、三章（MQ + ES），重点是结论和项目用法</li>
+<li>读第五章 30 题，只背每题的「结论 + 项目做法」两段</li>
+<li>把你自己简历里涉及的中间件（MQ、Redis、ES）各准备一个「我做了什么 + 遇到什么问题 + 怎么解决的」的故事</li>
+</ol>
+<p><strong>路径 B：基础扎实（3 天）</strong></p>
+<ol>
+<li>本手册全读一遍</li>
+<li><strong>动手写</strong>：把案例一（订单支付链路）在你本地用 RocketMQ + MySQL 跑通，包括幂等、延迟消息、堆积模拟</li>
+<li>本地起一个 ES，做一遍：建索引（text + keyword + 中文分词）、搜索、高亮、聚合、search_after</li>
+<li>读第六章 3 个案例，把话术改成你自己的话</li>
+</ol>
+<p><strong>路径 C：冲高级（1 周）</strong></p>
+<ol>
+<li>上面全部</li>
+<li><strong>看源码/原理</strong>：RocketMQ 的 CommitLog 刷盘机制、Kafka 的零拷贝、ES 的 segment merge 与 FST</li>
+<li>加一个真实排障经历：线上问题 → 定位过程 → 根因 → 修复 → 复盘改进，整理成一页纸，面试时讲这个</li>
+</ol>
+<h3 id="q-68" class="q-title">三个最容易忽略但很加分的地方</h3>
+<ol>
+<li><strong>每讲一个中间件，一定要说它的"代价"</strong><blockquote>
+<p>「用 MQ 换来了解耦和削峰，代价是引入了重复、丢失、乱序、堆积这四个问题，所以我们做了 XXX 保证。」</p>
+</blockquote>
+</li>
+</ol>
+<p>这句话一说出来，面试官立刻知道你不是只会用，是<strong>真的踩过坑</strong>。</p>
+<ol start="2">
+<li><strong>每讲一个方案，一定要说"为什么不用另一种"</strong><blockquote>
+<p>「ES 同步我们没用双写，因为双写在业务代码里要管 ES 写失败，耦合度高还容易不一致；也没用 MQ，因为要业务代码配合；最后选 Canal，因为它对业务零侵入，而且天然按 binlog 顺序。」</p>
+</blockquote>
+</li>
+</ol>
+<p>有对比才有判断力。</p>
+<ol start="3">
+<li><strong>一定要有一个"出过事"的完整故事</strong><blockquote>
+<p>「我们曾经出过一次消费端把异常全 catch 住的问题，表现为订单状态一直不流转，排查了半天才定位到是异常被吞了。之后我们改了异常分类处理策略，还加了死信队列告警。」</p>
+</blockquote>
+</li>
+</ol>
+<p>6 年经验的分水岭不是「你用过什么」，是<strong>「你踩过什么坑、怎么填的、之后怎么防的」</strong>。</p>
+<h3 id="q-69" class="q-title">最后一句</h3>
+<blockquote>
+<p><strong>中间件这一块，你不需要成为专家，但必须能说清楚边界。</strong></p>
+<p>面试官真正想知道的不是「RocketMQ 的原理是什么」，而是——<strong>「你用了它，你踩过它的坑吗？你知道它什么时候不该用吗？」</strong></p>
+<p>你的简历里有支付通道、有十万商户、有 SaaS 多租户，这些场景天然涉及 MQ、ES、分布式事务。<strong>把它们讲透，比多背 20 道八股题有用得多。</strong></p>
+</blockquote>
+<hr />
+<h2 id="sec-10" class="sec-title">附录：常用命令与配置速查</h2>
+<h3 id="q-70" class="q-title">A. RocketMQ 运维命令</h3>
+<pre><code class="language-bash">mqadmin clusterList -n &lt;ns:9876&gt;                          # 集群状态
+mqadmin topicStatus -n &lt;ns&gt; -t TOPIC                       # Topic 队列分布
+mqadmin topicRoute -n &lt;ns&gt; -t TOPIC                       # 路由信息
+mqadmin consumerProgress -n &lt;ns&gt; -g GROUP                 # 消费进度（看 DIFF 堆积）
+mqadmin consumerStatus -n &lt;ns&gt; -g GROUP                   # 消费者连接详情
+mqadmin traceMsgById -n &lt;ns&gt; -i MSG_ID                    # 消息轨迹
+mqadmin viewMsgById -n &lt;ns&gt; -t TOPIC -i MSG_ID            # 按 ID 查消息
+mqadmin resetOffsetByTime -n &lt;ns&gt; -g GROUP -t TOPIC -s TS  # 重置位点
+mqadmin updateTopic -n &lt;ns&gt; -t TOPIC -a +messageQueueNum=8  # 扩队列
+mqadmin deleteTopic -n &lt;ns&gt; -t TOPIC                       # 删 Topic
+mqadmin sendMessage -n &lt;ns&gt; -t TOPIC -p &quot;hello&quot;           # 发测试消息
+</code></pre>
+<h3 id="q-71" class="q-title">B. Elasticsearch 常用命令</h3>
+<pre><code class="language-bash"># 索引管理
+curl -XPUT 'localhost:9200/order_index' -H 'Content-Type: application/json' -d '{
+  &quot;settings&quot;: {&quot;number_of_shards&quot;: 3, &quot;number_of_replicas&quot;: 1, &quot;refresh_interval&quot;: &quot;1s&quot;},
+  &quot;mappings&quot;: {&quot;properties&quot;: {
+    &quot;orderNo&quot;: {&quot;type&quot;: &quot;keyword&quot;},
+    &quot;title&quot;:   {&quot;type&quot;: &quot;text&quot;, &quot;analyzer&quot;: &quot;ik_max_word&quot;, &quot;search_analyzer&quot;: &quot;ik_smart&quot;,
+                &quot;fields&quot;: {&quot;keyword&quot;: {&quot;type&quot;: &quot;keyword&quot;}}},
+    &quot;status&quot;:  {&quot;type&quot;: &quot;keyword&quot;},
+    &quot;amount&quot;:  {&quot;type&quot;: &quot;double&quot;},
+    &quot;createTime&quot;: {&quot;type&quot;: &quot;date&quot;}
+  }}}'
+
+curl 'localhost:9200/_cat/indices?v'
+curl 'localhost:9200/_cat/indices/order_index?v&amp;h=health,status,index,docs.count,store.size'
+curl -XDELETE 'localhost:9200/order_index_old'
+
+# 别名切换（重建索引的标准流程）
+curl -XPOST 'localhost:9200/_aliases' -H 'Content-Type: application/json' -d '{
+  &quot;actions&quot;: [
+    {&quot;add&quot;: {&quot;index&quot;: &quot;order_index_v2&quot;, &quot;alias&quot;: &quot;order_index&quot;}},
+    {&quot;remove&quot;: {&quot;index&quot;: &quot;order_index_v1&quot;, &quot;alias&quot;: &quot;order_index&quot;}}
+  ]}'
+
+# 数据操作
+curl -XPOST 'localhost:9200/order_index/_doc/1001?pretty' -H 'Content-Type: application/json' -d '{&quot;orderNo&quot;:&quot;1001&quot;,&quot;status&quot;:&quot;PAID&quot;,&quot;amount&quot;:99.5}'
+curl -XPOST 'localhost:9200/_bulk' -H 'Content-Type: application/x-ndjson' --data-binary @bulk.json
+curl -XPOST 'localhost:9200/order_index/_refresh'
+curl 'localhost:9200/order_index/_search?q=status:PAID&amp;size=10&amp;pretty'
+curl -XPOST 'localhost:9200/order_index/_search?pretty' -H 'Content-Type: application/json' -d '{
+  &quot;query&quot;: {&quot;bool&quot;: {&quot;must&quot;: [{&quot;match&quot;: {&quot;title&quot;: &quot;微信支付&quot;}}], &quot;filter&quot;: [{&quot;term&quot;: {&quot;status&quot;: &quot;PAID&quot;}}]}},
+  &quot;aggs&quot;: {&quot;by_status&quot;: {&quot;terms&quot;: {&quot;field&quot;: &quot;status&quot;}}} }'
+
+# 运维排查
+curl 'localhost:9200/_cluster/health?pretty'
+curl 'localhost:9200/_cluster/allocation/explain?pretty'
+curl 'localhost:9200/_cat/nodes?v&amp;h=name,ip,heap.percent,cpu,disk.used_percent'
+curl 'localhost:9200/_cat/thread_pool?v'
+curl 'localhost:9200/_cat/segments?v'
+curl 'localhost:9200/_tasks?actions=*search&amp;detailed'
+curl -XPOST 'localhost:9200/_cache/clear?pretty'
+</code></pre>
+<h3 id="q-72" class="q-title">C. Redis 常用命令</h3>
+<pre><code class="language-bash">redis-cli INFO memory                          # 内存信息
+redis-cli INFO stats | grep evicted           # 淘汰计数
+redis-cli INFO replication                    # 主从延迟
+redis-cli SLOWLOG GET 10                      # 慢日志
+redis-cli --bigkeys                           # 找大 key
+redis-cli --memkeys                           # 找带 TTL 的 key
+redis-cli MEMORY USAGE &lt;key&gt;                  # 单 key 内存
+redis-cli OBJECT ENCODING &lt;key&gt;               # 编码（ziplist/embstr/hashtable）
+redis-cli TTL &lt;key&gt;                           # 剩余过期时间
+redis-cli CLIENT LIST | wc -l                 # 连接数
+redis-cli CLUSTER INFO                        # 集群状态
+redis-cli CLUSTER NODES
+redis-cli CLUSTER INFO | grep cluster_slots_assigned
+</code></pre>
+<h3 id="q-73" class="q-title">D. 关键默认参数（记这些就够了）</h3>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>参数</th>
+<th>默认值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ES</td>
+<td><code>index.max_result_window</code></td>
+<td>10000</td>
+<td>from+size 上限，别乱调大</td>
+</tr>
+<tr>
+<td>ES</td>
+<td><code>refresh_interval</code></td>
+<td>1s</td>
+<td>调大提速，调小实时性高</td>
+</tr>
+<tr>
+<td>ES</td>
+<td><code>index.number_of_shards</code></td>
+<td>1</td>
+<td>建索引后不可改</td>
+</tr>
+<tr>
+<td>ES</td>
+<td><code>search.max_buckets</code></td>
+<td>65536</td>
+<td>聚合桶数上限</td>
+</tr>
+<tr>
+<td>RocketMQ</td>
+<td><code>flushDiskType</code></td>
+<td>ASYNC_FLUSH</td>
+<td>交易类改 SYNC_FLUSH</td>
+</tr>
+<tr>
+<td>RocketMQ</td>
+<td><code>retry-times-when-send-failed</code></td>
+<td>2</td>
+<td>同步发送重试次数</td>
+</tr>
+<tr>
+<td>RocketMQ</td>
+<td><code>maxReconsumeTimes</code></td>
+<td>16</td>
+<td>重试次数后进 DLQ，生产要调小</td>
+</tr>
+<tr>
+<td>RocketMQ</td>
+<td><code>consumeThreadNumber</code></td>
+<td>20</td>
+<td>消费线程数</td>
+</tr>
+<tr>
+<td>Kafka</td>
+<td><code>max.poll.records</code></td>
+<td>500</td>
+<td>单批拉取量</td>
+</tr>
+<tr>
+<td>Kafka</td>
+<td><code>max.poll.interval.ms</code></td>
+<td>300000</td>
+<td>超时触发 Rebalance</td>
+</tr>
+<tr>
+<td>Kafka</td>
+<td><code>min.insync.replicas</code></td>
+<td>1</td>
+<td>生产改 2，配合 acks=all</td>
+</tr>
+<tr>
+<td>Kafka</td>
+<td><code>session.timeout.ms</code></td>
+<td>10000</td>
+<td>心跳超时</td>
+</tr>
+<tr>
+<td>MySQL</td>
+<td><code>innodb_buffer_pool_size</code></td>
+<td>128M</td>
+<td>物理内存的 60-70%</td>
+</tr>
+<tr>
+<td>MySQL</td>
+<td><code>max_connections</code></td>
+<td>151</td>
+<td>按需调整</td>
+</tr>
+<tr>
+<td>MySQL</td>
+<td><code>innodb_flush_log_at_trx_commit</code></td>
+<td>1</td>
+<td>1=每次提交落盘最安全，2=每秒</td>
+</tr>
+<tr>
+<td>MySQL</td>
+<td><code>slow_query_log</code></td>
+<td>OFF</td>
+<td>生产要开</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td><code>maxmemory</code></td>
+<td>0(不限)</td>
+<td>必须设！配合 <code>maxmemory-policy</code></td>
+</tr>
+<tr>
+<td>Redis</td>
+<td><code>maxmemory-policy</code></td>
+<td>noeviction</td>
+<td>缓存场景用 allkeys-lru</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td><code>slowlog-log-slower-than</code></td>
+<td>10000(微秒)</td>
+<td>慢日志阈值</td>
+</tr>
+</tbody>
+</table>
+<h3 id="q-74" class="q-title">E. 面试前最后 5 分钟扫一遍</h3>
+<pre><code>□ MQ 不丢三段式：生产端检查 SendStatus / Broker 同步刷盘+同步复制 / 消费端手动 ACK
+□ 幂等：DB 唯一索引 + 状态机；SETNX 不能先占位后处理
+□ 顺序：同 key 同队列 + ORDERLY；扩队列会破坏映射
+□ 延迟：MQ 定时消息（主）+ 定时扫表（兜底）；消费时再查一次状态
+□ 事务消息：半消息 → 本地事务 → COMMIT/ROLLBACK → 回查最多 15 次 → 必须对账
+□ 堆积：先定位原因，再扩容（≤ 分区数）、提速、降级、跳过、补偿
+□ ES 倒排：词 → 文档列表；FST 在内存 + Posting List 用跳表
+□ ES 近实时：1s refresh 生成 segment 才可搜
+□ ES 深分页：search_after（推荐）/ scroll（导出）+ clear
+□ ES 同步：Canal 订阅 binlog（业务无侵入）；全量 + 增量 + 对账
+□ ES 字段：text 分词 / keyword 精确；聚合排序字段必须 keyword
+□ Redis 锁：SET NX EX + Lua 删锁 / Redisson tryLock + 看门狗
+□ Seata AT：undo_log + 全局锁；只支持关系库；不撤销 MQ/Redis 副作用
+□ Sentinel：限流主动、熔断被动、降级兜底；降级不能依赖故障下游
+□ K8s 优雅停机：graceful + preStop sleep + 主动注销，少了 preStop 白配
+□ 每个中间件都要能说出「代价」和「为什么不用另一种」
+</code></pre></article></main>
+<button id="top">↑</button>
+<div id="meta">共 30 道</div>
+<div id="tts">
+  <div id="ttsPanel">
+    <label>语速<br><input type="range" id="ttsRate" min="0.5" max="1.2" step="0.05" value="0.85"><span class="rv" id="ttsRateVal">0.85x</span></label>
+    <label>语音<select id="ttsVoice"></select></label>
+    <div class="hint"><b>点正文里任意英文</b>即可发音（浅蓝高亮的就是）。缩写念字母、单词照读，面试照着用。</div>
+  </div>
+  <button id="ttsBtn" title="发音设置 / 点词发声">🔊</button>
+</div>
+<div id="toast">点正文里任意英文，直接听发音 🔈</div>
+<script>
+  const groups=[...document.querySelectorAll('.nav-group')];
+  const qs=[...document.querySelectorAll('.nav-q')];
+  // 默认展开前两组
+  groups.slice(0,2).forEach(g=>g.classList.add('open'));
+  // 搜索
+  const input=document.getElementById('q');
+  input.addEventListener('input',()=>{
+    const k=input.value.trim().toLowerCase();
+    if(!k){groups.forEach(g=>{g.classList.remove('hidden');g.querySelectorAll('.nav-q').forEach(a=>a.classList.remove('hidden'));});return;}
+    groups.forEach(g=>{
+      const items=[...g.querySelectorAll('.nav-q')];
+      let hit=0;
+      items.forEach(a=>{
+        const ok=a.dataset.text.toLowerCase().includes(k);
+        a.classList.toggle('hidden',!ok);
+        if(ok)hit++;
+      });
+      const secOk=g.querySelector('.nav-sec').dataset.text.toLowerCase().includes(k);
+      const show=hit>0||secOk;
+      g.classList.toggle('hidden',!show);
+      if(show)g.classList.add('open');
+    });
+  });
+  // 滚动高亮
+  const heads=[...document.querySelectorAll('h2[id],h3[id]')];
+  const secLinks=new Map([...document.querySelectorAll('.nav-sec')].map(a=>[a.getAttribute('href').slice(1),a]));
+  const qLinks=new Map([...document.querySelectorAll('.nav-q')].map(a=>[a.getAttribute('href').slice(1),a]));
+  const obs=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting)return;
+      const id=e.target.id;
+      document.querySelectorAll('.nav-q.active').forEach(a=>a.classList.remove('active'));
+      document.querySelectorAll('.nav-group.open').forEach(g=>{if(!g.contains(document.activeElement))g.classList.remove('open');});
+      if(qLinks.has(id)){
+        const a=qLinks.get(id);a.classList.add('active');
+        const g=a.closest('.nav-group');g.classList.add('open');
+        a.scrollIntoView({block:'nearest'});
+      }else if(secLinks.has(id)){
+        secLinks.get(id).closest('.nav-group').classList.add('open');
+      }
+    });
+  },{rootMargin:'-10% 0px -80% 0px'});
+  heads.forEach(h=>obs.observe(h));
+  // 进度
+  const bar=document.getElementById('bar'),topBtn=document.getElementById('top');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement;
+    const p=h.scrollTop/(h.scrollHeight-h.clientHeight)*100;
+    bar.style.width=p+'%';
+    topBtn.style.display=h.scrollTop>600?'flex':'none';
+  });
+  topBtn.onclick=()=>scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('menu').onclick=()=>document.querySelector('aside').classList.toggle('show');
+  document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',()=>{
+    if(innerWidth<=1180)document.querySelector('aside').classList.remove('show');
+  }));
+
+  /* ========== 点词发音 ========== */
+  (function(){
+    const synth=window.speechSynthesis||null;
+    const btn=document.getElementById('ttsBtn');
+    const panel=document.getElementById('ttsPanel');
+    const rateEl=document.getElementById('ttsRate');
+    const rateVal=document.getElementById('ttsRateVal');
+    const voiceSel=document.getElementById('ttsVoice');
+    const toast=document.getElementById('toast');
+    if(!synth)btn.style.display='none';
+
+    /* 1. 把正文里的英文包成可点单元 */
+    const RE=new RegExp('[A-Za-z][A-Za-z0-9_.#]*(?:[-/][A-Za-z0-9_.#]+)*','g');
+    const SKIP=/^(SCRIPT|STYLE|A|BUTTON|SELECT|OPTION|TEXTAREA|INPUT)$/;
+    function wrapEng(root){
+      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{
+        acceptNode(n){
+          const p=n.parentElement;
+          if(!p||SKIP.test(p.tagName))return NodeFilter.FILTER_REJECT;
+          if(p.classList&&p.classList.contains('say'))return NodeFilter.FILTER_REJECT;
+          if(!/[A-Za-z]{2,}/.test(n.nodeValue))return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      const nodes=[];
+      while(walker.nextNode())nodes.push(walker.currentNode);
+      nodes.forEach(n=>{
+        const t=n.nodeValue;
+        let last=0,hit=false;
+        const frag=document.createDocumentFragment();
+        RE.lastIndex=0;
+        let m;
+        while((m=RE.exec(t))!==null){
+          if(m[0].length<2)continue;
+          hit=true;
+          if(m.index>last)frag.appendChild(document.createTextNode(t.slice(last,m.index)));
+          const s=document.createElement('span');
+          s.className='say';
+          s.dataset.w=m[0];
+          s.textContent=m[0];
+          frag.appendChild(s);
+          last=m.index+m[0].length;
+        }
+        if(!hit)return;
+        if(last<t.length)frag.appendChild(document.createTextNode(t.slice(last)));
+        n.parentNode.replaceChild(frag,n);
+      });
+    }
+    wrapEng(document.querySelector('article'));
+
+    /* 2. 语音列表 */
+    let voices=[];
+    function loadVoices(){
+      voices=synth.getVoices().filter(v=>/^en/i.test(v.lang));
+      if(!voices.length)voices=synth.getVoices();
+      voiceSel.innerHTML='';
+      voices.forEach((v,i)=>{
+        const o=document.createElement('option');
+        o.value=i;
+        o.textContent=v.name.replace('Microsoft ','').replace(' - English','')+' ('+v.lang+')';
+        voiceSel.appendChild(o);
+      });
+      let idx=voices.findIndex(v=>v.localService&&/Zira|Aria|Jenny|Guy|Samantha|Google US/i.test(v.name));
+      if(idx<0)idx=voices.findIndex(v=>v.localService);
+      if(idx<0)idx=0;
+      voiceSel.value=idx;
+    }
+    if(synth){loadVoices();synth.onvoiceschanged=loadVoices;}
+
+    function curVoice(){
+      const i=parseInt(voiceSel.value,10);
+      return voices[i]||null;
+    }
+
+    /* 3. 点击发音 */
+    let speakingEl=null,timer=null;
+    function say(word,el){
+      if(!synth)return;
+      synth.cancel();
+      if(speakingEl)speakingEl.classList.remove('speaking');
+      speakingEl=el||null;
+      if(speakingEl)speakingEl.classList.add('speaking');
+      const u=new SpeechSynthesisUtterance(word);
+      const v=curVoice();
+      if(v){u.voice=v;u.lang=v.lang;}else{u.lang='en-US';}
+      u.rate=parseFloat(rateEl.value);
+      u.onend=u.onerror=()=>{
+        if(speakingEl)speakingEl.classList.remove('speaking');
+        speakingEl=null;
+      };
+      synth.speak(u);
+    }
+
+    document.addEventListener('click',e=>{
+      const s=e.target.closest('.say');
+      if(!s)return;
+      e.preventDefault();
+      say(s.dataset.w,s);
+    });
+
+    /* 4. 面板 */
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      panel.classList.toggle('show');
+    });
+    document.addEventListener('click',e=>{
+      if(!e.target.closest('#tts'))panel.classList.remove('show');
+    });
+    rateEl.addEventListener('input',()=>{rateVal.textContent=rateEl.value+'x';});
+    rateEl.addEventListener('change',()=>{
+      if(speakingEl)say(speakingEl.dataset.w,speakingEl);
+    });
+
+    /* 5. 首次提示 */
+    const tipKey='ttsTipShown_v1';
+    try{
+      if(!localStorage.getItem(tipKey)){
+        setTimeout(()=>{
+          toast.classList.add('show');
+          setTimeout(()=>toast.classList.remove('show'),4200);
+          localStorage.setItem(tipKey,'1');
+        },1400);
+      }
+    }catch(err){
+      setTimeout(()=>{
+        toast.classList.add('show');
+        setTimeout(()=>toast.classList.remove('show'),4200);
+      },1400);
+    }
+    document.addEventListener('click',e=>{
+      if(e.target.closest('.say'))toast.classList.remove('show');
+    },true);
+  })();
+</script>
+</body>
+</html>
