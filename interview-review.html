@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>面试新题复盘 · 事务 / 工作流 / 支付加密 / UNION</title>
+<style>
+  :root{
+    --bg:#f6f5f2; --paper:#ffffff; --ink:#15181d; --ink-2:#3d444d; --ink-3:#6b7280;
+    --line:#e6e3dc; --accent:#c2410c; --accent-soft:#fdf0e9; --blue:#1d4ed8; --blue-soft:#eef3ff;
+    --warn:#b45309; --code:#f4f2ee;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Source Han Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    font-size:15.5px;line-height:1.85;-webkit-font-smoothing:antialiased;
+  }
+  /* 进度条 */
+  #bar{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#c2410c,#f59e0b);z-index:99;transition:width .1s linear;}
+  /* 侧栏 */
+  aside{
+    position:fixed;top:0;left:0;bottom:0;width:312px;background:#fbfaf8;border-right:1px solid var(--line);
+    display:flex;flex-direction:column;z-index:50;
+  }
+  .brand{padding:22px 22px 14px;border-bottom:1px solid var(--line);}
+  .brand h1{font-size:15px;margin:0 0 4px;letter-spacing:.02em;}
+  .brand p{margin:0;font-size:11.5px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;}
+  .search{padding:12px 16px;border-bottom:1px solid var(--line);}
+  .search input{
+    width:100%;padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;
+    font-size:13px;color:var(--ink);outline:none;font-family:inherit;
+  }
+  .search input:focus{border-color:#c2410c55;box-shadow:0 0 0 3px #c2410c14;}
+  nav{flex:1;overflow-y:auto;padding:10px 10px 40px;}
+  nav::-webkit-scrollbar{width:6px;}
+  nav::-webkit-scrollbar-thumb{background:#d8d4cb;border-radius:3px;}
+  .nav-group{margin-bottom:2px;}
+  .nav-sec{
+    display:flex;gap:9px;align-items:baseline;padding:7px 10px;border-radius:7px;
+    color:var(--ink);text-decoration:none;font-size:13.5px;font-weight:600;line-height:1.5;
+  }
+  .nav-sec:hover{background:#f0ede6;}
+  .nav-idx{font-size:10.5px;color:#b3ada2;font-variant-numeric:tabular-nums;font-weight:500;}
+  .nav-sub{display:none;padding:2px 0 8px 10px;margin-left:14px;border-left:1px solid var(--line);}
+  .nav-group.open .nav-sub{display:block;}
+  .nav-q{
+    display:block;padding:4px 10px;border-radius:6px;color:var(--ink-3);text-decoration:none;
+    font-size:12.5px;line-height:1.55;margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .nav-q:hover{background:#f2efe8;color:var(--ink);}
+  .nav-q.active{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+  .hidden{display:none !important;}
+  /* 内容 */
+  main{margin-left:312px;padding:56px 48px 140px;display:flex;justify-content:center;}
+  article{width:100%;max-width:880px;background:var(--paper);border:1px solid var(--line);border-radius:14px;
+    padding:44px 52px 60px;box-shadow:0 1px 2px #00000006,0 12px 40px -24px #0000001a;}
+  h1{font-size:27px;line-height:1.4;margin:0 0 10px;letter-spacing:-.01em;}
+  h2{
+    font-size:20px;margin:52px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);
+    letter-spacing:-.005em;scroll-margin-top:24px;
+  }
+  h2:first-of-type{margin-top:36px;}
+  h3.q-title{
+    font-size:15.5px;font-weight:700;margin:26px 0 8px;padding:2px 0 2px 13px;
+    border-left:3px solid #e8d6cc;color:#1b1e24;scroll-margin-top:20px;line-height:1.65;
+  }
+  h3.q-title:hover{border-left-color:var(--accent);}
+  p{margin:8px 0;color:var(--ink-2);}
+  strong{color:var(--ink);font-weight:650;}
+  em{color:var(--ink-3);font-style:normal;font-size:13.5px;}
+  ul,ol{margin:8px 0;padding-left:22px;color:var(--ink-2);}
+  li{margin:4px 0;}
+  li::marker{color:#b3ada2;}
+  code{
+    background:var(--code);padding:1.5px 5px;border-radius:4px;font-size:13px;
+    font-family:"JetBrains Mono","Cascadia Code",Consolas,monospace;color:#9a3412;
+    border:1px solid #ece8e1;
+  }
+  blockquote{
+    margin:14px 0;padding:12px 16px;background:#fdfaf6;border-left:3px solid #e0b48f;
+    border-radius:0 8px 8px 0;color:var(--ink-2);
+  }
+  blockquote p{margin:4px 0;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;}
+  th{background:#faf8f4;font-weight:650;color:var(--ink);white-space:nowrap;}
+  td{color:var(--ink-2);}
+  hr{border:none;border-top:1px dashed var(--line);margin:34px 0;}
+  a{color:var(--blue);}
+  /* 参考答案块 */
+  .ans{
+    margin:16px 0 6px;padding:14px 18px;border-radius:10px;
+    background:linear-gradient(180deg,#f4f8ff,#fbfcff);
+    border:1px solid #d9e4f7;border-left:4px solid #1d4ed8;
+  }
+  .ans > p:first-child{margin:0 0 8px;}
+  .ans .ah{
+    display:inline-block;font-size:13.5px;font-weight:700;color:#1d4ed8;
+    background:#e5edff;padding:2px 9px;border-radius:5px;letter-spacing:.01em;
+  }
+  .ans blockquote{
+    margin:6px 0;padding:8px 13px;background:transparent;border-left:2px solid #c7d7f5;
+    border-radius:0 6px 6px 0;color:var(--ink-2);
+  }
+  .ans .ask{
+    margin:12px 0 4px;font-size:13.5px;font-weight:700;color:#b45309;
+  }
+  .ans ul{margin:4px 0;padding-left:20px;}
+  .ans li{margin:5px 0;font-size:14px;line-height:1.75;}
+  .ans li strong{color:#7c4a03;}
+  .ans code{background:#eef3ff;border-color:#dde7fb;color:#1d4ed8;}
+  @media(max-width:1180px){
+    .ans{padding:12px 13px;}
+  }
+  /* 返回顶部 */
+  #top{
+    position:fixed;right:28px;bottom:28px;width:42px;height:42px;border-radius:50%;
+    background:#fff;border:1px solid var(--line);color:var(--ink-2);font-size:16px;cursor:pointer;
+    display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px #00000012;
+  }
+  #top:hover{border-color:#c2410c66;color:var(--accent);}
+  #meta{position:fixed;right:28px;bottom:80px;font-size:11px;color:#b3ada2;letter-spacing:.04em;}
+  /* 返回首页 */
+  #home{
+    position:fixed;right:28px;top:16px;z-index:70;display:flex;align-items:center;gap:6px;
+    height:36px;padding:0 15px;border-radius:18px;background:#fff;border:1px solid var(--line);
+    color:var(--ink-2);font-size:13px;text-decoration:none;box-shadow:0 3px 14px #0000000f;
+    font-family:inherit;
+  }
+  #home:hover{border-color:#c2410c66;color:var(--accent);background:#fdf7f3;}
+  @media(max-width:1180px){
+    #home{right:16px;top:16px;height:34px;padding:0 13px;font-size:12.5px;}
+  }
+  @media(max-width:1180px){
+    aside{transform:translateX(-100%);transition:transform .22s;}
+    aside.show{transform:none;}
+    main{margin-left:0;padding:40px 20px 100px;}
+    article{padding:30px 24px 40px;}
+    #menu{display:flex !important;}
+  }
+  #menu{display:none;position:fixed;left:16px;top:16px;z-index:60;width:40px;height:40px;
+    background:#fff;border:1px solid var(--line);border-radius:10px;align-items:center;justify-content:center;
+    font-size:16px;cursor:pointer;box-shadow:0 2px 10px #00000010;}
+  /* 点词发音 */
+  .say{cursor:pointer;border-radius:3px;transition:background .12s,color .12s;}
+  .say:hover{background:var(--blue-soft);color:var(--blue);}
+  .say.speaking{background:#ffe9a8;color:#7c4a03;box-shadow:0 0 0 2px #ffe9a8;}
+  #tts{position:fixed;right:28px;bottom:132px;z-index:70;font-family:inherit;}
+  #ttsBtn{
+    width:42px;height:42px;border-radius:50%;background:#fff;border:1px solid var(--line);
+    font-size:16px;cursor:pointer;box-shadow:0 4px 16px #00000012;display:flex;align-items:center;justify-content:center;
+  }
+  #ttsBtn:hover{border-color:#1d4ed866;background:var(--blue-soft);}
+  #ttsBtn.on{background:var(--blue);border-color:var(--blue);}
+  #ttsPanel{
+    display:none;position:absolute;right:0;bottom:52px;width:246px;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:14px 16px;box-shadow:0 12px 40px -12px #00000033;font-size:12.5px;color:var(--ink-2);
+  }
+  #ttsPanel.show{display:block;}
+  #ttsPanel label{display:block;margin-bottom:10px;}
+  #ttsPanel label:last-of-type{margin-bottom:8px;}
+  #ttsPanel select,#ttsPanel input[type=range]{width:100%;margin-top:4px;font-family:inherit;font-size:12px;}
+  #ttsPanel select{padding:5px;border:1px solid var(--line);border-radius:6px;background:#fff;outline:none;}
+  #ttsPanel .rv{float:right;color:var(--accent);font-weight:700;}
+  #ttsPanel .hint{font-size:11.5px;color:#9aa0aa;line-height:1.6;margin-top:2px;border-top:1px dashed var(--line);padding-top:8px;}
+  #ttsPanel .hint b{color:var(--ink-2);}
+  #toast{
+    position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);z-index:80;
+    background:#15181d;color:#fff;font-size:13px;padding:10px 20px;border-radius:24px;
+    box-shadow:0 10px 30px -8px #00000055;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
+    white-space:nowrap;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media(max-width:1180px){
+    #tts{bottom:96px;right:20px;}
+  }
+  @media print{
+    aside,#bar,#top,#menu,#tts,#toast,#home{display:none !important;}
+    main{margin:0;padding:0;}
+    article{border:none;box-shadow:none;padding:0;max-width:none;}
+    body{background:#fff;}
+  }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<a id="home" href="index.html" title="返回首页">🏠 首页</a>
+<button id="menu">☰</button>
+<aside>
+  <div class="brand">
+    <h1>面试新题复盘 · 事务 / 工作流 / 支付加密 / UNION</h1>
+    <p>2026-11-04 实盘复盘 · 47 题 · 4 个被问到的方向</p>
+  </div>
+  <div class="search"><input id="q" type="search" placeholder="搜索题目 / 关键词…" autocomplete="off"></div>
+  <nav id="nav"><div class="nav-group" data-text="一、事务"><a class="nav-sec" href="#sec-1"><span class="nav-idx">01</span><span>一、事务</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-1" data-text="Q1 ACID 分别靠什么实现">Q1 ACID 分别靠什么实现</a>
+<a class="nav-q" href="#q-2" data-text="Q2 @Transactional 的底层是怎么实现的">Q2 @Transactional 的底层是怎么实现的</a>
+<a class="nav-q" href="#q-3" data-text="Q3 @Transactional 在哪些情况下会失效">Q3 @Transactional 在哪些情况下会失效</a>
+<a class="nav-q" href="#q-4" data-text="Q4 七种传播行为，项目里真正用得上的只有三种">Q4 七种传播行为，项目里真正用得上的只有三种</a>
+<a class="nav-q" href="#q-5" data-text="Q5 事务没提交就发了 MQ，会出什么事">Q5 事务没提交就发了 MQ，会出什么事</a>
+<a class="nav-q" href="#q-6" data-text="Q6 大事务有什么危害，怎么拆">Q6 大事务有什么危害，怎么拆</a>
+<a class="nav-q" href="#q-7" data-text="Q7 分布式事务有哪些方案，怎么选">Q7 分布式事务有哪些方案，怎么选</a>
+<a class="nav-q" href="#q-8" data-text="Q8 为什么说「不要用分布式事务解决所有问题」">Q8 为什么说「不要用分布式事务解决所有问题」</a>
+</div>
+</div>
+<div class="nav-group" data-text="二、工作流事务"><a class="nav-sec" href="#sec-2"><span class="nav-idx">02</span><span>二、工作流事务</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-9" data-text="Q9 工作流引擎的事务怎么和业务事务绑在一起">Q9 工作流引擎的事务怎么和业务事务绑在一起</a>
+<a class="nav-q" href="#q-10" data-text="Q10 流程节点里调用第三方接口失败了，流程会回滚吗">Q10 流程节点里调用第三方接口失败了，流程会回滚吗</a>
+<a class="nav-q" href="#q-11" data-text="Q11 一个审批流程走三天，能用一个数据库事务包住吗">Q11 一个审批流程走三天，能用一个数据库事务包住吗</a>
+<a class="nav-q" href="#q-12" data-text="Q12 异步执行（async）的节点为什么拿不到原事务">Q12 异步执行（async）的节点为什么拿不到原事务</a>
+<a class="nav-q" href="#q-13" data-text="Q13 流程回滚了但业务数据没回滚，怎么排查">Q13 流程回滚了但业务数据没回滚，怎么排查</a>
+<a class="nav-q" href="#q-14" data-text="Q14 Saga 和工作流编排是什么关系">Q14 Saga 和工作流编排是什么关系</a>
+<a class="nav-q" href="#q-15" data-text="Q15 工作流里怎么做幂等和补偿">Q15 工作流里怎么做幂等和补偿</a>
+<a class="nav-q" href="#q-16" data-text="Q16 如果项目里没用过工作流引擎，这题怎么答">Q16 如果项目里没用过工作流引擎，这题怎么答</a>
+</div>
+</div>
+<div class="nav-group" data-text="三、我们项目的工作流与事务（park-server 实战版）"><a class="nav-sec" href="#sec-3"><span class="nav-idx">03</span><span>三、我们项目的工作流与事务（park-server 实战版）</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-17" data-text="Q17 你们项目的工单工作流是怎么做的">Q17 你们项目的工单工作流是怎么做的</a>
+<a class="nav-q" href="#q-18" data-text="Q18 为什么不用 Activiti / Flowable，自己写不怕出问题吗">Q18 为什么不用 Activiti / Flowable，自己写不怕出问题吗</a>
+<a class="nav-q" href="#q-19" data-text="Q19 流程定义改了，进行中的工单怎么办">Q19 流程定义改了，进行中的工单怎么办</a>
+<a class="nav-q" href="#q-20" data-text="Q20 GATEWAY 节点为什么是节点但不生成任务">Q20 GATEWAY 节点为什么是节点但不生成任务</a>
+<a class="nav-q" href="#q-21" data-text="Q21 getPreNode 的 visited 防环是防什么">Q21 getPreNode 的 visited 防环是防什么</a>
+<a class="nav-q" href="#q-22" data-text="Q22 SpEL 表达式有注入风险吗">Q22 SpEL 表达式有注入风险吗</a>
+<a class="nav-q" href="#q-23" data-text="Q23 handleTask 的事务边界画在哪">Q23 handleTask 的事务边界画在哪</a>
+<a class="nav-q" href="#q-24" data-text="Q24 事务里 catch 了异常，为什么提交还会失败">Q24 事务里 catch 了异常，为什么提交还会失败</a>
+<a class="nav-q" href="#q-25" data-text="Q25 注册发积分为什么不能直接放主事务里">Q25 注册发积分为什么不能直接放主事务里</a>
+<a class="nav-q" href="#q-26" data-text="Q26 什么时候用跨模块大事务，什么时候绝对不能用">Q26 什么时候用跨模块大事务，什么时候绝对不能用</a>
+<a class="nav-q" href="#q-27" data-text="Q27 批量任务的事务怎么控制">Q27 批量任务的事务怎么控制</a>
+<a class="nav-q" href="#q-28" data-text="Q28 并发下扣积分怎么防超扣">Q28 并发下扣积分怎么防超扣</a>
+<a class="nav-q" href="#q-29" data-text="Q29 这几块内容的代码在哪（面试前快速回顾）">Q29 这几块内容的代码在哪（面试前快速回顾）</a>
+</div>
+</div>
+<div class="nav-group" data-text="四、支付加密"><a class="nav-sec" href="#sec-4"><span class="nav-idx">04</span><span>四、支付加密</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-30" data-text="Q30 签名和加密到底有什么区别">Q30 签名和加密到底有什么区别</a>
+<a class="nav-q" href="#q-31" data-text="Q31 摘要、HMAC、RSA、SM2 到底怎么选">Q31 摘要、HMAC、RSA、SM2 到底怎么选</a>
+<a class="nav-q" href="#q-32" data-text="Q32 为什么签名串必须按 key 字典序排序">Q32 为什么签名串必须按 key 字典序排序</a>
+<a class="nav-q" href="#q-33" data-text="Q33 支付回调怎么防伪造、防重放、防重复、防金额篡改">Q33 支付回调怎么防伪造、防重放、防重复、防金额篡改</a>
+<a class="nav-q" href="#q-34" data-text="Q34 对称加密和非对称加密在支付里怎么配合">Q34 对称加密和非对称加密在支付里怎么配合</a>
+<a class="nav-q" href="#q-35" data-text="Q35 密钥怎么管理">Q35 密钥怎么管理</a>
+<a class="nav-q" href="#q-36" data-text="Q36 HTTPS 都有了，为什么报文还要签名">Q36 HTTPS 都有了，为什么报文还要签名</a>
+<a class="nav-q" href="#q-37" data-text="Q37 为什么说 Base64 不是加密">Q37 为什么说 Base64 不是加密</a>
+</div>
+</div>
+<div class="nav-group" data-text="五、SQL UNION"><a class="nav-sec" href="#sec-5"><span class="nav-idx">05</span><span>五、SQL UNION</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-38" data-text="Q38 UNION 和 UNION ALL 的区别，性能差多少">Q38 UNION 和 UNION ALL 的区别，性能差多少</a>
+<a class="nav-q" href="#q-39" data-text="Q39 UNION 的隐式排序去重是怎么发生的">Q39 UNION 的隐式排序去重是怎么发生的</a>
+<a class="nav-q" href="#q-40" data-text="Q40 UNION 对字段数量和类型有什么要求">Q40 UNION 对字段数量和类型有什么要求</a>
+<a class="nav-q" href="#q-41" data-text="Q41 UNION 之后 ORDER BY 和 LIMIT 作用在哪">Q41 UNION 之后 ORDER BY 和 LIMIT 作用在哪</a>
+<a class="nav-q" href="#q-42" data-text="Q42 UNION 为什么不能走索引">Q42 UNION 为什么不能走索引</a>
+<a class="nav-q" href="#q-43" data-text="Q43 分表之后用 UNION 查有什么坑">Q43 分表之后用 UNION 查有什么坑</a>
+<a class="nav-q" href="#q-44" data-text="Q44 UNION 和 OR、JOIN、IN 怎么选">Q44 UNION 和 OR、JOIN、IN 怎么选</a>
+</div>
+</div>
+<div class="nav-group" data-text="六、复盘与话术"><a class="nav-sec" href="#sec-6"><span class="nav-idx">06</span><span>六、复盘与话术</span></a>
+<div class="nav-sub">
+<a class="nav-q" href="#q-45" data-text="Q45 这四道题面试官分别在考什么">Q45 这四道题面试官分别在考什么</a>
+<a class="nav-q" href="#q-46" data-text="Q46 答不上来的时候怎么接">Q46 答不上来的时候怎么接</a>
+<a class="nav-q" href="#q-47" data-text="Q47 下一轮面试前还该补什么">Q47 下一轮面试前还该补什么</a>
+</div>
+</div></nav>
+</aside>
+<main><article><h1 id="doc-title">面试新题复盘 · 事务 / 工作流事务 / 支付加密 / SQL UNION</h1>
+<blockquote>
+<p>记录 2026 年 11 月 4 日实际面试中被问到的四个方向。
+这四题不是八股，都是<strong>能问出工程经验深浅</strong>的题——面试官想看的是你在真实系统里踩过什么坑，而不是背没背过定义。
+每题结构：先说人话 → 技术要点 → 面试时怎么开口 → 可能怎么追问。</p>
+</blockquote>
+<hr />
+<h2 id="sec-1" class="sec-title">一、事务</h2>
+<blockquote>
+<p>事务这题被问了不止一次。6 年经验的回答必须从「ACID 是什么」跳到「Spring 怎么实现、什么情况会失效、大事务怎么拆」。</p>
+</blockquote>
+<h3 id="q-1" class="q-title">Q1 ACID 分别靠什么实现</h3>
+<p>🗣 <strong>人话</strong>：别背四个词，背它们背后的机制。原子性靠 undo log，持久性靠 redo log，隔离性靠锁和 MVCC，一致性是前三个的结果加上业务约束。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><strong>原子性 A</strong>：undo log。改之前先把旧值记下来，回滚就是反向执行。</li>
+<li><strong>持久性 D</strong>：redo log。先写日志再刷页（WAL），宕机后按 redo 重放。</li>
+<li><strong>隔离性 I</strong>：MVCC + 锁。读不加锁靠快照，写靠行锁。</li>
+<li><strong>一致性 C</strong>：不是数据库单独保证的，是业务约束（唯一索引、外键、金额校验）+ 前面三个共同兜住的。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「ACID 我不按定义说，我说实现。原子性是 undo log 撑的，InnoDB 改数据前先把旧版本写进 undo，回滚就反向重放；持久性是 redo log，WAL 机制先顺序写日志再刷脏页，宕机恢复按 redo 重放，所以 <code>innodb_flush_log_at_trx_commit=1</code> 时提交就真的落了盘。」
+「隔离性分两块，读走 MVCC，靠 undo 版本链 + ReadView 做快照读，不加锁；写走行锁，加上间隙锁防幻读。一致性其实是结果不是机制，靠唯一索引、外键、业务侧校验加上前三个一起兜住——所以我说数据库只能保证它自己那一层的一致。」
+「这四者里最容易被牺牲的是隔离性，因为隔离级别越高并发越差，MySQL 默认选了 RR 就是为了在一致性和并发之间取个平衡。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「redo log 和 binlog 有什么区别？」</strong> → redo 是 InnoDB 引擎层的物理日志，循环写，用于崩溃恢复；binlog 是 Server 层的逻辑日志，追加写，用于主从复制和数据恢复。两阶段提交保证两者一致。</li>
+<li><strong>「为什么说一致性不能单靠数据库？」</strong> → 跨表、跨库、跨服务的业务规则数据库管不到，转账的「总额不变」要靠业务代码和事务边界保证。</li>
+</ul>
+</div><h3 id="q-2" class="q-title">Q2 @Transactional 的底层是怎么实现的</h3>
+<p>🗣 <strong>人话</strong>：本质就是一个 AOP 代理加一个 ThreadLocal。代理在方法前后开事务、提交或回滚，事务期间把数据库连接塞进当前线程，后面所有 DAO 都从同一个线程里取这个连接。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><code>@EnableTransactionManagement</code> 注册 <code>InfrastructureAdvisorAutoProxyCreator</code>，这是一个 BeanPostProcessor，负责给带 <code>@Transactional</code> 的 Bean 生成代理。</li>
+<li>匹配到注解的方法被 <code>TransactionInterceptor</code> 拦截，走 <code>TransactionAspectSupport#invokeWithinTransaction</code>。</li>
+<li><code>PlatformTransactionManager</code>（一般是 <code>DataSourceTransactionManager</code>）执行 <code>doBegin()</code>：拿连接、<code>setAutoCommit(false)</code>。</li>
+<li>连接被绑定到 <code>TransactionSynchronizationManager</code> 的 ThreadLocal 里，后续 MyBatis 通过 <code>DataSourceUtils.getConnection()</code> 取到同一个连接。</li>
+<li>方法正常返回 <code>commit()</code>，抛异常 <code>rollback()</code>，最后释放连接。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「<code>@Transactional</code> 是纯 AOP，没有黑魔法。启动时 <code>@EnableTransactionManagement</code> 会注册一个 <code>InfrastructureAdvisorAutoProxyCreator</code>，它在 Bean 初始化后判断这个 Bean 有没有方法带 <code>@Transactional</code>，有就生成代理——有接口用 JDK 动态代理，没接口用 CGLIB。」
+「调用时被 <code>TransactionInterceptor</code> 拦住，进到 <code>invokeWithinTransaction</code>。这里先让 <code>PlatformTransactionManager</code> 开事务，<code>DataSourceTransactionManager</code> 会从连接池拿一个连接，把 autocommit 关掉，然后把这个连接绑到 <code>TransactionSynchronizationManager</code> 的 ThreadLocal 上。」
+「关键就在这个 ThreadLocal：后面 MyBatis 执行 SQL 时调 <code>DataSourceUtils.getConnection()</code>，先看当前线程有没有绑定连接，有就直接用，所以整个方法里所有 DAO 共享同一个连接、同一个事务。方法返回就 commit，抛异常就 rollback，最后把连接还回池子。」
+「所以它天然有三个边界：跨线程不生效，因为 ThreadLocal 不共享；不走代理不生效，因为拦截器根本没被触发；不是 Spring 管的 Bean 不生效，因为压根没生成代理。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「代理对象和原始对象什么关系？」</strong> → 代理持有原始对象的引用（target），方法调用先进拦截器，再反射调 target。所以 <code>this</code> 调用绕过了拦截器。</li>
+<li><strong>「CGLIB 代理的类为什么不能是 final？」</strong> → CGLIB 是生成子类覆写方法，final 类无法继承、final 方法无法覆写。</li>
+</ul>
+</div><h3 id="q-3" class="q-title">Q3 @Transactional 在哪些情况下会失效</h3>
+<p>🗣 <strong>人话</strong>：这个问题面试官几乎必问，答不全就是减分。记住八个字：<strong>不走代理、不抛异常</strong>。所有失效场景基本都能归到这两类。</p>
+<p><strong>要点</strong></p>
+<ol>
+<li><strong>同类内部自调用</strong>：<code>this.methodB()</code> 走的是原始对象，不是代理。</li>
+<li><strong>方法不是 public</strong>：Spring 默认只对 public 方法解析事务属性。</li>
+<li><strong>异常被 catch 吞掉</strong>：拦截器收不到异常，以为正常返回，直接 commit。</li>
+<li><strong>抛的是检查异常</strong>：默认只回滚 <code>RuntimeException</code> 和 <code>Error</code>，<code>IOException</code> 这种不回滚，要写 <code>rollbackFor = Exception.class</code>。</li>
+<li><strong>Bean 不是 Spring 管的</strong>：自己 <code>new</code> 出来的对象，没有代理。</li>
+<li><strong>多线程调用</strong>：子线程拿不到父线程 ThreadLocal 里绑定的连接。</li>
+<li><strong>存储引擎不支持事务</strong>：MyISAM 表。</li>
+<li><strong>传播行为是 <code>NOT_SUPPORTED</code> 或 <code>NEVER</code></strong>：主动挂起或不许开事务。</li>
+<li><strong>类或方法是 final</strong>：CGLIB 代理不了。</li>
+</ol>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我按两类记。第一类是<strong>根本没进拦截器</strong>：自调用最常见，<code>this.b()</code> 走原始对象；方法不是 public 也不行，Spring 只解析 public 的事务属性；Bean 不是 Spring 管的、类或方法是 final 导致 CGLIB 生成不了代理，都属于这类。」
+「第二类是<strong>进了拦截器但没触发回滚</strong>：异常被 catch 吞了，拦截器看到正常返回就 commit；或者抛的是检查异常，默认 <code>rollbackFor</code> 只认 <code>RuntimeException</code> 和 <code>Error</code>，<code>IOException</code> 这种不回滚，得显式写 <code>rollbackFor = Exception.class</code>。」
+「还有两个特殊的：多线程，因为事务上下文在 ThreadLocal 里，子线程是另一份；以及传播行为设成 <code>NOT_SUPPORTED</code>，那是主动告诉 Spring 别开事务。」
+「我踩过最典型的是第一个。当时一个 Service 里 A 方法调 B 方法，B 加了 <code>@Transactional</code>，结果 B 里抛异常 A 没回滚。排查半天才反应过来是自调用，后来把 B 拆到独立 Bean 里就好了。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「怎么确认事务到底生效没有？」</strong> → 开 <code>logging.level.org.springframework.transaction.interceptor=TRACE</code>，看有没有 <code>Creating new transaction</code> / <code>Participating in existing transaction</code> 日志；或者在方法里打 <code>TransactionSynchronizationManager.isActualTransactionActive()</code>。</li>
+<li><strong>「自调用除了拆 Bean 还有别的解吗？」</strong> → <code>AopContext.currentProxy()</code> 配合 <code>@EnableAspectJAutoProxy(exposeProxy = true)</code>，或者注入自己（加 <code>@Lazy</code> 破循环依赖）。但拆 Bean 最干净。</li>
+</ul>
+</div><h3 id="q-4" class="q-title">Q4 七种传播行为，项目里真正用得上的只有三种</h3>
+<p>🗣 <strong>人话</strong>：<code>REQUIRED</code> 是默认值，八成场景都用它。真正需要动脑的是 <code>REQUIRES_NEW</code>（我要独立事务，你别拖累我）和 <code>NESTED</code>（我失败只回滚我自己这一段）。</p>
+<p><strong>要点</strong></p>
+<table>
+<thead>
+<tr>
+<th>传播行为</th>
+<th>行为</th>
+<th>什么时候用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>REQUIRED</code></td>
+<td>有事务就加入，没有就新建</td>
+<td>默认，绝大多数场景</td>
+</tr>
+<tr>
+<td><code>REQUIRES_NEW</code></td>
+<td>挂起外层，自己开一个独立事务</td>
+<td>记操作日志、发通知，主事务回滚了它也不能丢</td>
+</tr>
+<tr>
+<td><code>NESTED</code></td>
+<td>在当前事务里打 savepoint</td>
+<td>子操作失败只回滚子操作，主流程继续</td>
+</tr>
+<tr>
+<td><code>SUPPORTS</code></td>
+<td>有就加入，没有就以非事务运行</td>
+<td>查询方法</td>
+</tr>
+<tr>
+<td><code>NOT_SUPPORTED</code></td>
+<td>挂起外层，非事务运行</td>
+<td>大批量导入，不想占着事务和锁</td>
+</tr>
+<tr>
+<td><code>MANDATORY</code></td>
+<td>必须在事务里，否则抛异常</td>
+<td>强制约束调用方</td>
+</tr>
+<tr>
+<td><code>NEVER</code></td>
+<td>必须不在事务里，否则抛异常</td>
+<td>极少用</td>
+</tr>
+</tbody>
+</table>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「七个里我实际只用过三个。<code>REQUIRED</code> 是默认的，绝大多数业务方法都用它，语义是『有就加入，没有就新建』。」
+「<code>REQUIRES_NEW</code> 用在必须独立提交的地方，比如操作日志、审计记录、发通知——主业务失败了，日志也得留下。它会把外层事务挂起，自己开一个新事务，用的是<strong>另一个数据库连接</strong>。」
+「<code>NESTED</code> 用在子步骤失败不该拖垮主流程的场景，它本质是打个 savepoint，回滚到那个点，外层事务还能继续提交。区别在于 <code>REQUIRES_NEW</code> 是彻底独立，<code>NESTED</code> 是外层回滚时它一起回滚。」
+「<code>REQUIRES_NEW</code> 有个坑要注意：外层事务一直占着一个连接不放，内层又要一个，连接池小的话会直接死锁。我们 HikariCP 配的是 20，但理论上池子只有 2 的时候，两个 <code>REQUIRES_NEW</code> 嵌套就能把自己锁死。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「<code>NESTED</code> 和 <code>REQUIRES_NEW</code> 报错后的区别？」</strong> → <code>NESTED</code> 内层回滚后外层可以继续提交；<code>REQUIRES_NEW</code> 内层回滚不影响外层，但外层回滚也不影响内层（已提交）。</li>
+<li><strong>「<code>NESTED</code> 有什么限制？」</strong> → 依赖 JDBC 的 savepoint，只有 <code>DataSourceTransactionManager</code> 支持，JTA 不支持。</li>
+</ul>
+</div><h3 id="q-5" class="q-title">Q5 事务没提交就发了 MQ，会出什么事</h3>
+<p>🗣 <strong>人话</strong>：消息先飞出去了，数据库那边回滚了。消费者收到消息去查数据，查不到——轻则报错重试，重则写出脏数据。这是分布式系统里最经典的时序错乱。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>问题本质：<strong>两个系统的事务不共享</strong>，MQ 发送成功 ≠ 数据库提交成功。</li>
+<li>三种解法，按侵入从小到大：
+  1. <code>@TransactionalEventListener(phase = AFTER_COMMIT)</code> 或 <code>TransactionSynchronization#afterCommit</code>——事务提交后才发。
+  2. <strong>本地消息表</strong>：消息和业务写在同一个库、同一个事务，定时任务扫表发送，发成功改状态。
+  3. <strong>RocketMQ 事务消息</strong>：发半消息 → 执行本地事务 → 提交或回滚 → 失败由 Broker 回查。</li>
+<li><code>afterCommit</code> 也有漏洞：提交成功了但进程在发消息前挂了，消息就丢了。要真正可靠还得配本地消息表或事务消息。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「这是消息和数据库双写不一致的经典问题。事务还没提交消息就发出去了，消费者拿到消息回查数据库查不到数据，要么报错重试，要么按空数据往下走，写出脏数据。」
+「最轻量的解法是 <code>@TransactionalEventListener</code> 的 <code>AFTER_COMMIT</code> 阶段，或者直接注册 <code>TransactionSynchronization</code>，在 <code>afterCommit</code> 里发消息。这样保证消息一定在提交之后才出去。」
+「但这个方案有缺口：提交成功了、进程在发消息之前被 kill，消息就永久丢了。要真正不丢，得用本地消息表——消息和业务在同一个事务里落库，然后有个定时任务扫未发送的记录去投递，发成功改状态，失败重试。这样至少保证『业务成功则消息最终一定发出』。」
+「如果是 RocketMQ，可以直接用事务消息：先发半消息，Broker 不投递；执行本地事务；成功就 commit，失败就 rollback；如果本地事务状态不明确，Broker 会回查生产者的接口。这套机制就是为了解决这个问题设计的。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「消费者收到消息了但业务处理失败怎么办？」</strong> → 重试 + 死信队列，同时消费端必须幂等（唯一索引或状态机兜底）。</li>
+<li><strong>「<code>afterCommit</code> 和 <code>@Async</code> 一起用有什么问题？」</strong> → <code>@Async</code> 会切线程，事务上下文丢了；而且异步执行时异常被吞，排查困难，最好把任务丢线程池并落日志。</li>
+</ul>
+</div><h3 id="q-6" class="q-title">Q6 大事务有什么危害，怎么拆</h3>
+<p>🗣 <strong>人话</strong>：一个事务里干了太多事，锁攥着不放、undo 堆成山、主从延迟飙起来。面试官问这个，是看你有没有线上意识。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><strong>锁持有时间长</strong>：并发骤降，死锁概率上升。</li>
+<li><strong>undo log 膨胀</strong>：回滚极慢，purge 线程压力大。</li>
+<li><strong>主从延迟</strong>：大事务在 binlog 里是一条大记录，从库只能串行重放。</li>
+<li><strong>连接占用</strong>：事务期间连接不归还，池子容易被占满。</li>
+<li><strong>缓冲池污染</strong>：大批量更新把热数据挤出内存。</li>
+</ul>
+<p>拆法：</p>
+<ol>
+<li>事务里<strong>不要放 RPC、HTTP、文件 IO</strong>，这些挪到事务外。</li>
+<li>批量操作<strong>分批提交</strong>，每批 500～1000 条。</li>
+<li>用编程式事务（<code>TransactionTemplate</code>）<strong>精确控制边界</strong>，只包住必须原子的几行代码。</li>
+<li>查询类操作<strong>不要包事务</strong>，用 <code>SUPPORTS</code> 或干脆不加。</li>
+</ol>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「大事务的危害我按五个说：锁持有时间长导致并发下降、undo log 膨胀让回滚变得极慢、binlog 里一条大记录导致从库串行重放产生主从延迟、事务期间连接不归还容易打满连接池、大批量更新还会污染缓冲池把热数据挤出去。」
+「拆的核心思路是<strong>缩小事务边界</strong>。第一，事务里绝对不放 RPC 调用和文件 IO，我们之前有个接口在事务里调第三方，第三方超时 30 秒，直接把连接池占满了。」
+「第二，批量处理分批提交，一次 500 到 1000 条，既控制锁的范围也控制 undo 大小。第三，用 <code>TransactionTemplate</code> 编程式事务，只包住真正需要原子的那几行，而不是整个方法挂个 <code>@Transactional</code>。」
+「还有一个容易忽略的：查询方法别加 <code>@Transactional</code>，它不需要事务，加了反而多占一次连接和事务开销。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「怎么发现线上有大事务？」</strong> → <code>information_schema.innodb_trx</code> 按 <code>trx_started</code> 排序看长事务；<code>SHOW ENGINE INNODB STATUS</code> 看 <code>TRANSACTIONS</code> 段；或者监控 binlog 事件大小。</li>
+<li><strong>「<code>innodb_undo_log_truncate</code> 是干什么的？」</strong> → 允许 truncate 掉不再需要的 undo 表空间，防止 undo 无限增长，需要配合 <code>innodb_purge_rseg_truncate_frequency</code>。</li>
+</ul>
+</div><h3 id="q-7" class="q-title">Q7 分布式事务有哪些方案，怎么选</h3>
+<p>🗣 <strong>人话</strong>：别上来就说 Seata。先问一句「这个业务能不能接受最终一致」——能接受就别用强一致，成本差一个数量级。</p>
+<p><strong>要点</strong></p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>一致性</th>
+<th>侵入性</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2PC / XA</td>
+<td>强一致</td>
+<td>低（数据库层）</td>
+<td>单库多数据源、并发低</td>
+</tr>
+<tr>
+<td>TCC</td>
+<td>最终一致</td>
+<td>高（要写三个方法）</td>
+<td>资金类、要求高</td>
+</tr>
+<tr>
+<td>Saga</td>
+<td>最终一致</td>
+<td>中</td>
+<td>长流程、多服务编排</td>
+</tr>
+<tr>
+<td>本地消息表</td>
+<td>最终一致</td>
+<td>低</td>
+<td>异步场景，允许延迟</td>
+</tr>
+<tr>
+<td>事务消息</td>
+<td>最终一致</td>
+<td>中</td>
+<td>RocketMQ 生态</td>
+</tr>
+<tr>
+<td>最大努力通知</td>
+<td>最终一致</td>
+<td>低</td>
+<td>支付回调、对账</td>
+</tr>
+</tbody>
+</table>
+<p>选择顺序：<strong>能用本地事务 + 消息解决的，绝不上分布式事务框架。</strong></p>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我的判断顺序是先问一句：这个业务能不能接受最终一致？能接受就不用上强一致方案，成本差一个数量级。」
+「强一致只有 2PC 和 XA，性能差、锁范围大，一般只在单库多数据源或者内部管理系统用。互联网业务基本都走最终一致。」
+「最终一致里，最简单的其实是本地消息表——把消息和业务写在同一个事务，定时投递。它的好处是不依赖任何中间件，缺点是延迟和需要自己写补偿逻辑。」
+「TCC 适合资金类，因为要预留资源，隔离性比 Saga 好，但侵入太大，每个操作要写 Try、Confirm、Cancel 三个方法，还要处理空回滚、悬挂、幂等这三座大山。」
+「Saga 适合长流程，比如订单履约那种跨七八个服务的，每个正向操作配一个补偿，失败反向执行。它没有隔离性，中间态对外可见，得靠状态机防脏读。」
+「我们支付项目里其实没上 Seata，用的是本地事务保证单笔订单，跨渠道靠对账兜底——因为支付场景下『对账』本身就是最强的最终一致保障，比对账更可靠的补偿方案不多。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「Seata AT 模式是怎么做到的？」</strong> → 一阶段直接提交业务 SQL，同时把前后镜像写进 <code>undo_log</code> 并注册分支；二阶段全局提交就异步删 <code>undo_log</code>，全局回滚就用 <code>undo_log</code> 反向补偿。靠全局锁保证一阶段提交前该行没被别人改。</li>
+<li><strong>「TCC 的空回滚和悬挂是什么？」</strong> → 空回滚是 Try 没执行但 Cancel 到了（网络乱序），要判断 Try 是否执行过；悬挂是 Cancel 先执行、Try 后到，要拒绝迟到的 Try。</li>
+</ul>
+</div><h3 id="q-8" class="q-title">Q8 为什么说「不要用分布式事务解决所有问题」</h3>
+<p>🗣 <strong>人话</strong>：分布式事务是最后手段，不是常规武器。大部分所谓的分布式事务，本质是设计问题——你把不该拆的东西拆了。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><strong>优先靠业务设计消解</strong>：把强一致的部分放在同一个库、同一个事务里；真正跨界的部分改成异步 + 最终一致。</li>
+<li><strong>优先靠幂等 + 重试 + 对账</strong>：很多场景不需要事务，需要的是「最终会一致」。</li>
+<li><strong>优先靠状态机</strong>：订单状态单向流转，比分布式事务更可控。</li>
+<li>分布式事务的代价：性能、复杂度、运维（TC 高可用）、排查难度。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我觉得分布式事务最大的问题不是技术难，是容易掩盖设计问题。很多场景本来就不该拆——你为什么把必须强一致的两个人放在两个服务里？先想清楚边界，再谈方案。」
+「第二选择是幂等加重试加对账。绝大部分业务要的不是『同时成功』，而是『最终会一致』。支付回调重复推送，我们不靠事务，靠订单状态机和唯一索引，来一百次结果都一样。」
+「第三是状态机。订单从待支付到已支付到已发货，状态单向流转，每一步都是本地事务，出事就停在那一步等人工或者补偿，比分布式事务透明得多。」
+「真到不得不用的时候，也要清楚代价：TC 要高可用、日志要持久化、超时时间要合理、补偿逻辑要幂等可重入。所以我的原则是能不用就不用。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「那什么情况非用不可？」</strong> → 跨库的强一致资金操作、合规要求必须同时落账、且性能压力不大的内部系统。</li>
+<li><strong>「支付宝转账算分布式事务吗？」</strong> → 支付宝内部是「本地事务 + 对账 + 差错处理」，不是我们想象的全局事务。</li>
+</ul>
+<hr />
+</div><h2 id="sec-2" class="sec-title">二、工作流事务</h2>
+<blockquote>
+<p>这是被问得最猝不及防的一题。</p>
+<p>⚠️ <strong>先看第三章</strong>——你项目里没用 Flowable / Activiti，是自研的轻量引擎，真实答案在「三、我们项目的工作流与事务」。<strong>面试时先讲自研那套</strong>，本章的通用原理留着应付「那你知道 Flowable 怎么做的吗」这类追问。</p>
+<p>两章的分工：本章讲引擎的<strong>通用事务边界</strong>，第三章讲你的<strong>实际实现和踩过的坑</strong>。考官问什么都能接住。</p>
+</blockquote>
+<h3 id="q-9" class="q-title">Q9 工作流引擎的事务怎么和业务事务绑在一起</h3>
+<p>🗣 <strong>人话</strong>：能不能绑在一起，只看一件事——<strong>流程表和业务表是不是同一个数据源</strong>。同一个库，Spring 一个 <code>@Transactional</code> 就包住了；不是同一个库，对不起，这是分布式事务问题。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>Flowable 集成 Spring 时用 <code>SpringProcessEngineConfiguration</code>，注入的是 Spring 的 <code>PlatformTransactionManager</code>。</li>
+<li>引擎内部每个操作包在一个 <code>Command</code> 里，<code>CommandContext</code> 会检查当前线程有没有活跃事务，有就加入，没有再新建。</li>
+<li><strong>同数据源</strong>：业务 Service 上的 <code>@Transactional</code> 会同时覆盖流程操作，一起提交、一起回滚。</li>
+<li><strong>不同数据源</strong>：事务管理器不是同一个，<code>@Transactional</code> 只作用于业务库，流程操作在自己的事务里，做不到原子。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「关键只看一件事：流程引擎和业务是不是同一个数据源。Flowable 集成 Spring 用的是 <code>SpringProcessEngineConfiguration</code>，它会注入 Spring 的 <code>PlatformTransactionManager</code>，引擎内部每个操作包成一个 Command，执行时会检查当前线程有没有活跃事务——有就加入，没有就新建。」
+「所以如果是同一个库，业务 Service 上挂一个 <code>@Transactional</code>，里面调 <code>runtimeService.startProcessInstanceByKey()</code>，业务表和流程表就在同一个事务里，要么都成功要么都回滚。这是最常见也最省心的配法。」
+「但如果是两个数据源，事务管理器都不是同一个，那点 <code>@Transactional</code> 只保护业务库，流程操作在它自己的事务里。这种情况要么合并数据源，要么上分布式事务，要么接受不一致靠补偿。我的建议是<strong>能合并就合并</strong>，流程表和业务表放同一个库是最省事的。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「流程引擎自己会开事务吗？」</strong> → 会。没检测到外部事务时，<code>SpringTransactionInterceptor</code> 会给每个 Command 开一个事务，所以单独调 <code>taskService.complete()</code> 也是原子的。</li>
+<li><strong>「<code>@Transactional</code> 配了 <code>transactionManager</code> 但引擎配的是另一个怎么办？」</strong> → 两个事务管理器并存，容易出隐蔽的不一致，必须显式确认引擎注入的是哪个。</li>
+</ul>
+</div><h3 id="q-10" class="q-title">Q10 流程节点里调用第三方接口失败了，流程会回滚吗</h3>
+<p>🗣 <strong>人话</strong>：会，但这是「不该回滚却回滚了」——第三方那边可能已经扣了钱，你这边流程回滚了，账就不平了。所以第三方调用<strong>不该放在流程事务里</strong>。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>如果 RPC 异常没被 catch，会冒泡到 Command，整个流程事务回滚。</li>
+<li>问题是<strong>回滚不等于撤销</strong>：第三方已经执行的操作回不来。</li>
+<li>正确姿势：
+  1. 第三方调用挪到<strong>事务提交之后</strong>（<code>afterCommit</code> 或异步任务）。
+  2. 或者<strong>先记录调用意图</strong>（落一张调用表，状态待执行），事务提交后异步执行，失败重试直到成功或进补偿。
+  3. 必须同步拿到结果的，就要在业务侧做<strong>幂等 + 状态核对</strong>，用查单接口确认实际结果，而不是靠事务回滚。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「会回滚，但这里恰恰是坑。RPC 抛异常冒泡到流程 Command，流程事务回滚了，可第三方那边钱已经扣了——回滚只回滚了我们自己的数据，撤销不了外面的操作。」
+「所以正确的做法是别把第三方调用放在流程事务里面。我一般两种处理：一种是挪到事务提交之后，用 <code>TransactionSynchronization</code> 的 <code>afterCommit</code> 或者丢到异步任务里去调；另一种更稳的是先落一张调用记录表，状态是待执行，和业务在同一个事务里提交，然后异步去调，失败就重试，重试到上限进人工补偿。」
+「如果业务上必须同步拿到结果，那就得靠幂等加查单。调用超时不要直接认为失败，要去调对方的查询接口确认到底成没成——支付场景里这叫『查单兜底』，是最重要的一环。」
+「一句话总结：事务只能保证自己库里的原子性，跨系统的原子性只能靠补偿和查询来兜。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「那 <code>afterCommit</code> 里调用失败怎么办？」</strong> → 事务已经提交了，回不去，只能重试 + 告警 + 人工介入，所以更稳的是本地消息表。</li>
+<li><strong>「流程回滚了但第三方成功了，怎么补救？」</strong> → 靠对账发现差异单，然后反向操作（退款 / 冲正），不能重跑原流程。</li>
+</ul>
+</div><h3 id="q-11" class="q-title">Q11 一个审批流程走三天，能用一个数据库事务包住吗</h3>
+<p>🗣 <strong>人话</strong>：绝对不能。一个事务开三天，数据库连接早就超时被回收了，undo log 也撑不住。这种长流程的一致性只能靠「每步短事务 + 状态持久化 + 失败补偿」。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>一个事务持有连接三天 = 连接池直接瘫痪，还会阻塞 undo purge。</li>
+<li>正确做法：<strong>每个节点操作是一个独立短事务</strong>，流程状态持久化在流程表里（<code>ACT_RU_TASK</code>、<code>ACT_RU_EXECUTION</code>）。</li>
+<li>跨节点一致性靠 <strong>Saga 模式</strong>：每个正向操作配一个补偿操作，失败时反向执行。</li>
+<li>中间态对外可见是 Saga 的固有缺陷，要用<strong>业务状态机</strong>控制（比如「审批中」的单据不能被并发修改）。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「绝对不行。一个事务开三天，首先数据库连接早就超时被回收了，连接池直接就废了；其次 undo log 三天不能 purge，能把整个库拖慢；再加上这三天的中间状态对其他人全不可见，业务上也没法接受。」
+「实际做法是<strong>每步短事务 + 状态持久化</strong>。每个审批节点的操作是独立事务，提交完流程状态就落在流程表里，第三天从库里恢复出来继续走，跟第一天没关系。」
+「跨节点的一致性靠 Saga：每个正向操作配一个补偿操作。比如扣了库存要能退还、冻结了额度要能解冻，失败时反向执行补偿。工作流引擎本来就是为这个场景设计的——它持久化的是『走到哪一步了』，不是『一个事务开着』。」
+「Saga 的固有缺陷是没有隔离性，中间态对外可见。所以要用业务状态机兜住，比如『审批中』的单据禁止并发修改，或者用语义锁把资源标记成『处理中』。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「Saga 的补偿一定能成功吗？」</strong> → 不能，补偿也可能失败，所以要补偿重试 + 告警 + 人工兜底，最终靠对账收口。</li>
+<li><strong>「那和分布式事务比，Saga 的优势在哪？」</strong> → 不用长时间持锁，天然支持跨天流程，失败粒度清晰（知道停在哪一步）。</li>
+</ul>
+</div><h3 id="q-12" class="q-title">Q12 异步执行（async）的节点为什么拿不到原事务</h3>
+<p>🗣 <strong>人话</strong>：异步节点是<strong>原事务提交之后</strong>才被另一个线程池捞起来执行的，它压根不在原来那个事务里。所以在异步节点里读同步节点刚写的数据，要小心是不是已经提交了。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><code>flowable:async="true"</code>（或 <code>activiti:async</code>）：当前事务提交时，把 Job 写进 <code>ACT_RU_JOB</code> 表；事务提交后由 <code>AsyncExecutor</code> 的独立线程池捞出来执行。</li>
+<li>独立线程 = 独立的 ThreadLocal = 没有原事务上下文，Spring 会给它新开一个事务。</li>
+<li>常见坑：
+  1. 以为异步节点能读到未提交的数据——读不到，因为异步是在提交之后才触发。
+  2. 异步任务会<strong>重复执行</strong>（失败重试机制），必须幂等。
+  3. 异步节点抛异常不会回滚原流程，只是 Job 重试，重试到上限进死信表。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「异步节点的事务和主流程完全是两回事。<code>async=true</code> 的语义是：当前事务提交的时候，把这条 Job 记录写进 <code>ACT_RU_JOB</code> 表；事务提交之后，异步执行器的线程池才把它捞出来跑。所以它一定在原事务提交之后，而且跑在另一个线程里。」
+「线程不同，ThreadLocal 就不同，原来绑定的连接和事务上下文全都没有了，Spring 会给它新开一个事务。所以你在异步节点里想读同步节点刚写的数据是可以的——因为已经提交了；但反过来，如果你指望异步节点和主流程一起回滚，那是不可能的。」
+「这里有三个坑要注意。第一，异步任务会因为失败而重试，所以必须幂等。第二，异步节点抛异常不会回滚主流程，只是这个 Job 反复重试，到上限之后进死信表，需要监控。第三，异步节点里如果再调异步，会形成任务链，排查起来很痛苦，一定要打好 traceId。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「怎么让异步节点也保持顺序？」</strong> → Flowable 有 <code>async</code> 和 <code>exclusive</code> 两个属性，<code>exclusive=true</code>（默认）会让同一流程实例的异步任务串行执行。</li>
+<li><strong>「异步任务堆积了怎么排查？」</strong> → 查 <code>ACT_RU_JOB</code> 的 <code>RETRIES_</code> 和 <code>EXCEPTION_MSG_</code>，或者看 <code>ACT_RU_DEADLETTER_JOB</code>。</li>
+</ul>
+</div><h3 id="q-13" class="q-title">Q13 流程回滚了但业务数据没回滚，怎么排查</h3>
+<p>🗣 <strong>人话</strong>：九成是<strong>事务边界不一致</strong>——要么不同数据源，要么业务代码自己 catch 了异常，要么中间隔了一个异步或 MQ。</p>
+<p><strong>要点</strong></p>
+<p>排查顺序：</p>
+<ol>
+<li>确认是不是同一个 <code>PlatformTransactionManager</code>（打印引擎配置、看 <code>@Transactional</code> 有没有指定 <code>transactionManager</code>）。</li>
+<li>确认异常有没有被 catch 吞掉（尤其是 <code>try-catch</code> 里只打日志不抛）。</li>
+<li>确认中间有没有异步 / MQ / 新线程，跨线程就断链。</li>
+<li>确认业务方法是不是自调用（没走代理）。</li>
+<li>开 <code>logging.level.org.springframework.transaction=DEBUG</code>，看日志里事务的 begin / commit / rollback 边界对不对得上。</li>
+</ol>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我按四步查。第一步看事务管理器是不是同一个。如果流程引擎配的是 A 数据源的事务管理器，业务 <code>@Transactional</code> 用的是 B，那它俩压根不是一个事务，回滚当然互不影响。这个最隐蔽，因为代码看起来完全正常。」
+「第二步看异常有没有被吞。很多业务代码 <code>try-catch</code> 里只 <code>log.error</code> 不往外抛，拦截器收到的是正常返回，直接 commit。」
+「第三步看中间有没有断链。异步任务、MQ、新起的线程，任何一个都会让事务上下文丢失。这个在流程引擎里特别常见，因为异步节点是标配。」
+「第四步看自调用。这个和普通 Spring 事务失效是同一个原因。」
+「排查手段就是把 <code>org.springframework.transaction</code> 的日志级别开到 DEBUG，看事务的开始、提交、回滚日志，边界一对就出来了。再不行就在两边分别打 <code>TransactionSynchronizationManager.isActualTransactionActive()</code>，看是不是同一个事务。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「如果是不同数据源，有什么办法？」</strong> → 合并数据源最优；不能合并就用 Seata 或者本地消息表 + 补偿。</li>
+<li><strong>「流程回滚了但业务已提交，怎么补救？」</strong> → 反向补偿业务操作，或者把流程重新推进到对应节点，绝不能简单重跑。</li>
+</ul>
+</div><h3 id="q-14" class="q-title">Q14 Saga 和工作流编排是什么关系</h3>
+<p>🗣 <strong>人话</strong>：Saga 是一种<strong>模式</strong>，工作流引擎是<strong>实现它的工具</strong>。你可以手写 Saga，也可以用 Temporal / Camunda / Seata Saga 帮你把编排、状态持久化、重试、补偿都做了。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><strong>Saga 模式</strong>：一串本地事务 T1…Tn，每个配一个补偿 C1…Cn，失败时反向执行已完成的补偿。</li>
+<li><strong>工作流编排</strong>：把「走到哪一步」持久化下来，支持跨天、支持人工介入、支持可视化。</li>
+<li>两者关系：工作流引擎是 Saga 的工程化载体，但工作流能做的事比 Saga 多（人工任务、并行网关、定时边界事件）。</li>
+<li>选型：纯服务编排用 Saga 框架；有<strong>人工审批</strong>环节必须用工作流引擎。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我的理解是 Saga 是模式，工作流引擎是实现它的工具。Saga 本身很简单：一串本地事务，每个配一个补偿，失败了反向执行。但真要做到生产可用，你需要持久化『走到哪一步』、需要重试、需要超时、需要人工介入，这些都是工作流引擎帮你做的。」
+「所以如果只是几个服务的编排，没有人工环节，用 Seata Saga 或者自己写状态机就够了。但只要有审批、有跨天、有人工干预，就必须上工作流引擎——因为你要的不只是补偿，是『流程可以停在那里等三天』。」
+「Temporal 这类新框架其实也是这个思路，它把工作流状态持久化，代码写成顺序执行的样子，但底层是事件溯源，宕机了能从中断点恢复。本质还是 Saga 加持久化。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「Saga 和 TCC 怎么选？」</strong> → 资金类、要求隔离性选 TCC；长流程、服务多、能接受中间态选 Saga。TCC 侵入大但一致性强，Saga 侵入小但要自己防脏读。</li>
+<li><strong>「Temporal 和 Flowable 的区别？」</strong> → Temporal 是代码即流程（写 Java 方法），Flowable 是 BPMN 图即流程（业务人员能看懂）。前者适合工程师编排，后者适合有审批场景。</li>
+</ul>
+</div><h3 id="q-15" class="q-title">Q15 工作流里怎么做幂等和补偿</h3>
+<p>🗣 <strong>人话</strong>：流程会重试、消息会重投、人可能点两次。所有节点操作都得假设「我可能被执行两遍」。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><strong>幂等三层</strong>：
+  1. <strong>唯一索引</strong>兜底——最可靠，插不进去就是重复。
+  2. <strong>状态机校验</strong>——只允许从合法前置状态流转。
+  3. <strong>分布式锁 / 幂等表</strong>——<code>SET NX</code> 或唯一键记录请求号。</li>
+<li><strong>补偿设计原则</strong>：</li>
+<li>补偿操作本身必须幂等（可能被重试）。</li>
+<li>补偿要能「部分成功」——不能因为某个补偿失败就整批放弃。</li>
+<li>补偿失败要告警 + 进人工队列，不能静默。</li>
+<li><strong>正向和补偿要成对设计</strong>：扣库存 ↔ 还库存，冻结 ↔ 解冻，创建 ↔ 取消。设计时就要写清楚。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「幂等我一般做三层。最底层是唯一索引，业务单号加唯一键，插不进去就是重复，这是最可靠的兜底。中间层是状态机，只允许从合法状态流转，比如只有『待支付』能变成『已支付』，重复请求直接被拒。最上层是分布式锁或者幂等表，用请求号做 <code>SET NX</code>，挡住瞬时并发。」
+「补偿的设计有几个原则。第一，补偿本身必须幂等，因为它也会被重试。第二，补偿要允许部分成功，不能因为一个补偿失败就整批放弃，得记录每一步的结果。第三，补偿失败不能静默，必须告警进人工队列。」
+「最重要的是正向和补偿要成对设计。你在设计『扣库存』的时候就要想好『还库存』怎么写，设计『冻结额度』的时候就要想好『解冻』。我见过很多系统是出事了才临时想补偿，结果发现数据已经变形，补不回去了。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「补偿要不要考虑顺序？」</strong> → 要，必须严格反向，后做的先补偿，否则可能违反业务约束。</li>
+<li><strong>「如果补偿执行了一半系统挂了？」</strong> → 补偿也要持久化进度，重启后从断点继续，本质是把补偿也做成一个可恢复的流程。</li>
+</ul>
+</div><h3 id="q-16" class="q-title">Q16 如果项目里没用过工作流引擎，这题怎么答</h3>
+<p>🗣 <strong>人话</strong>：别硬编。老实说没用过引擎，然后把你做过的<strong>长流程一致性</strong>讲清楚——面试官真正想听的是你对「跨步骤、跨系统、跨时间」的一致性怎么处理。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>承认边界：「我们没上 Flowable 这类引擎，但业务里有类似的长流程。」</li>
+<li>迁移到你熟的场景：订单履约、支付对账、退款流程，本质都是长事务编排。</li>
+<li>讲你的方案：状态机 + 每步短事务 + 补偿 + 对账兜底。</li>
+<li>主动补一句学习意愿：「工作流引擎我了解过 BPMN 和 Flowable 的事务模型，如果业务有审批场景我会优先考虑它。」</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我们项目里没有引入 Flowable 或 Activiti 这类引擎，所以引擎层的事务细节我是从原理上理解的，没有生产踩坑经验，这点我先说清楚。」
+「但类似的长流程一致性我们确实在做。比如支付订单从下单、调渠道、等回调、到对账，整个过程跨几个小时甚至跨天，不可能用一个事务。我们的做法是状态机加每步短事务：订单状态单向流转，每一步都是独立事务，出事就停在那个状态等补偿。」
+「跨系统的部分靠对账兜底。每天拉渠道对账单，和本地流水按订单号加金额比对，差异单走人工或者自动冲正。这套东西比分布式事务更土，但在支付场景里反而更可靠——因为对账能发现所有类型的不一致，包括事务管不到的。」
+「工作流引擎我了解过它的 BPMN 模型和事务边界，核心就是流程表和业务表同数据源时共享 Spring 事务。如果以后业务上有人工审批这类跨天流程，我会优先选 Flowable 而不是自己写状态机。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「那你觉得自研状态机和工作流引擎的差别在哪？」</strong> → 自研灵活但每加一个流程就要写一遍；引擎统一但学习成本和 BPMN 建模成本高，适合流程多的场景。</li>
+<li><strong>「订单状态机怎么防止状态跳变？」</strong> → 更新时带上前置状态做条件：<code>UPDATE ... SET status=2 WHERE id=? AND status=1</code>，影响行数为 0 就说明状态已变。</li>
+</ul>
+<hr />
+</div><h2 id="sec-3" class="sec-title">三、我们项目的工作流与事务（park-server 实战版）</h2>
+<blockquote>
+<p><strong>这一章是你面试时要讲的真实答案</strong>，上一章是通用原理，用来应付追问和对比。
+核心优势：你能说清「为什么不用成熟引擎」和「rollback-only 那个坑怎么踩的」，这两点比背 Flowable 强得多。</p>
+</blockquote>
+<h3 id="q-17" class="q-title">Q17 你们项目的工单工作流是怎么做的</h3>
+<p>🗣 <strong>人话</strong>：前端拖拽画布产出 JSON 流程图，后端不引引擎，自己写几百行做「解析图 + 算下一步」。工单创建时把流程图<strong>拍个快照</strong>存进去，之后每个单子跑的都是它自己那份。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><strong>自研轻量流程引擎</strong>（<code>control-wrk</code> 模块，<code>com.xingdata.server.flow</code> 包）。</li>
+<li>前端画布 → JSON 流程图 → 后端 <code>FlowGraph</code> / <code>FlowNode</code> / <code>FlowEdge</code> 三个模型直接反序列化。</li>
+<li><code>FlowEngine</code> 只做路由计算：找起点、算下一节点、反查前置节点。</li>
+<li>工单创建时<strong>快照流程 JSON</strong>（<code>processGraphJson</code> / <code>processStructureJson</code>），流程定义后续改动不影响存量工单。</li>
+<li>每次完成任务：算下一节点 → 按节点的 <code>taskType</code> + <code>positionId</code> 分派岗位 → 写流转日志。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我们的工单工作流是自研的轻量引擎，不是 Activiti 也不是 Flowable。前端用画布拖出流程，产出一份 JSON 流程图，后端有三个模型 <code>FlowGraph</code>、<code>FlowNode</code>、<code>FlowEdge</code> 直接反序列化这份 JSON。」
+「引擎核心只有三个方法。<code>getStartNode</code> 找 START 节点作为起点；<code>getNextNode</code> 是路由核心，遍历当前节点的出边，用 SpEL 解析每条边的条件表达式，变量来自流程上下文比如工单类型和金额，命中的第一条返回，都不命中就走默认边；<code>getPreNode</code> 反查前置的业务节点，遇到网关递归跳过，用于拒绝后回流到上一处理人。」
+「工单创建时会按园区取默认的流程定义，然后把流程 JSON <strong>快照</strong>一份存到工单上。这一步很关键——流程定义后来改了，存量工单跑的还是它创建时刻那个版本，不会因为改流程把在途的单子搞乱。」
+「每次完成任务的时候，引擎算出下一节点，如果下一节点是网关就自动跳过不生成任务，直到走到 TASK 节点，再按节点的 taskType 和 positionId 生成任务分派给对应岗位，同时写流转日志。整套核心逻辑就几百行。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「流程节点类型有哪些？」</strong> → START、TASK、GATEWAY、END 四种。GATEWAY 只做条件分支，不产生任务。</li>
+<li><strong>「除了主干还做了什么？」</strong> → 拒绝回退、超时升级（批次任务自动处理）、以及对接外部 CREAMS 审批系统的回调。</li>
+</ul>
+</div><h3 id="q-18" class="q-title">Q18 为什么不用 Activiti / Flowable，自己写不怕出问题吗</h3>
+<p>🗣 <strong>人话</strong>：我们的流程就是「派单 → 审核 → 报价 → 处理 → 确认」这种直线，引一个几十张表、API 巨复杂的引擎，学它的成本比写这几百行还高。这叫投入产出不匹配。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><strong>流程特征</strong>：线性链路，节点少，无会签、无并行分支、无子流程。</li>
+<li><strong>引擎的代价</strong>：几十张表、复杂 API、学习成本、升级维护成本、和现有业务表的事务边界问题。</li>
+<li><strong>自研收益</strong>：前端画布直接对接 JSON，后端只做「解析 + 算下一步」，改动灵活。</li>
+<li><strong>边界要说清</strong>：如果流程复杂度升级（会签、并行、子流程），就该换成熟引擎了——<strong>这是加分点，不是减分点</strong>。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「当时评估过引引擎，最后没引是因为投入产出不匹配。我们的流程就是派单、审核、报价、处理、确认这种线性链路，节点少、没有会签、没有并行分支、没有子流程，Flowable 百分之八十的能力我们根本用不上。」
+「而引它的代价是实打实的：几十张表要纳入运维、API 要学、和现有业务表的事务边界要理清、以后升级还得跟着升。这些成本加起来，比我们自己写一个几百行的路由引擎高得多。」
+「自研还有个额外好处是灵活。前端画布产出的 JSON 后端直接吃，加一个节点类型、加一个条件字段都是改几十行的事，不用去研究引擎的扩展点。」
+「不过我会主动说清边界：这套东西只适合线性流程。如果以后要支持会签、并行网关、子流程嵌套，自研的成本会指数级上升，那时候就该换 Flowable 了。技术选型要看场景，不是自研就一定好。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「自研引擎怎么保证不出错？」</strong> → 引擎是纯计算，无状态、可单测；流程 JSON 有结构校验；关键是流转日志全量落库，出问题能追溯每个单子走了哪条路径。</li>
+<li><strong>「如果让你重做一次还这么选吗？」</strong> → 会，但会补两件事：流程 JSON 的 schema 校验、以及流程定义的可视化 diff（改了什么一眼能看到）。</li>
+</ul>
+</div><h3 id="q-19" class="q-title">Q19 流程定义改了，进行中的工单怎么办</h3>
+<p>🗣 <strong>人话</strong>：因为是快照，在途的单子继续跑老版本，新单子才用新版本。这就是快照存在的唯一理由。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>工单创建时把 <code>graphJson</code> 和 <code>processStructure</code> 一起快照到工单表。</li>
+<li>在途工单走老图，新工单走新图，互不干扰。</li>
+<li>避免了「改流程把在途单子卡死」这个线上灾难——比如删掉一个节点，老单子正好停在那个节点上，没有快照就找不到下一步了。</li>
+<li>代价：同一个流程定义，可能同时存在多个版本在跑，统计和排查时要看工单上的版本号。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「工单创建的时候会把流程定义的 JSON 和结构一起快照到工单上，所以进行中的工单跑的都是它创建那一刻的流程版本，流程定义后来怎么改都不影响它。新创建的工单才用新定义。」
+「这个设计不是为了好看，是为了避免一个线上灾难。想象一下如果没快照、所有工单都实时读流程定义，管理员把一个节点删了，正好有一批单子停在这个节点上，那这批单子下次完成任务时就找不到下一节点了，直接卡死，只能人工改数据。」
+「代价是同一个流程定义可能同时有好几个版本在跑，做统计和排查的时候要看工单上记的版本号。但这个代价比卡死单子小太多了。」
+「所以我会把这个说成一个设计决策，而不是一个实现细节——『为什么快照』比『怎么快照』更能体现你在想问题。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「快照会不会让存储变大？」</strong> → 会，JSON 存两列确实占空间，但相比流程表几十张的开销可以忽略；而且可以只存压缩后的结构。</li>
+<li><strong>「如果要让在途单子升级到新版本怎么办？」</strong> → 做成显式的「流程迁移」操作，重新算当前节点在新图里的映射，不能自动升。</li>
+</ul>
+</div><h3 id="q-20" class="q-title">Q20 GATEWAY 节点为什么是节点但不生成任务</h3>
+<p>🗣 <strong>人话</strong>：网关是「岔路口」，只负责判断走哪条路，不派人干活。所以引擎走到网关时不停，直接算下一跳。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><code>FlowNode.type</code> 有四种：<code>START</code>、<code>TASK</code>、<code>GATEWAY</code>、<code>END</code>。</li>
+<li><code>GATEWAY</code> 只在路由计算中存在，<strong>不落任务、不派人</strong>。</li>
+<li>引擎算下一节点时如果遇到网关，递归继续算，直到遇到 <code>TASK</code> 或 <code>END</code>。</li>
+<li>好处：流程图上能画分支条件，但业务上不产生无意义的「待办」。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「网关在我们的模型里是四种节点类型之一，但它的语义是『岔路口』——只负责判断往哪走，不派人干活。所以引擎算到网关的时候不会停，会递归继续算下一跳，直到遇到 TASK 或者 END。」
+「如果不这么设计，网关就会生成一条没人处理的待办任务，业务上完全没有意义，还会污染待办列表。所以网关是节点但不是任务，这是两个概念要分开。」
+「我们画布上把网关画成菱形，用户能直观看到这里是个判断点，配置每条出边的条件表达式；但落到数据上，网关只是流转日志里的一条记录，说明『在这判断了一下，走了哪条分支』。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「所有条件都不命中怎么办？」</strong> → 走默认边（没有条件表达式的边）。所以流程设计时默认边是必须的，否则会走进死路。</li>
+<li><strong>「网关会出现在流转日志里吗？」</strong> → 会，记一条「经过网关，命中某条分支」，排查时能看清为什么走了这条路。</li>
+</ul>
+</div><h3 id="q-21" class="q-title">Q21 getPreNode 的 visited 防环是防什么</h3>
+<p>🗣 <strong>人话</strong>：流程图里可能有回退边（拒绝了退回上一步），有环。反查前置节点时要是不记访问过的，就会在两个节点之间来回跳，直接栈溢出。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>拒绝场景需要「回流到上一处理人」，所以要反查前置的<strong>业务</strong>节点。</li>
+<li>遇到 <code>GATEWAY</code> 要递归跳过（网关不是处理人）。</li>
+<li>图可能有环（回退边、循环审批），递归必须带 <code>visited</code> 集合防死循环。</li>
+<li>只要访问过就跳过，保证每个节点最多进一次。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「防的是图里的环。我们的流程图允许回退——拒绝了要退回上一处理人，所以图上存在反向的边，有反向边就可能有环，比如 A 退 B、B 退 A。」
+「<code>getPreNode</code> 的逻辑是反查前置节点，遇到网关要递归跳过，因为网关不是处理人，不能把任务派给一个岔路口。递归的时候如果没有任何防护，A 找前置找到 B，B 的前置又指回 A，就在两个节点之间无限跳，直接栈溢出。」
+「所以递归必须带一个 <code>visited</code> 集合，访问过的节点直接跳过，保证每个节点最多进一次。这是个很典型的图遍历细节，写的时候容易漏，一漏就是线上 StackOverflowError。」
+「这个点看着小，但面试时讲出来能证明你真的写过图算法，不是调 API。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「如果整个图都是网关怎么办？」</strong> → <code>visited</code> 会兜住，最终返回 null，调用方要处理这种异常流程定义。</li>
+<li><strong>「为什么不用迭代而用递归？」</strong> → 深度有限（一般十几个节点），递归更直观；真要深的话可以改显式栈。</li>
+</ul>
+</div><h3 id="q-22" class="q-title">Q22 SpEL 表达式有注入风险吗</h3>
+<p>🗣 <strong>人话</strong>：有理论风险，但我们的表达式是管理员在画布上配的，不是终端用户输入；而且求值上下文只暴露变量 map，不暴露对象引用。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>表达式来源：流程定义（<code>wrk_process_def</code>），由<strong>管理员</strong>配置，不是终端用户随便输入。</li>
+<li>求值上下文只暴露流程变量 map（工单类型、金额等），不暴露 Spring Bean 或任意对象引用。</li>
+<li><strong>更进一步的安全做法（加分项）</strong>：用 <code>SimpleEvaluationContext</code> 替代 <code>StandardEvaluationContext</code>，它禁用了类型引用（<code>T()</code>）、构造函数、Bean 引用，只保留变量和基本运算。</li>
+<li>若真要开放给业务人员配置，还应加<strong>表达式白名单</strong> + 长度限制 + 求值超时。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「严格说 SpEL 本身是能执行任意代码的——<code>T(java.lang.Runtime)</code> 这种类型引用如果放开了，理论上能拿到运行时。但风险大小取决于两件事：表达式谁写的，和求值上下文暴露了什么。」
+「我们的表达式是流程定义的一部分，由管理员在画布上配置，存到流程定义表里，不是终端用户随手输入的，所以来源是可信的。求值上下文也只暴露了一个变量 map，工单类型、金额这些，没有放任何对象引用进去，所以即使表达式写了别的东西也拿不到东西。」
+「不过如果让我加固，我会换成 <code>SimpleEvaluationContext</code>。它默认禁用了类型引用、构造函数和 Bean 引用，只保留变量读取和基本运算，对我们这种只需要做条件判断的场景完全够用，安全性上一个台阶。」
+「还有一点是量的问题：如果以后开放给园区业务人员自己配流程，那就不能只靠『来源可信』了，得加表达式白名单、长度限制、求值超时，否则一条死循环表达式就能把线程卡住。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「<code>StandardEvaluationContext</code> 和 <code>SimpleEvaluationContext</code> 的区别？」</strong> → 前者功能全但危险（可调静态方法、构造对象、访问 Bean），后者是受限沙箱，具体能力要显式开启。</li>
+<li><strong>「表达式求值会抛异常吗，怎么处理？」</strong> → 会，变量缺失或类型不符都会抛，要 catch 后按「条件不命中」处理并记日志，不能让它冒泡把流程搞挂。</li>
+</ul>
+</div><h3 id="q-23" class="q-title">Q23 handleTask 的事务边界画在哪</h3>
+<p>🗣 <strong>人话</strong>：整个 <code>handleTask</code> 是一个事务——完成任务、算下一节点、生成新任务、写两份日志，这五件事要么全成要么全败，因为少一件工单状态就是错乱的。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>一个 <code>handleTask</code> 里做的事：更新当前任务状态 → 算下一节点 → 生成下一任务 → 写流转日志 → 写工单日志。</li>
+<li>这些必须原子：比如任务标了完成但没生成下一任务，单子就「悬空」了，没人能处理。</li>
+<li>事务边界画在 Service 层（<code>WrkOrderFlowServiceImpl.handleTask</code>），用声明式 <code>@Transactional(rollbackFor = Exception.class)</code>。</li>
+<li><strong>外部动作（CREAMS 回调、消息）不能放进来</strong>，要挪到 <code>afterCommit</code>。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「整个 <code>handleTask</code> 是一个事务。它里面干五件事：把当前任务标成完成、用引擎算下一节点、生成下一节点的任务、写流转日志、写工单日志。这五件事必须原子，缺一件工单状态就错乱。」
+「最典型的错乱是：任务标了完成，但下一任务没生成。这个单子就悬空了——当前节点没人能处理，下一节点又不存在，只能人工改数据。所以这几步一定要在一个事务里。」
+「边界我画在 Service 层的 <code>handleTask</code> 上，用声明式的 <code>@Transactional(rollbackFor = Exception.class)</code>，受检异常也回滚，不然默认只回滚运行时异常，容易漏。」
+「但外部动作我一定挪出去。比如通知 CREAMS 审批系统，那是 HTTP 调用，慢且失败不可回滚，放事务里就是拿数据库连接去等网络。这类动作统一走 <code>afterCommit</code> 或者异步消息加补偿。」
+「引擎本身是纯计算、无 IO 的，放在事务里没问题，它不会拖长事务。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「生成下一任务时并发点了两次完成怎么办？」</strong> → 任务更新要带前置状态做条件（<code>UPDATE ... WHERE id=? AND status=待处理</code>），影响行数为 0 就说明已被处理，直接返回。</li>
+<li><strong>「超时升级是事务里做还是定时任务？」</strong> → 定时任务，独立事务，和人工操作互不干扰。</li>
+</ul>
+</div><h3 id="q-24" class="q-title">Q24 事务里 catch 了异常，为什么提交还会失败</h3>
+<p>🗣 <strong>人话</strong>：这是最值钱的一个坑。子方法抛异常时 Spring 已经把事务标记成「只能回滚」了，你外层 catch 住也没用，提交那一刻照样炸 <code>UnexpectedRollbackException</code>。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>场景：外层方法 A（<code>REQUIRED</code>）调用子方法 B（<code>REQUIRED</code>），B 抛异常，A 用 <code>try-catch</code> 吞掉。</li>
+<li>机制：B 的事务拦截器捕获异常后，发现自己是<strong>加入</strong>已有事务（不是新建），于是把事务标记为 <code>rollback-only</code>，然后重新抛出。</li>
+<li>结果：A 正常返回，提交时 <code>processCommit</code> 检测到 rollback-only，抛 <code>UnexpectedRollbackException</code>，整个事务回滚。</li>
+<li><strong>catch 只能吞掉异常，不能撤销 rollback-only 标记。</strong></li>
+</ul>
+<p>解法：</p>
+<ol>
+<li>子调用改成 <code>REQUIRES_NEW</code>，开独立事务，回滚只影响它自己。</li>
+<li>把动作挪到 <code>afterCommit</code> 回调里。</li>
+<li>让异常正常抛出（如果你本来就希望整体回滚）。</li>
+</ol>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「这个坑我在注册发积分那个场景实际踩过。现象很诡异：外层方法明明 <code>try-catch</code> 把异常吞了，日志也没报错，但最后抛了一个 <code>UnexpectedRollbackException</code>，整个事务还是回滚了。」
+「原因是 Spring 的事务拦截器在子方法抛异常时，会先判断自己是新建事务还是加入已有事务。如果是加入——也就是 <code>REQUIRED</code> 传播、外层已经有事务——它不能只回滚自己那一部分，因为大家在同一个事务里，所以它把整个事务标记成 <code>rollback-only</code>，然后把异常重新抛出来。」
+「外层 <code>catch</code> 住异常，看起来风平浪静，方法正常返回，拦截器就去提交。但 <code>processCommit</code> 一检查，发现事务被标了 rollback-only，直接抛 <code>UnexpectedRollbackException</code>。所以 catch 只能吞异常，吞不掉那个标记。」
+「解法就两个：要么子调用改成 <code>REQUIRES_NEW</code> 开独立事务，它的回滚只影响自己；要么干脆别放事务里，挪到 <code>afterCommit</code> 回调中执行。我们注册发积分用的是后者——积分发失败只记日志，不能影响注册主流程。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「<code>REQUIRES_NEW</code> 和 <code>afterCommit</code> 怎么选？」</strong> → 需要在主流程失败时也不执行 → <code>afterCommit</code>；需要在主流程未提交时就读到最新数据 → 只能 <code>REQUIRES_NEW</code>（但会有一致性风险）。</li>
+<li><strong>「怎么确认是 rollback-only 导致的？」</strong> → 异常栈里搜 <code>UnexpectedRollbackException</code>，配合 <code>logging.level.org.springframework.transaction=DEBUG</code> 看 <code>Participating in existing transaction</code> 和 <code>Initiating transaction rollback</code> 的日志。</li>
+</ul>
+</div><h3 id="q-25" class="q-title">Q25 注册发积分为什么不能直接放主事务里</h3>
+<p>🗣 <strong>人话</strong>：积分是锦上添花，注册是命根子。放一个事务里，积分出问题会把注册一起拖死。宁可丢分，不能丢注册。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>主事务是「绑定手机号」，积分是附带动作。</li>
+<li>放同一事务的问题：积分失败 → 事务 rollback-only → 绑定也失败 → 用户注册不了。</li>
+<li>正确做法：<code>TransactionSynchronization#afterCommit</code> 回调 + <code>TransactionTemplate</code> 配 <code>PROPAGATION_REQUIRES_NEW</code>。</li>
+<li>权衡清晰：<strong>积分可丢，注册不可丢</strong>。发分失败只记日志 + 告警，人工补。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「因为这两件事的重要级差得远。注册是命根子，用户绑不了手机号就走不下去了；积分是锦上添花，晚发一会儿甚至不发都能补。把它们放在一个事务里，等于让次要的事绑架主要的事。」
+「具体机制就是刚才说的 rollback-only：发积分在同一个事务里失败，事务就被标记成只能回滚，外层再怎么 catch，提交时照样抛 <code>UnexpectedRollbackException</code>，绑定手机号跟着失败。用户看到的是『注册失败』，实际上只是积分服务出了点问题。」
+「所以我们的做法是在主事务提交之后再做。注册一个 <code>TransactionSynchronization</code>，在 <code>afterCommit</code> 回调里用 <code>TransactionTemplate</code> 配 <code>REQUIRES_NEW</code> 开一个独立事务去发分。这样主事务已经提交了，发分成功失败都影响不到它。」
+「发分失败就记日志加告警，走人工或者定时任务补偿。这个权衡我会主动说出来：宁可丢分不能丢注册。面试官听到这种明确的取舍判断，比听十个 API 名字有价值。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「<code>afterCommit</code> 里为什么一定要 <code>REQUIRES_NEW</code>？」</strong> → 因为 <code>afterCommit</code> 执行时原事务的资源还绑在当前线程上，用默认的 <code>REQUIRED</code> 会被当成加入一个已提交的事务，SQL 可能不生效。必须显式开新事务。</li>
+<li><strong>「发分彻底失败了怎么补？」</strong> → 落一条失败记录，定时任务扫描重试，超过次数人工处理；积分流水表本身有唯一约束，重复发会被挡住。</li>
+</ul>
+</div><h3 id="q-26" class="q-title">Q26 什么时候用跨模块大事务，什么时候绝对不能用</h3>
+<p>🗣 <strong>人话</strong>：能用一个事务包住的，前提是<strong>同一个数据库</strong>。我们积分商城兑换就是订单、库存、积分扣减一起回滚。但一旦跨服务、跨库，这条路就走不通了。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>典型场景：积分商城兑换下单（<code>LsSalesOrderServiceImpl.redeemOrderByPoints</code>）——订单落库 + 库存出库 + 调 <code>control-mkt</code> 扣积分，同一个事务。</li>
+<li><strong>能这么做的前提</strong>：这是<strong>模块化单体</strong>，所有模块共享同一个 <code>DataSource</code>，所以 <code>REQUIRED</code> 传播能真的加入同一个事务。</li>
+<li>收益：余额不足抛 <code>POINT_BALANCE_NOT_ENOUGH</code>，整单回滚，不会出现「分扣了单没建」或「单建了分没扣」。</li>
+<li><strong>绝对不能用的情况</strong>：跨微服务、跨数据库、事务里含 RPC/HTTP。</li>
+<li>边界纪律：事务只包数据库操作，外部调用一律挪出去。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「跨模块大事务我用在积分商城兑换下单上：订单落库、库存出库、调积分模块扣减余额，这三件事在同一个事务里。余额不足直接抛异常整单回滚，不会出现分扣了单没建，也不会出现单建了分没扣。」
+「但我要强调一个前提：<strong>能这么做是因为我们是模块化单体，所有模块共享同一个数据源</strong>。<code>REQUIRED</code> 传播真的能让 control-ls 和 control-mkt 加入同一个事务，因为它们用的是同一个连接。」
+「如果换成微服务、各自独立数据库，这条路立刻走不通——那就是分布式事务的范畴了，得用 Saga、TCC 或者本地消息表。所以我从来不觉得『大事务』是个通用方案，它是单体架构的一个红利。」
+「还有一条纪律：事务里只包数据库操作。任何 RPC、HTTP、发消息都不许进事务，因为这些动作慢且失败不可回滚，放进事务就是拿数据库连接去等网络，还会让锁持有时间变长。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「大事务会不会有性能问题？」</strong> → 会，锁范围和持有时间都变大。所以只用在低频但要求强一致的场景（下单兑换），高频场景要拆。</li>
+<li><strong>「那以后拆微服务怎么办？」</strong> → 这块要改成 Saga：订单和库存本地事务，积分扣减走消息 + 补偿，牺牲强一致换可用性。</li>
+</ul>
+</div><h3 id="q-27" class="q-title">Q27 批量任务的事务怎么控制</h3>
+<p>🗣 <strong>人话</strong>：几千条费用记录一次性塞进一个事务，锁一堆、undo 一堆、连接占着不放。用编程式事务分块提交，每块几百条。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>场景：费用记录批量生成（<code>FinCostRecordServiceImpl</code>）。</li>
+<li>问题：声明式事务只能包整个方法，批量数据一大就是大事务。</li>
+<li>解法：<code>TransactionTemplate.executeWithoutResult(status -&gt; {...})</code>，按块提交，每块 500～1000 条。</li>
+<li>附带好处：可以<strong>动态决定传播行为</strong>（运行时设 <code>REQUIRES_NEW</code>），声明式做不到。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「批量生成费用记录用的是编程式事务，<code>TransactionTemplate</code> 的 <code>executeWithoutResult</code>。原因是声明式事务只能包住整个方法，几千条数据一次性提交就是典型的大事务——锁范围大、undo 膨胀、连接占着不放，还容易造成主从延迟。」
+「用 <code>TransactionTemplate</code> 就能自己控制块大小，比如每五百条提交一次。这样锁只影响当前这批，undo 也能及时 purge，主从延迟可控。中途失败也只回滚当前块，前面的已经落库，配合断点续跑比整批重来友好得多。」
+「编程式还有个声明式给不了的能力：<strong>动态决定传播行为</strong>。比如某些场景需要运行时判断要不要开独立事务，<code>@Transactional</code> 是编译期固定的，做不到，<code>TransactionTemplate</code> 可以临时 set 一个 <code>REQUIRES_NEW</code>。」
+「代价是可读性差一点，事务边界散在代码里。所以我的原则是默认用声明式，只有批量或者需要动态传播行为才上编程式。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「分块提交失败了怎么续跑？」</strong> → 记录已处理的批次标记，失败从断点继续；或者用幂等键（业务唯一号）让重跑天然幂等。</li>
+<li><strong>「<code>executeWithoutResult</code> 和 <code>execute</code> 区别？」</strong> → 前者用于无返回值场景（<code>void</code>），后者可以拿返回值；都是 <code>TransactionCallback</code> 的封装。</li>
+</ul>
+</div><h3 id="q-28" class="q-title">Q28 并发下扣积分怎么防超扣</h3>
+<p>🗣 <strong>人话</strong>：现在的做法是靠事务原子性加余额校验，量级够用。但要老实说清楚——高并发下这套是不保险的，得上乐观锁或者行锁。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>当前做法：单事务里「读余额 → 校验 → 写流水 → 更新余额」，异常整单回滚。</li>
+<li><strong>局限</strong>：这是「先读后写」，两个并发请求可能都读到足够的余额，然后都扣——典型的丢失更新。</li>
+<li>加固方案：
+  1. <strong>数据库行锁</strong>：<code>SELECT ... FOR UPDATE</code>，简单但阻塞。
+  2. <strong>乐观锁</strong>：余额表加 <code>version</code>，<code>UPDATE ... WHERE version = ?</code>，影响行数为 0 就重试。
+  3. <strong>条件更新</strong>：<code>UPDATE account SET balance = balance - ? WHERE id = ? AND balance &gt;= ?</code>，一条 SQL 搞定，最推荐。</li>
+<li>面试时<strong>主动承认局限</strong>是加分项，硬吹「事务能防超扣」会被追问穿。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「现在的实现是单事务里读余额、校验够不够、写流水、更新余额，任何一步异常整单回滚。在目前的量级下是够用的。」
+「但我得说清楚它的局限：这是典型的先读后写，两个并发请求可能同时读到余额足够，然后都往下扣，就是丢失更新。事务的隔离级别在 RR 下也挡不住这个，因为两个事务读的是各自的快照。」
+「要真正防超扣，有三个方案。最简单的是 <code>SELECT ... FOR UPDATE</code> 加行锁，缺点是阻塞、容易死锁。第二种是乐观锁，余额表加 version 字段，更新时带上版本号，影响行数为 0 就重试。第三种我最推荐，直接条件更新：<code>UPDATE account SET balance = balance - ? WHERE id = ? AND balance &gt;= ?</code>，一条 SQL 把校验和更新做完，靠数据库的行锁保证原子，影响行数为 0 就说明余额不足。」
+「我会主动说『当前量级用事务加校验够用，量大再加锁』，因为这是实话。硬说事务能防超扣，面试官追问一句并发场景就漏了。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「条件更新和乐观锁怎么选？」</strong> → 余额扣减这类「减法 + 下限校验」用条件更新最简洁；需要校验多个字段用乐观锁。</li>
+<li><strong>「重试会不会重复扣？」</strong> → 重试前要重新读最新余额，且整个操作要幂等（用业务单号唯一约束兜底）。</li>
+</ul>
+</div><h3 id="q-29" class="q-title">Q29 这几块内容的代码在哪（面试前快速回顾）</h3>
+<p>🗣 <strong>人话</strong>：面试前半小时翻这张表就够了，别通读代码。</p>
+<table>
+<thead>
+<tr>
+<th>内容</th>
+<th>位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>流程引擎</td>
+<td><code>control-wrk/.../flow/engine/FlowEngine.java</code></td>
+</tr>
+<tr>
+<td>流程模型</td>
+<td><code>control-wrk/.../flow/model/</code>（FlowGraph / FlowNode / FlowEdge）</td>
+</tr>
+<tr>
+<td>工单流转</td>
+<td><code>control-wrk/.../service/impl/WrkOrderFlowServiceImpl.java</code>（handleTask）</td>
+</tr>
+<tr>
+<td>流程定义</td>
+<td><code>wrk_process_def</code> 表，WrkProcessDefService</td>
+</tr>
+<tr>
+<td>积分事务</td>
+<td><code>control-mkt/.../MktPointServiceImpl.java</code></td>
+</tr>
+<tr>
+<td>兑换大事务</td>
+<td><code>control-ls/.../LsSalesOrderServiceImpl.java</code>（redeemOrderByPoints）</td>
+</tr>
+<tr>
+<td>afterCommit 发分</td>
+<td><code>controlserver/.../WechatAuthServiceImpl.java</code></td>
+</tr>
+<tr>
+<td>TransactionTemplate</td>
+<td><code>control-fin/.../FinCostRecordServiceImpl.java</code></td>
+</tr>
+<tr>
+<td>外部审批回调</td>
+<td><code>WrkOrderApprovalCallbackApplicationServiceImpl</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>要点</strong></p>
+<ul>
+<li>面试讲项目时<strong>先给结构和链路，再给类名</strong>。上来就报类名面试官听不懂，先讲「画布 → JSON → 引擎算下一跳 → 派任务」，再补「核心在 FlowEngine」。</li>
+<li>每个点准备「一个坑 + 一个数字」：坑是 rollback-only，数字是几百行核心代码 / 每批 500 条。</li>
+<li>主动提改进点：SpEL 换 <code>SimpleEvaluationContext</code>、余额扣减改条件更新、流程定义加 schema 校验。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「讲项目我有个固定顺序：先说业务是什么、流程长什么样，再说技术方案和为什么这么选，最后才提类名和表名。上来就报 <code>FlowEngine</code> 和 <code>wrk_process_def</code>，面试官脑子里没有画面，等于白说。」
+「每个技术点我都会配一个真实的坑。讲事务就讲 rollback-only 那次排查，讲工作流就讲快照设计避免的那次卡单风险。故事比定义记得住。」
+「最后主动说改进点，这个特别加分。我会说三件事：SpEL 求值建议换成 <code>SimpleEvaluationContext</code> 做沙箱、余额扣减从先读后写改成条件更新、流程定义加 schema 校验。主动暴露问题说明你真的在想，而不是背文档。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「如果面试官追问实现细节记不清了呢？」</strong> → 说清思路和取舍，细节记不清就直说「具体方法名我记不清了，逻辑是这样的」。</li>
+<li><strong>「为什么要准备数字？」</strong> → 数字是可信度的锚点，「几百行」比「很轻量」有力，「每批 500 条」比「分批提交」有力。</li>
+</ul>
+<hr />
+</div><h2 id="sec-4" class="sec-title">四、支付加密</h2>
+<blockquote>
+<p>这块你项目里有真实代码，是最容易答出彩的地方。核心就四件事：<strong>签名、加密、验签、回调</strong>。
+项目内更细的渠道对照（每个渠道用什么算法、哪些类）见本地文档 <code>支付对接面试速记.md</code>，那份不适合公开，别往线上放。</p>
+</blockquote>
+<h3 id="q-30" class="q-title">Q30 签名和加密到底有什么区别</h3>
+<p>🗣 <strong>人话</strong>：签名是「证明这是我发的、没被改过」，加密是「让别人看不懂」。签名用私钥，验证用公钥；加密反过来。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><strong>签名</strong>：防篡改 + 防抵赖。对摘要做运算，接收方用公钥（或共享密钥）验证。</li>
+<li><strong>加密</strong>：防窃听。内容不可读。</li>
+<li>两者可以同时用：先加密再签名，或先签名再加密，看协议约定。</li>
+<li>常见误区：MD5 单独用不叫签名，因为它没有密钥，谁都能算——只能防误传，不防伪造。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「签名和加密解决的是两个不同的问题。签名解决『这是不是你发的、有没有被改过』，加密解决『别人能不能看懂』。」
+「签名是我用私钥对报文摘要做运算，对方用我的公钥验证，验证通过就说明报文确实是我发的、而且没被改过——因为改一个字摘要就变了，而别人没有我的私钥算不出新签名。所以签名同时做到了防篡改和防抵赖。」
+「加密是反过来的，用对方的公钥加密，对方用私钥解密，保证传输过程中别人看不到内容。」
+「我们项目里银联进件是两者都用的：<code>json_data</code> 用 3DES 加密保证内容不可读，<code>sign_data</code> 用 SHA-256 做摘要保证不被篡改。这是双重保险。」
+「有一个常见误区要说清楚：单纯 MD5 不算签名，因为它没有密钥，任何人都能算出一模一样的值，只能防传输误码，防不了伪造。要防伪造必须带密钥，要么 HMAC，要么非对称签名。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「先加密还是先签名？」</strong> → 一般先签名后加密（sign-then-encrypt），保证签名不可见且不被剥离；具体看渠道协议，不能自己定。</li>
+<li><strong>「为什么签名不直接对原文签名？」</strong> → 非对称运算慢，原文可能很大，先做摘要能大幅提速。</li>
+</ul>
+</div><h3 id="q-31" class="q-title">Q31 摘要、HMAC、RSA、SM2 到底怎么选</h3>
+<p>🗣 <strong>人话</strong>：没密钥的只能防手滑，有密钥的才能防坏人。对称快但钥匙要共享，非对称慢但能防抵赖。</p>
+<p><strong>要点</strong></p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>代表</th>
+<th>密钥</th>
+<th>能力</th>
+<th>场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>摘要</td>
+<td>MD5、SHA-256</td>
+<td>无</td>
+<td>只能防误传</td>
+<td>校验文件完整性</td>
+</tr>
+<tr>
+<td>HMAC</td>
+<td>HMAC-SHA256</td>
+<td>共享密钥</td>
+<td>防篡改 + 防伪造</td>
+<td>API 签名（双方都有 key）</td>
+</tr>
+<tr>
+<td>非对称签名</td>
+<td>RSA2、SM2</td>
+<td>私钥签 / 公钥验</td>
+<td>防篡改 + 防伪造 + 防抵赖</td>
+<td>支付、开放平台</td>
+</tr>
+<tr>
+<td>对称加密</td>
+<td>AES、3DES</td>
+<td>同一密钥</td>
+<td>保密</td>
+<td>报文加密</td>
+</tr>
+<tr>
+<td>非对称加密</td>
+<td>RSA、SM2</td>
+<td>公钥加 / 私钥解</td>
+<td>保密 + 密钥交换</td>
+<td>换会话密钥</td>
+</tr>
+</tbody>
+</table>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我按『有没有密钥』分三类。第一类是没有密钥的摘要，MD5 和 SHA-256，它只能防传输误码，防不了伪造，因为谁都能算。MD5 现在连抗碰撞都不行了，生产不建议用。」
+「第二类是带共享密钥的 HMAC，比『MD5 加拼 key』规范得多，因为它不是简单拼接，有防长度扩展攻击的设计。API 签名里最常见，双方约定一个 appSecret。」
+「第三类是非对称签名，RSA2 和国密 SM2。私钥签名公钥验签，多了防抵赖能力——因为只有你有私钥。支付、开放平台基本都用这个，支付宝是 RSA2，银联云直连用 SM2。」
+「对称加密和非对称加密是另一个维度：对称快，适合加密大数据量的报文；非对称慢，一般只用来交换会话密钥。实际系统都是混合的——非对称换密钥，对称加密数据。」
+「选型上我的原则是：能上 RSA2 或 SM2 就别用 MD5；国密合规要求就用 SM2；内部服务之间 HMAC 就够了。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「SM2 和 RSA 的区别？」</strong> → SM2 是椭圆曲线，256 位强度约等于 RSA 3072 位，密钥更短、运算更快；但生态支持不如 RSA 广。</li>
+<li><strong>「为什么 MD5 不抗碰撞就不能用了？」</strong> → 攻击者可以构造两个不同内容但 MD5 相同，签名就失去了防篡改意义。</li>
+</ul>
+</div><h3 id="q-32" class="q-title">Q32 为什么签名串必须按 key 字典序排序</h3>
+<p>🗣 <strong>人话</strong>：因为双方要拼出<strong>一模一样</strong>的字符串才能验签通过。Map 的遍历顺序不保证，不排序就会你今天这样拼、对方那样拼，永远对不上。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>排序保证「同样的参数集合 → 同样的字符串」，与语言、序列化实现无关。</li>
+<li>惯例：剔除空值、剔除 <code>sign</code> 字段本身、按 key 的 ASCII 升序。</li>
+<li>拼接格式 <code>k1=v1&amp;k2=v2</code>，末尾按渠道要求追加 <code>&amp;key=xxx</code>（MD5 类）。</li>
+<li>不排序的后果：验签偶发失败，且难以复现——因为 HashMap 顺序在扩容后会变。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「根本原因是<strong>双方必须拼出完全相同的字符串</strong>才能验签一致。参数放在 Map 里，HashMap 的遍历顺序本来就不保证，扩容之后顺序还会变，不排序的话你今天拼出来一个样、明天又一个样，对方永远对不上。」
+「所以行业惯例是统一按 key 的 ASCII 升序排，剔除空值，剔除 <code>sign</code> 字段本身——因为 sign 是结果不能参与计算。拼成 <code>k1=v1&amp;k2=v2</code> 的形式，MD5 类渠道再在末尾追 <code>&amp;key=签名密钥</code>。」
+「这个细节看着小，实际上是最容易出问题的地方。我踩过的坑是空值处理：我以为 null 和空串都剔除，结果对方只剔除 null，空串要参与拼接，导致某几个字段为空时验签一直失败。」
+「所以对接新渠道时，第一步一定是拿官方提供的签名测试用例跑通，用例能过再谈业务。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「中文参数排序有问题吗？」</strong> → 按字节值排序，UTF-8 编码下中文和英文的相对顺序是确定的，但必须双方都用 UTF-8。</li>
+<li><strong>「参数里有嵌套 JSON 怎么办？」</strong> → 一般把整个 JSON 当字符串值参与拼接，不递归；具体看渠道文档，不能自己想当然。</li>
+</ul>
+</div><h3 id="q-33" class="q-title">Q33 支付回调怎么防伪造、防重放、防重复、防金额篡改</h3>
+<p>🗣 <strong>人话</strong>：四道关，顺序不能乱：<strong>先验签，再防重放，再幂等，再校验金额</strong>。任何一步跳过都会出事。</p>
+<p><strong>要点</strong></p>
+<ol>
+<li><strong>防伪造</strong>：验签。用渠道公钥验证，验不过直接丢弃，不写任何数据。</li>
+<li><strong>防重放</strong>：<code>timestamp</code> + <code>nonce</code>，时间窗（比如 ±5 分钟）+ nonce 存 Redis <code>SET NX EX</code> 去重。</li>
+<li><strong>防重复</strong>：幂等。订单状态机兜底——已成功的直接返回成功，不重复处理。</li>
+<li><strong>防金额篡改</strong>：回调金额必须和本地订单金额比对，不一致进异常队列。</li>
+<li><strong>应答</strong>：处理成功才返回渠道要求的成功标识，否则渠道会一直重试。</li>
+</ol>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我按四道关来说，顺序不能乱。第一道是验签，用渠道的公钥验证签名，验不过直接丢弃，一个字段都不落库——这一步是防伪造，也是最关键的，因为后面所有校验都建立在『这个请求真的来自渠道』这个前提上。」
+「第二道防重放。看 <code>timestamp</code> 是不是在允许的时间窗内，比如正负五分钟；再看 <code>nonce</code>，用 Redis 的 <code>SET NX EX</code> 去重，重复的直接拒。这一步防的是有人抓了包原样重发。」
+「第三道是幂等。回调一定会重复推送，这是渠道的机制不是 bug。我们用订单状态机兜底：查订单，如果已经是成功状态，直接返回成功应答，不重复处理。更稳的还会加唯一索引，防并发。」
+「第四道是金额校验。回调里的金额必须和本地订单金额比对，不一致说明可能被篡改或者下错单，进异常队列人工处理。这一步很多人会漏。」
+「最后是应答。处理成功了才返回渠道要求的成功标识，处理失败就返回失败，让渠道重试——千万别为了『不报错』一律返回成功，那是自己骗自己，最后掉单。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「为什么回调一定要幂等，不能靠渠道只推一次？」</strong> → 渠道的重试机制保证的是「至少一次」，不是「恰好一次」，网络超时、应答丢失都会触发重推。</li>
+<li><strong>「验签失败的回调要不要记录？」</strong> → 要，落日志和告警，可能是密钥配错了，也可能是攻击。</li>
+</ul>
+</div><h3 id="q-34" class="q-title">Q34 对称加密和非对称加密在支付里怎么配合</h3>
+<p>🗣 <strong>人话</strong>：非对称慢得像蜗牛，只用来换钥匙；真正加密大报文一律用对称。这叫混合加密。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>非对称加密开销是对称的上千倍，不能直接加密报文。</li>
+<li>标准套路：客户端生成随机 AES 密钥 → 用服务端 RSA 公钥加密这个密钥 → 服务端私钥解密拿到 AES 密钥 → 后续用 AES 加密通信。</li>
+<li>支付场景里更常见的是：<strong>报文整体用对称加密（3DES/AES），签名用非对称（RSA2/SM2）</strong>，两者各司其职。</li>
+<li>对称密钥怎么安全传递，是非对称存在的意义。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「非对称加密的性能开销是堆成量级的，RSA 加密一个几 KB 的报文可能比 AES 慢上千倍，所以它从来不直接加密业务数据，只用来做两件事：签名，和交换对称密钥。」
+「标准混合加密是这么走的：客户端生成一个随机的 AES 密钥，用服务端的 RSA 公钥把这个密钥加密传过去，服务端用私钥解出来，之后双方都用这个 AES 密钥加密通信。这样既有非对称的安全性，又有对称的性能。」
+「支付场景里更常见的组合是分工：报文整体用对称加密，比如银联进件用 3DES 加密 <code>json_data</code>；签名用非对称或者摘要，比如 <code>sign_data</code> 用 SHA-256。加密负责保密，签名负责防篡改，两件事分开做。」
+「所以如果面试官问『为什么不用 RSA 加密整个报文』，答案就是性能——非对称只适合加密很短的数据，长报文必须走对称。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「3DES 还能用吗？」</strong> → 能用但不推荐，64 位分组有 Sweet32 攻击风险，新系统应该用 AES-GCM。</li>
+<li><strong>「AES 的 ECB 模式为什么不能用？」</strong> → 相同明文块加密结果相同，会泄露数据模式，要用 CBC 或 GCM，GCM 还自带完整性校验。</li>
+</ul>
+</div><h3 id="q-35" class="q-title">Q35 密钥怎么管理</h3>
+<p>🗣 <strong>人话</strong>：密钥不能写死在代码里，不能打进日志，不能所有人一个。这是安全和合规的硬要求。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><strong>不硬编码</strong>：放配置中心 / KMS / 环境变量，绝不写在代码里（<code>private static final String KEY = "xxx"</code> 是典型反模式）。</li>
+<li><strong>不落日志</strong>：支付日志必须脱敏，卡号、密钥、身份证一律打码。</li>
+<li><strong>公私钥分离</strong>：私钥只在自己这侧，公钥给对方；私钥不能出现在任何日志和报文中。</li>
+<li><strong>分环境隔离</strong>：测试和生产的密钥绝对不能相同。</li>
+<li><strong>定期轮换</strong>：支持双密钥并行（新老密钥同时可验签），平滑切换。</li>
+<li><strong>最小权限</strong>：只有支付模块能读密钥，其他模块拿不到。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我按五点说。第一，绝不硬编码。密钥放配置中心或者 KMS，代码里只留一个 key 的名字。我见过最典型的反模式是 <code>private static final String SIGN_KEY = "xxx"</code> 直接写在工具类里，一旦代码泄露或者仓库公开，密钥就废了。」
+「第二，绝不落日志。支付相关的日志必须脱敏，卡号、身份证、密钥一律打码。很多线上事故不是因为被黑，是因为日志被下载了。我特别注意不要在 <code>log.info</code> 里把拼好的签名串打出来，因为那里面通常带着密钥。」
+「第三，公私钥严格分离。私钥只在自己这侧，公钥给对方；私钥永远不出现在日志、报文、错误信息里。」
+「第四，测试和生产密钥必须分开。这个听起来废话，但我真的见过有团队图省事共用一套，结果测试环境把生产数据打通了。」
+「第五，支持轮换。设计上要允许新旧两套密钥并行一段时间，新密钥生效但老密钥仍可验签，等所有调用方都切换完再下线老的。没有这个机制，换密钥就是一次全量停机。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「密钥轮换怎么做不停机？」</strong> → 双密钥并行：加密/签名用新密钥，验签同时接受新旧；监控老密钥调用量归零后再下线。</li>
+<li><strong>「KMS 的作用是什么？」</strong> → 密钥托管 + 审计 + 自动轮换 + 权限控制，应用只拿到临时凭证，拿不到密钥明文。</li>
+</ul>
+</div><h3 id="q-36" class="q-title">Q36 HTTPS 都有了，为什么报文还要签名</h3>
+<p>🗣 <strong>人话</strong>：HTTPS 只保护「路上」，到网关就解密了。签名保护的是「报文本身」，能防内部篡改、防抵赖、防越权。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>HTTPS 是<strong>传输层</strong>加密，链路两端（客户端 → 网关）之间有效；过了网关就是明文。</li>
+<li>签名是<strong>报文级</strong>，端到端有效，中途任何一环改了都能发现。</li>
+<li>支付还需签名原因：
+  1. <strong>防抵赖</strong>——渠道不能否认收到过这笔请求。
+  2. <strong>防内部篡改</strong>——网关到业务服务之间可能有多层转发。
+  3. <strong>防越权调用</strong>——签名绑定商户身份，别人拿不到私钥就伪造不了。
+  4. <strong>协议要求</strong>——监管和渠道规范强制要求。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「HTTPS 保护的是传输链路，从客户端到网关这一段。问题是报文到了网关就解密了，网关到业务服务、到数据库这一段是明文的，任何一个环节被改，HTTPS 都发现不了。」
+「签名是报文级的，端到端有效。报文一路传下去，任何一环改了内容，最后的验签都会失败。所以这两者是不同层次的东西，不是替代关系。」
+「支付场景还有几个特殊原因。第一是防抵赖，渠道不能否认收到过这笔请求，因为只有它能生成这个签名。第二是防内部篡改，我们的网关到业务服务中间可能经过好几层转发，每一层理论上都能改报文，签名能兜住。第三是防越权，签名绑定了商户身份，别人没有你的私钥，伪造不出合法请求。」
+「最后一个原因更实际：监管和渠道规范强制要求。银联、网联的接入规范里签名是必选项，不是你想不想做的问题。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「那内部服务之间也要签名吗？」</strong> → 一般用 HMAC 就够了，成本低；涉及资金和敏感数据的接口建议做。</li>
+<li><strong>「签名能防重放吗？」</strong> → 不能，签名只保证内容没被改，重放的是合法报文。防重放要靠 timestamp + nonce。</li>
+</ul>
+</div><h3 id="q-37" class="q-title">Q37 为什么说 Base64 不是加密</h3>
+<p>🗣 <strong>人话</strong>：Base64 就是换了个编码方式，把二进制变成可打印字符，谁都能解。把它当加密用，等于把密码写在明信片上。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>Base64 是<strong>编码</strong>，不是加密：无密钥、可逆、算法公开。</li>
+<li>作用：让二进制数据能安全地在文本协议（HTTP Header、URL、JSON）里传输。</li>
+<li>判据：<strong>有没有密钥</strong>。有密钥才是加密。</li>
+<li>常见误会：<code>Base64(user:password)</code> 做 Basic Auth，只是避免了特殊字符问题，不是安全措施——必须配 HTTPS。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「Base64 是编码不是加密，判断标准就一条：有没有密钥。Base64 没有密钥、算法完全公开、任何人都能解开，它做的事只是把二进制数据转成可打印字符，方便在 HTTP Header、URL、JSON 这些文本协议里传输。」
+「我强调这一点是因为真有人把它当加密用。比如 HTTP Basic 认证里的 <code>Base64(user:password)</code>，很多人以为密码被保护了，其实抓个包解一下就出来了——它必须配合 HTTPS 才有意义，本身零安全性。」
+「支付场景里 Base64 出现得很多，比如 RSA 签名后的二进制结果要转成 Base64 才能放进 <code>sign</code> 字段，M-Pesa 的 password 也是 <code>Base64(shortcode + passkey + timestamp)</code>。这些地方用 Base64 纯粹是格式要求，不是安全措施。」
+「所以面试如果问『这个字段加密了吗』，看到 Base64 要敢于说没有，这是加分点。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「Base64 会让数据变长多少？」</strong> → 约 33%，每 3 字节变 4 字符；URL-safe 版本用 <code>-</code> 和 <code>_</code> 替换 <code>+</code> 和 <code>/</code>。</li>
+<li><strong>「那什么才算加密？」</strong> → 有密钥、无密钥不可还原，比如 AES、RSA、SM2。</li>
+</ul>
+<hr />
+</div><h2 id="sec-5" class="sec-title">五、SQL UNION</h2>
+<blockquote>
+<p>这题看着简单，但面试官问 UNION 通常是想问<strong>性能</strong>和<strong>执行计划</strong>。答「UNION 会去重所以慢」只是及格线。</p>
+</blockquote>
+<h3 id="q-38" class="q-title">Q38 UNION 和 UNION ALL 的区别，性能差多少</h3>
+<p>🗣 <strong>人话</strong>：<code>UNION ALL</code> 是直接拼起来，<code>UNION</code> 是拼起来之后还要去重。去重就得排序或者建哈希表，数据量大时这就是几倍的差距。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><code>UNION ALL</code>：两个结果集直接拼接，<strong>不排序、不去重</strong>，O(n)。</li>
+<li><code>UNION</code>：等价于 <code>UNION ALL</code> + <code>DISTINCT</code>，需要 Sort 或 Hash Aggregate 去重，O(n log n) 或 O(n) 但内存开销大。</li>
+<li>执行计划里 <code>UNION</code> 会多出 <code>Using temporary</code> 或 <code>Using filesort</code>。</li>
+<li><strong>能用 <code>UNION ALL</code> 就别用 <code>UNION</code></strong>——如果业务上确定两个分支不会有重复行（比如按状态、按时间分片），加 <code>ALL</code> 是免费的优化。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「<code>UNION ALL</code> 是把两个结果集直接拼起来，不排序不去重，复杂度是线性的。<code>UNION</code> 等价于 <code>UNION ALL</code> 加 <code>DISTINCT</code>，多了一步去重，底层要么排序后相邻去重，要么建哈希表，所以执行计划里会多出 <code>Using temporary</code> 或者 <code>Using filesort</code>。」
+「性能差多少取决于数据量。几万行以内感知不到，百万行以上可能差好几倍，而且内存消耗明显——去重用的临时表超过 <code>tmp_table_size</code> 会落盘，那就更慢了。」
+「所以我的默认选择是 <code>UNION ALL</code>，只有在业务上确实可能重复、并且必须去重的时候才用 <code>UNION</code>。比如按状态分两个分支查，一个查『待支付』一个查『已支付』，天然不会重复，加 <code>ALL</code> 是免费的优化。」
+「还有一个更彻底的做法：如果两个分支查的是同一张表的不同条件，很多时候可以直接用 <code>OR</code> 或者 <code>IN</code> 合并成一个查询，根本不需要 UNION。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「<code>UNION</code> 去重是按什么去重？」</strong> → 按所有输出列的组合去重，不是按主键。</li>
+<li><strong>「<code>UNION ALL</code> 的结果顺序有保证吗？」</strong> → 没有，需要顺序必须显式加 <code>ORDER BY</code>，但加了 <code>ORDER BY</code> 就有排序开销了。</li>
+</ul>
+</div><h3 id="q-39" class="q-title">Q39 UNION 的隐式排序去重是怎么发生的</h3>
+<p>🗣 <strong>人话</strong>：MySQL 做 <code>UNION</code> 去重，要么把结果全灌进临时表建索引去重，要么排序后比相邻行。无论哪种，都要把整个结果集<strong>先物化出来</strong>，这就是内存和磁盘的开销来源。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>MySQL 处理 <code>UNION</code>：每个分支的结果送进临时表，去重后输出。</li>
+<li>临时表优先用内存（<code>tmp_table_size</code> / <code>max_heap_table_size</code>），超限落磁盘。</li>
+<li><code>EXPLAIN</code> 里第二个分支往后的 <code>Extra</code> 会出现 <code>Using temporary</code>；8.0 之前还会合并成一个 <code>&lt;union1,2&gt;</code> 的派生表。</li>
+<li>MySQL 8.0 用 hash 去重的比例提升，但内存占用问题依旧。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「MySQL 处理 <code>UNION</code> 的机制是：每个 SELECT 分支的结果都送进一张临时表，去重之后统一输出。这张临时表优先放内存，由 <code>tmp_table_size</code> 和 <code>max_heap_table_size</code> 控制，超过就落磁盘——一旦落盘，性能是断崖式下跌。」
+「去重的方式有两种：一种是把整表灌进去，靠临时表的唯一性或者哈希结构去重；另一种是排序之后比较相邻行。不管哪种，都得把<strong>整个结果集物化</strong>出来才能开始输出，所以它是阻塞的，不能流式返回。」
+「看 <code>EXPLAIN</code> 的话，第二个分支之后会出现 <code>Using temporary</code>，8.0 之前还会显示一个 <code>&lt;union1,2&gt;</code> 的派生表。看到这个就知道有临时表开销了。」
+「所以如果要优化，第一选择是换成 <code>UNION ALL</code> 消掉临时表；第二选择是看能不能用单条查询替代，比如把两个分支的条件合并成 <code>OR</code> 或者 <code>CASE WHEN</code>。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「怎么判断临时表落盘了？」</strong> → 看 <code>Created_tmp_disk_tables</code> 状态变量，或者在 <code>SHOW STATUS</code> 里对比 <code>Created_tmp_tables</code>；也可以调 <code>tmp_table_size</code> 观察性能变化。</li>
+<li><strong>「8.0 有什么改进？」</strong> → <code>UNION</code> 去重更多用 hash 结构，并且 <code>UNION</code> 分支之间可以并行；但物化这个本质没变。</li>
+</ul>
+</div><h3 id="q-40" class="q-title">Q40 UNION 对字段数量和类型有什么要求</h3>
+<p>🗣 <strong>人话</strong>：两边列数必须一样，类型要能兼容。类型不兼容 MySQL 会隐式转换——不报错，但结果可能是错的，或者索引失效。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><strong>列数必须相同</strong>，否则直接报错 <code>The used SELECT statements have a different number of columns</code>。</li>
+<li><strong>类型需要兼容</strong>：会按类型优先级做隐式转换，<code>INT</code> 和 <code>VARCHAR</code> 混用容易出问题。</li>
+<li><strong>列名取第一个 SELECT 的</strong>，所以 <code>ORDER BY</code> 要用第一个分支的列名或别名。</li>
+<li><strong>字符集不同</strong>可能导致 <code>Illegal mix of collations</code> 报错。</li>
+<li>类型不一致的隐患：隐式转换会让索引失效，还可能丢精度（比如 <code>DECIMAL</code> 和 <code>VARCHAR</code> 混用）。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「硬性要求是列数必须相同，不一致会直接报错。类型的要求是『兼容』，MySQL 会按类型优先级做隐式转换，但这里坑很多。」
+「最典型的坑是 <code>INT</code> 和 <code>VARCHAR</code> 混用。看起来能出结果，实际上是按字符串比较——<code>'10'</code> 会小于 <code>'9'</code>，排序就乱了。更麻烦的是如果这个字段上有索引，隐式转换会让索引失效，变成全表扫。」
+「还有个细节：输出列名取第一个 SELECT 的，所以 <code>ORDER BY</code> 必须用第一个分支的列名或者别名，写第二个分支的列名会报错。我踩过这个，明明两个分支都起了别名，但 <code>ORDER BY</code> 用第二个的别名就是不行。」
+「另外字符集不同会直接报 <code>Illegal mix of collations</code>，两个分支的表如果建表时字符集不一样就会撞上，得显式 <code>CONVERT</code>。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「类型不一致怎么修？」</strong> → 显式 <code>CAST</code> 成统一类型，别依赖隐式转换。</li>
+<li><strong>「两个分支的表结构不一样怎么办？」</strong> → 补齐缺失列用 <code>NULL</code> 或者常量占位，保证列数一致。</li>
+</ul>
+</div><h3 id="q-41" class="q-title">Q41 UNION 之后 ORDER BY 和 LIMIT 作用在哪</h3>
+<p>🗣 <strong>人话</strong>：作用在<strong>合并后的总结果</strong>上，不是每个分支上。想在分支内部排序，必须用括号把子查询包起来，而且还得配合 <code>LIMIT</code> 才不会被优化掉。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>不加括号时，<code>UNION</code> 后面的 <code>ORDER BY</code> / <code>LIMIT</code> 作用于整个结果集。</li>
+<li>想让每个分支自己排序：<code>(SELECT ... ORDER BY ... LIMIT n) UNION ALL (SELECT ... ORDER BY ... LIMIT n)</code>。</li>
+<li><strong>分支内的 <code>ORDER BY</code> 单独存在一般会被优化器忽略</strong>，必须带 <code>LIMIT</code> 才有意义。</li>
+<li>全局 <code>ORDER BY</code> 只能引用第一个 SELECT 的列名或别名。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「默认情况下 <code>UNION</code> 后面的 <code>ORDER BY</code> 和 <code>LIMIT</code> 作用于合并后的整个结果集，不是单个分支。这是最常见的误解——很多人以为写在最后是给最后一个 SELECT 排序。」
+「如果想让每个分支自己排序，比如两个分支各取最新 10 条再合并，必须用括号把子查询包起来，而且<strong>分支里必须带 <code>LIMIT</code></strong>，否则优化器会直接把 <code>ORDER BY</code> 优化掉，因为它觉得排序没有意义。」
+「全局 <code>ORDER BY</code> 有个限制：只能引用第一个 SELECT 的列名或别名。第二个分支起的别名在这里是不认的，会直接报错。」
+「实际写分页的时候要特别注意：<code>UNION</code> 加 <code>ORDER BY</code> 加 <code>LIMIT offset, size</code> 是三重开销——先物化去重、再全局排序、再跳过 offset 行。深分页的时候这个组合能慢到不可接受，所以能用 <code>search_after</code> 这种游标方式就用游标。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「<code>UNION</code> 分支里的 <code>ORDER BY</code> 不带 <code>LIMIT</code> 会怎样？」</strong> → 被优化器忽略，不报错也不生效，属于静默失效，很难发现。</li>
+<li><strong>「全局 <code>ORDER BY</code> 能引用表达式吗？」</strong> → 可以，但表达式必须基于第一个分支的列。</li>
+</ul>
+</div><h3 id="q-42" class="q-title">Q42 UNION 为什么不能走索引</h3>
+<p>🗣 <strong>人话</strong>：索引是建在表上的，<code>UNION</code> 的结果是<strong>临时表</strong>，临时表没有索引。所以每个分支自己可以走索引，但合并后的排序、筛选、分页全都是全表扫临时表。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>每个分支<strong>独立</strong>走各自的索引，这部分没问题。</li>
+<li>合并后的结果在临时表里，<strong>临时表的排序和过滤没有索引可用</strong>。</li>
+<li>所以 <code>UNION</code> + <code>ORDER BY</code> + 深分页的组合最伤：先物化、再排序、再 offset 跳过。</li>
+<li>优化方向：减少结果集（分支里就加好 <code>WHERE</code>）、用 <code>UNION ALL</code> 免去重、用游标分页代替 offset。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「要分两段看。每个分支自己是可以走索引的，<code>WHERE</code> 条件正常用索引，这部分没问题。问题在合并之后——结果是物化到一张临时表里的，临时表没有索引，所以全局的 <code>ORDER BY</code>、全局的 <code>WHERE</code>（如果有外层查询）、还有 <code>LIMIT offset</code> 的跳过，全都是在这个无索引的临时表上做的。」
+「所以最伤的写法是 <code>UNION</code> 加 <code>ORDER BY</code> 加深分页。三步叠加：先把所有分支结果灌进临时表（可能落盘）、再对整表排序、再从头扫过 offset 行丢掉。数据量一大就是几秒甚至几十秒。」
+「优化的方向有三个。第一，把结果集在分支里就缩小，<code>WHERE</code> 条件写足，别指望外层过滤。第二，确定不重复就用 <code>UNION ALL</code>，省掉临时表的去重。第三，分页改成游标方式，用上一页的最后一条记录的排序键做条件，避免 offset。」
+「如果业务允许，最好的优化是不用 <code>UNION</code>——把分支条件合并成一条查询的 <code>OR</code>，或者用 <code>CASE WHEN</code> 打标，让优化器有索引可走。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「<code>UNION</code> 结果能做子查询再 JOIN 吗？」</strong> → 可以，但派生表可能被物化，8.0 有 derived merge 优化，但不保证生效，要看 <code>EXPLAIN</code>。</li>
+<li><strong>「为什么 <code>UNION</code> 的 <code>LIMIT 10</code> 也慢？」</strong> → 因为要先物化完所有分支才能去重排序，<code>LIMIT</code> 是在这之后才生效的，不能提前终止。</li>
+</ul>
+</div><h3 id="q-43" class="q-title">Q43 分表之后用 UNION 查有什么坑</h3>
+<p>🗣 <strong>人话</strong>：分表查询就是 N 个分支 <code>UNION ALL</code>，然后全局排序分页。表越多越慢，而且 <code>COUNT</code>、<code>ORDER BY</code>、深分页三个都会爆炸。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li>分表场景下 <code>UNION ALL</code> 是常态（各表数据天然不重复），但代价是：<strong>分支数 = 表数</strong>，每个分支都要扫一遍。</li>
+<li><strong>排序分页</strong>最痛：<code>ORDER BY create_time DESC LIMIT 100000, 20</code> 要在所有分表上各取 100020 条，再全局排序。</li>
+<li><strong><code>COUNT</code> 更痛</strong>：要每张表都 <code>COUNT</code> 再加起来，大表上就是 N 次全表扫。</li>
+<li>优化：
+  1. 分页时<strong>各分支先取前 N 条</strong>（<code>ORDER BY ... LIMIT offset+size</code>），再全局排序取 size——前提是排序键单调。
+  2. 用<strong>游标分页</strong>（<code>WHERE create_time &lt; 上一页最后一条</code>），避免 offset。
+  3. 宽表冗余（ES / 汇总表）承接列表查询，DB 只负责详情。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「分表查询基本就是 N 个分支 <code>UNION ALL</code>，因为各分表数据天然不重复，用 <code>ALL</code> 就够。但问题在于分支数等于表数，每加一张表就多扫一遍。」
+「最痛的是排序分页。<code>ORDER BY create_time DESC LIMIT 100000, 20</code> 这种，逻辑上要在每张分表上都取前 100020 条，合并后再排序取 20 条——数据量是表数的倍数放大，内存直接爆。」
+「优化有几个思路。第一，分支里先截断：如果排序键是单调的，每个分支先 <code>ORDER BY ... LIMIT offset+size</code>，再全局排序取 20 条，这样每个分支最多只取 offset+size 行，不是全表。第二，改成游标分页，用上一页最后一条的 <code>create_time</code> 做条件，彻底避开 offset。」
+「<code>COUNT</code> 也是大坑，要每张表都 <code>COUNT</code> 再相加，40 张分表就是 40 次全表扫。所以列表页的『共多少条』一般不做精确统计，改成『加载更多』或者用近似值。」
+「根本解法是把列表查询挪到 ES 或者单独的汇总表，DB 只负责按主键查详情。分表解决的是写和存储，不解决复杂查询。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「分支先截断的方案有什么前提？」</strong> → 排序键必须单调（如自增 ID、时间），否则可能漏数据。</li>
+<li><strong>「ShardingSphere 是怎么处理的？」</strong> → 它会做 SQL 改写合并，但底层仍然是 N 个分支 + 内存归并，深分页问题一样存在。</li>
+</ul>
+</div><h3 id="q-44" class="q-title">Q44 UNION 和 OR、JOIN、IN 怎么选</h3>
+<p>🗣 <strong>人话</strong>：<code>UNION</code> 是<strong>行的纵向拼接</strong>，<code>JOIN</code> 是<strong>列的横向关联</strong>，<code>OR</code> 是<strong>行内条件</strong>。三者不是替代关系，但 <code>UNION ALL</code> 常被用来优化 <code>OR</code>。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><code>UNION</code>：两个查询结果的行合并，列数相同。</li>
+<li><code>JOIN</code>：两张表按关联条件横向拼列。</li>
+<li><code>OR</code>：同一张表上的多个条件，命中任意一个。</li>
+<li><strong><code>OR</code> 优化成 <code>UNION ALL</code></strong>：老版本 MySQL 对 <code>OR</code> 处理差，容易全表扫；拆成两个走索引的查询再 <code>UNION ALL</code>，各自走索引。但 5.6+ 有 <code>index_merge</code>，不一定需要手工改，先看 <code>EXPLAIN</code>。</li>
+<li><code>IN</code> 和 <code>OR</code> 等价，大列表时要注意索引和范围。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「这三个是不同维度的东西。<code>UNION</code> 是行的纵向拼接，两个查询结果列数相同、上下摞起来；<code>JOIN</code> 是列的横向关联，两张表按条件拼在一起变成更宽的行；<code>OR</code> 是同一个查询里的条件分支，命中任意一个就算。」
+「但有个经典优化是 <code>UNION ALL</code> 替代 <code>OR</code>。老版本 MySQL 对 <code>OR</code> 的处理很差，<code>WHERE a=1 OR b=2</code> 即使两个字段都有索引也经常走全表扫，拆成两个查询各自走索引再 <code>UNION ALL</code> 能快很多。」
+「不过这个优化不能盲目做。MySQL 5.6 之后有 <code>index_merge</code> 优化，<code>OR</code> 也能同时用两个索引再求并集。所以正确做法是先 <code>EXPLAIN</code> 看 <code>type</code>，如果已经是 <code>index_merge</code> 就不用改；如果是 <code>ALL</code> 全表扫，才手工拆。」
+「<code>IN</code> 和 <code>OR</code> 基本是等价的，<code>IN</code> 列表很长时（几百上千）要小心，优化器可能放弃索引。这种场景我一般改成 <code>JOIN</code> 临时表或者分批查。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「<code>UNION</code> 能替代 <code>JOIN</code> 吗？」</strong> → 不能，除非是垂直分割的表（大字段拆表），那种情况用 <code>UNION ALL</code> 拼回宽行是可行的。</li>
+<li><strong>「<code>index_merge</code> 有什么限制？」</strong> → 只对 <code>AND</code> / <code>OR</code> 的等值或范围条件有效，而且如果索引选择性差，优化器可能不选它。</li>
+</ul>
+<hr />
+</div><h2 id="sec-6" class="sec-title">六、复盘与话术</h2>
+<h3 id="q-45" class="q-title">Q45 这四道题面试官分别在考什么</h3>
+<p>🗣 <strong>人话</strong>：表面问技术，实际都在问「你在真实系统里踩过没有」。答定义只能及格，答坑和取舍才是加分。</p>
+<p><strong>要点</strong></p>
+<table>
+<thead>
+<tr>
+<th>题目</th>
+<th>表面在问</th>
+<th>实际在考</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>事务</td>
+<td><code>@Transactional</code> 怎么用</td>
+<td>你有没有线上排查过事务问题</td>
+</tr>
+<tr>
+<td>工作流事务</td>
+<td>引擎的事务模型</td>
+<td>你对「跨步骤、跨时间」一致性有没有概念</td>
+</tr>
+<tr>
+<td>支付加密</td>
+<td>签名和加密的区别</td>
+<td>你有没有安全意识和真实对接经验</td>
+</tr>
+<tr>
+<td>SQL UNION</td>
+<td>两个关键字区别</td>
+<td>你会不会看执行计划、有没有性能意识</td>
+</tr>
+</tbody>
+</table>
+<p><strong>这四题你手上都有真实素材，别浪费：</strong></p>
+<ul>
+<li>事务 → 注册发积分的 rollback-only 排查（第三章 Q24、Q25）</li>
+<li>工作流事务 → 自研 FlowEngine + 流程快照（第三章），Flowable 原理当备用（第二章）</li>
+<li>支付加密 → 七个渠道的签名验签实现（第四章）</li>
+<li>SQL UNION → 需要自己补，这块是纯知识，没有项目故事，那就把执行计划讲透</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我总结了一下，这四道题表面问的东西不一样，实际都在问同一件事：你有没有在真实系统里踩过。事务那题如果只背 ACID 和传播行为，面试官会觉得你是背的；但你说『自调用导致 REQUIRES_NEW 没生效，我排查了半天』，他就知道你写过。」
+「工作流事务那题更明显，它在考你对『跨步骤、跨时间』的一致性有没有概念。这题反而是你的强项——大多数候选人只能答 Flowable 的配置，你能说『我们自研了一套，流程图 JSON 快照、SpEL 做条件路由、任务流转全在一个事务里』，还能讲清为什么不用成熟引擎，这个区分度很高。」
+「支付加密那题考的是安全意识和实战。能说清楚『Base64 不是加密』『HTTPS 到网关就解了所以还要签名』，说明你真的对接过并且在思考，而不是复制粘贴 SDK。」
+「UNION 那题考性能意识。答区别是及格，能说出『UNION 会物化临时表所以深分页很痛』才是他想听的。这题你没有项目故事，那就靠把执行计划讲透来补。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「如果面试官追问细节你答不上来怎么办？」</strong> → 承认边界，然后迁移到你熟的场景，别硬编。</li>
+<li><strong>「怎么准备这类题？」</strong> → 每道题准备一个真实的坑 + 一个数字，比背十页定义有用。</li>
+</ul>
+</div><h3 id="q-46" class="q-title">Q46 答不上来的时候怎么接</h3>
+<p>🗣 <strong>人话</strong>：别沉默，别瞎编。承认不会 + 说出你知道的相邻知识 + 给出你会怎么查。这个组合面试官接受度很高。</p>
+<p><strong>要点</strong></p>
+<ul>
+<li><strong>不要硬编</strong>：编错的代价远大于承认不会，尤其是 6 年经验的岗位，面试官一问细节就露。</li>
+<li>三段式接法：
+  1. 「这块我没有生产经验，我说下我的理解。」
+  2. 说出你确实知道的相邻知识（证明不是完全空白）。
+  3. 「如果让我做，我会先看 XX 文档 / 先验证 XX。」</li>
+<li><strong>迁移到你熟的场景</strong>：把不熟的问题映射到你做过的类似问题。</li>
+<li>事后补：面试完立刻查清楚，如果有二面可以主动说「上次那个问题我回去查了」。</li>
+</ul>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我的原则是绝不硬编。6 年经验的岗位，面试官随便追问两层就能听出来，编错的代价远大于承认不会。」
+「我一般用三段式。第一句先划边界：『这块我没有生产经验，我说下我的理解。』第二句说我知道的相邻知识，证明我不是完全空白——比如被问到 Seata 的 TC 怎么做高可用，我会说『TC 那层的选主和存储我没深入研究过，但我理解是类似 Raft 的机制，多个节点选主，会话和分支信息要持久化』。第三句给出行动方案：『如果让我做，我会先看官方部署文档，再搭个集群验证 TC 宕机后分支事务的走向。』」
+「这个组合面试官接受度挺高的，因为它体现了三件事：诚实、有基础、有方法。」
+「还有一点，面试完一定要查清楚。如果进二面，主动提一句『上次您问的工作流事务我回去查了，是这么回事』，这个加分非常大——说明你真的在学，不是应付。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「承认不会会不会直接挂？」</strong> → 一道题不会不会挂，但如果每题都编且被戳穿，会挂得很彻底。</li>
+<li><strong>「怎么判断该不该编？」</strong> → 有 60% 以上把握就说「我的理解是……」，低于就别硬上。</li>
+</ul>
+</div><h3 id="q-47" class="q-title">Q47 下一轮面试前还该补什么</h3>
+<p>🗣 <strong>人话</strong>：从这次被问的方向看，短板集中在<strong>分布式一致性</strong>和<strong>性能分析</strong>两块。这两块补上，6 年经验的画像就完整了。</p>
+<p><strong>要点</strong></p>
+<ol>
+<li><strong>分布式一致性</strong>：Saga、TCC、本地消息表、事务消息，各准备一个真实场景。</li>
+<li><strong>工作流</strong>：把自研引擎讲熟（第三章），再补一层 Flowable 的对照，能说清「什么场景该换引擎」。</li>
+<li><strong>执行计划</strong>：<code>EXPLAIN</code> 每个字段的含义、<code>type</code> 的等级排序、<code>Extra</code> 里的告警信息。</li>
+<li><strong>支付安全</strong>：签名验签全链路、密钥管理、防重放。</li>
+<li><strong>表达</strong>：每个知识点准备「一个坑 + 一个数字」，比背定义有效十倍。</li>
+</ol>
+<div class="ans"><p><span class="ah">📖 参考答案（面试时这样开口）</span></p>
+<blockquote>
+<p>「我复盘下来，短板集中在两块。第一块是分布式一致性，我能说出方案名字，但缺少『为什么选这个不选那个』的实感，这块要把 Saga、TCC、本地消息表各自准备一个真实场景，说清楚取舍。」
+「第二块是性能分析。UNION 那题暴露了我对执行计划不够熟——<code>type</code> 的等级顺序、<code>Extra</code> 里哪些是告警、<code>rows</code> 估算偏差说明什么，这些要能脱口而出。」
+「工作流这块我其实有优势，自研引擎的细节我能讲透，但要补一层对照：Flowable 的 BPMN 模型和事务边界得知道，因为面试官很可能问『你为什么不用成熟引擎』『什么场景你会换过去』。答不上这个，自研就从优势变成了减分点。」
+「最后是表达。我发现每个知识点准备一个真实的坑加一个具体数字，比背十页定义都有用。因为面试官记住的永远是故事，不是条目。」</p>
+</blockquote>
+<p><p class="ask">🔍 追问预判</p></p>
+<ul>
+<li><strong>「怎么练表达？」</strong> → 录音回放，听自己有没有卡壳、有没有说「这个那个」，比对着镜子练有效。</li>
+<li><strong>「时间不够优先补哪个？」</strong> → 优先补你简历上写了但说不深的那块，那是面试官一定会挖的地方。</li>
+</ul></div></article></main>
+<button id="top">↑</button>
+<div id="meta">共 47 题</div>
+<div id="tts">
+  <div id="ttsPanel">
+    <label>语速<br><input type="range" id="ttsRate" min="0.5" max="1.2" step="0.05" value="0.85"><span class="rv" id="ttsRateVal">0.85x</span></label>
+    <label>语音<select id="ttsVoice"></select></label>
+    <div class="hint"><b>点正文里任意英文</b>即可发音（浅蓝高亮的就是）。缩写念字母、单词照读，面试照着用。</div>
+  </div>
+  <button id="ttsBtn" title="发音设置 / 点词发声">🔊</button>
+</div>
+<div id="toast">点正文里任意英文，直接听发音 🔈</div>
+<script>
+  const groups=[...document.querySelectorAll('.nav-group')];
+  const qs=[...document.querySelectorAll('.nav-q')];
+  // 默认展开前两组
+  groups.slice(0,2).forEach(g=>g.classList.add('open'));
+  // 搜索
+  const input=document.getElementById('q');
+  input.addEventListener('input',()=>{
+    const k=input.value.trim().toLowerCase();
+    if(!k){groups.forEach(g=>{g.classList.remove('hidden');g.querySelectorAll('.nav-q').forEach(a=>a.classList.remove('hidden'));});return;}
+    groups.forEach(g=>{
+      const items=[...g.querySelectorAll('.nav-q')];
+      let hit=0;
+      items.forEach(a=>{
+        const ok=a.dataset.text.toLowerCase().includes(k);
+        a.classList.toggle('hidden',!ok);
+        if(ok)hit++;
+      });
+      const secOk=g.querySelector('.nav-sec').dataset.text.toLowerCase().includes(k);
+      const show=hit>0||secOk;
+      g.classList.toggle('hidden',!show);
+      if(show)g.classList.add('open');
+    });
+  });
+  // 滚动高亮
+  const heads=[...document.querySelectorAll('h2[id],h3[id]')];
+  const secLinks=new Map([...document.querySelectorAll('.nav-sec')].map(a=>[a.getAttribute('href').slice(1),a]));
+  const qLinks=new Map([...document.querySelectorAll('.nav-q')].map(a=>[a.getAttribute('href').slice(1),a]));
+  const obs=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting)return;
+      const id=e.target.id;
+      document.querySelectorAll('.nav-q.active').forEach(a=>a.classList.remove('active'));
+      document.querySelectorAll('.nav-group.open').forEach(g=>{if(!g.contains(document.activeElement))g.classList.remove('open');});
+      if(qLinks.has(id)){
+        const a=qLinks.get(id);a.classList.add('active');
+        const g=a.closest('.nav-group');g.classList.add('open');
+        a.scrollIntoView({block:'nearest'});
+      }else if(secLinks.has(id)){
+        secLinks.get(id).closest('.nav-group').classList.add('open');
+      }
+    });
+  },{rootMargin:'-10% 0px -80% 0px'});
+  heads.forEach(h=>obs.observe(h));
+  // 进度
+  const bar=document.getElementById('bar'),topBtn=document.getElementById('top');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement;
+    const p=h.scrollTop/(h.scrollHeight-h.clientHeight)*100;
+    bar.style.width=p+'%';
+    topBtn.style.display=h.scrollTop>600?'flex':'none';
+  });
+  topBtn.onclick=()=>scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('menu').onclick=()=>document.querySelector('aside').classList.toggle('show');
+  document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',()=>{
+    if(innerWidth<=1180)document.querySelector('aside').classList.remove('show');
+  }));
+
+  /* ========== 点词发音 ========== */
+  (function(){
+    const synth=window.speechSynthesis||null;
+    const btn=document.getElementById('ttsBtn');
+    const panel=document.getElementById('ttsPanel');
+    const rateEl=document.getElementById('ttsRate');
+    const rateVal=document.getElementById('ttsRateVal');
+    const voiceSel=document.getElementById('ttsVoice');
+    const toast=document.getElementById('toast');
+    if(!synth)btn.style.display='none';
+
+    /* 1. 把正文里的英文包成可点单元 */
+    const RE=new RegExp('[A-Za-z][A-Za-z0-9_.#]*(?:[-/][A-Za-z0-9_.#]+)*','g');
+    const SKIP=/^(SCRIPT|STYLE|A|BUTTON|SELECT|OPTION|TEXTAREA|INPUT)$/;
+    function wrapEng(root){
+      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{
+        acceptNode(n){
+          const p=n.parentElement;
+          if(!p||SKIP.test(p.tagName))return NodeFilter.FILTER_REJECT;
+          if(p.classList&&p.classList.contains('say'))return NodeFilter.FILTER_REJECT;
+          if(!/[A-Za-z]{2,}/.test(n.nodeValue))return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      const nodes=[];
+      while(walker.nextNode())nodes.push(walker.currentNode);
+      nodes.forEach(n=>{
+        const t=n.nodeValue;
+        let last=0,hit=false;
+        const frag=document.createDocumentFragment();
+        RE.lastIndex=0;
+        let m;
+        while((m=RE.exec(t))!==null){
+          if(m[0].length<2)continue;
+          hit=true;
+          if(m.index>last)frag.appendChild(document.createTextNode(t.slice(last,m.index)));
+          const s=document.createElement('span');
+          s.className='say';
+          s.dataset.w=m[0];
+          s.textContent=m[0];
+          frag.appendChild(s);
+          last=m.index+m[0].length;
+        }
+        if(!hit)return;
+        if(last<t.length)frag.appendChild(document.createTextNode(t.slice(last)));
+        n.parentNode.replaceChild(frag,n);
+      });
+    }
+    wrapEng(document.querySelector('article'));
+
+    /* 2. 语音列表 */
+    let voices=[];
+    function loadVoices(){
+      voices=synth.getVoices().filter(v=>/^en/i.test(v.lang));
+      if(!voices.length)voices=synth.getVoices();
+      voiceSel.innerHTML='';
+      voices.forEach((v,i)=>{
+        const o=document.createElement('option');
+        o.value=i;
+        o.textContent=v.name.replace('Microsoft ','').replace(' - English','')+' ('+v.lang+')';
+        voiceSel.appendChild(o);
+      });
+      let idx=voices.findIndex(v=>v.localService&&/Zira|Aria|Jenny|Guy|Samantha|Google US/i.test(v.name));
+      if(idx<0)idx=voices.findIndex(v=>v.localService);
+      if(idx<0)idx=0;
+      voiceSel.value=idx;
+    }
+    if(synth){loadVoices();synth.onvoiceschanged=loadVoices;}
+
+    function curVoice(){
+      const i=parseInt(voiceSel.value,10);
+      return voices[i]||null;
+    }
+
+    /* 3. 点击发音 */
+    let speakingEl=null,timer=null;
+    function say(word,el){
+      if(!synth)return;
+      synth.cancel();
+      if(speakingEl)speakingEl.classList.remove('speaking');
+      speakingEl=el||null;
+      if(speakingEl)speakingEl.classList.add('speaking');
+      const u=new SpeechSynthesisUtterance(word);
+      const v=curVoice();
+      if(v){u.voice=v;u.lang=v.lang;}else{u.lang='en-US';}
+      u.rate=parseFloat(rateEl.value);
+      u.onend=u.onerror=()=>{
+        if(speakingEl)speakingEl.classList.remove('speaking');
+        speakingEl=null;
+      };
+      synth.speak(u);
+    }
+
+    document.addEventListener('click',e=>{
+      const s=e.target.closest('.say');
+      if(!s)return;
+      e.preventDefault();
+      say(s.dataset.w,s);
+    });
+
+    /* 4. 面板 */
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      panel.classList.toggle('show');
+    });
+    document.addEventListener('click',e=>{
+      if(!e.target.closest('#tts'))panel.classList.remove('show');
+    });
+    rateEl.addEventListener('input',()=>{rateVal.textContent=rateEl.value+'x';});
+    rateEl.addEventListener('change',()=>{
+      if(speakingEl)say(speakingEl.dataset.w,speakingEl);
+    });
+
+    /* 5. 首次提示 */
+    const tipKey='ttsTipShown_v1';
+    try{
+      if(!localStorage.getItem(tipKey)){
+        setTimeout(()=>{
+          toast.classList.add('show');
+          setTimeout(()=>toast.classList.remove('show'),4200);
+          localStorage.setItem(tipKey,'1');
+        },1400);
+      }
+    }catch(err){
+      setTimeout(()=>{
+        toast.classList.add('show');
+        setTimeout(()=>toast.classList.remove('show'),4200);
+      },1400);
+    }
+    document.addEventListener('click',e=>{
+      if(e.target.closest('.say'))toast.classList.remove('show');
+    },true);
+  })();
+</script>
+</body>
+</html>
